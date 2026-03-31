@@ -64,6 +64,11 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
       throw new ApiError(errorData.error || 'Request failed', response.status, errorData.details);
     }
 
+    // If the response is a 204 No Content, don't try to parse JSON
+    if (response.status === 204) {
+      return null;
+    }
+
     return response.json();
   } catch (error) {
     // Handle network errors with retry
