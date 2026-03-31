@@ -83,6 +83,7 @@ export function validateBody(schema) {
       next();
     } catch (err) {
       if (err instanceof z.ZodError) {
+        console.error('Validation error details:', err.errors);
         return res.status(400).json({
           error: 'Validation error',
           details: err.errors.map(e => ({
