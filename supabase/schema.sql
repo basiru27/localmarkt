@@ -181,32 +181,61 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION handle_new_user();
 
 -- ============================================
--- STORAGE BUCKET SETUP (Run separately in Supabase Dashboard)
+-- STORAGE BUCKET SETUP
+-- Run this section to create the storage bucket and policies
 -- ============================================
--- 1. Go to Storage in Supabase Dashboard
--- 2. Create a new bucket called 'listing-images'
--- 3. Set it to Public
--- 4. Add the following policies:
---
--- Policy 1: Allow public read access
---   - Name: "Public read access"
---   - Allowed operations: SELECT
---   - Target roles: public
---   - Policy definition: true
---
--- Policy 2: Allow authenticated users to upload
---   - Name: "Authenticated users can upload"
---   - Allowed operations: INSERT
---   - Target roles: authenticated
---   - Policy definition: true
---
--- Policy 3: Allow users to update/delete their uploads
---   - Name: "Users can manage their uploads"
---   - Allowed operations: UPDATE, DELETE
---   - Target roles: authenticated
---   - Policy definition: (auth.uid()::text = (storage.foldername(name))[1])
---
--- Note: Structure uploads as: {user_id}/{filename}
+
+-- Create the listing-images bucket (if it doesn't exist)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'listing-images',
+  'listing-images',
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp']::text[]
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp']::text[];
+
+-- Storage policies for listing-images bucket
+
+-- Policy 1: Allow public read access (for viewing listing images)
+DROP POLICY IF EXISTS "Public read access for listing images" ON storage.objects;
+CREATE POLICY "Public read access for listing images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'listing-images');
+
+-- Policy 2: Allow authenticated users to upload images
+DROP POLICY IF EXISTS "Authenticated users can upload listing images" ON storage.objects;
+CREATE POLICY "Authenticated users can upload listing images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'listing-images' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Policy 3: Allow users to update their own images
+DROP POLICY IF EXISTS "Users can update their own listing images" ON storage.objects;
+CREATE POLICY "Users can update their own listing images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'listing-images' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Policy 4: Allow users to delete their own images
+DROP POLICY IF EXISTS "Users can delete their own listing images" ON storage.objects;
+CREATE POLICY "Users can delete their own listing images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'listing-images' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 
 -- ============================================
 -- VERIFICATION QUERIES (Run to verify setup)
@@ -214,3 +243,4 @@ CREATE TRIGGER on_auth_user_created
 -- SELECT * FROM regions;
 -- SELECT * FROM categories;
 -- SELECT COUNT(*) FROM listings;
+-- SELECT * FROM storage.buckets WHERE id = 'listing-images';

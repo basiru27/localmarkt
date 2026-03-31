@@ -5,11 +5,13 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_WIDTH = 800;
 const MAX_COMPRESSED_SIZE = 300 * 1024; // 300KB
+const BUCKET_NAME = 'listing-images';
 
 export class ImageUploadError extends Error {
-  constructor(message) {
+  constructor(message, code = 'UPLOAD_ERROR') {
     super(message);
     this.name = 'ImageUploadError';
+    this.code = code;
   }
 }
 
@@ -59,7 +61,7 @@ export async function uploadImage(file, userId) {
 
   // Upload to Supabase Storage
   const { data, error } = await supabase.storage
-    .from('listing-images')
+    .from(BUCKET_NAME)
     .upload(fileName, compressedFile, {
       contentType: 'image/jpeg',
       cacheControl: '3600',
@@ -68,13 +70,49 @@ export async function uploadImage(file, userId) {
 
   if (error) {
     console.error('Upload error:', error);
-    throw new ImageUploadError('Failed to upload image');
+    
+    // Provide more specific error messages based on error type
+    const errorMessage = error.message?.toLowerCase() || '';
+    const statusCode = error.statusCode || error.status;
+    
+    if (errorMessage.includes('bucket') || errorMessage.includes('not found') || statusCode === 404) {
+      throw new ImageUploadError(
+        'Image storage is not configured. Please ensure the "listing-images" bucket exists in Supabase.',
+        'BUCKET_NOT_FOUND'
+      );
+    } else if (errorMessage.includes('policy') || errorMessage.includes('permission') || 
+               errorMessage.includes('row-level security') || statusCode === 403) {
+      throw new ImageUploadError(
+        'Permission denied. Please ensure you are logged in and storage policies are configured.',
+        'PERMISSION_DENIED'
+      );
+    } else if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
+      throw new ImageUploadError(
+        'An image with this name already exists. Please try again.',
+        'DUPLICATE'
+      );
+    } else if (errorMessage.includes('size') || errorMessage.includes('too large') || statusCode === 413) {
+      throw new ImageUploadError(
+        'Image file is too large. Please use a smaller image (max 5MB).',
+        'FILE_TOO_LARGE'
+      );
+    } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('failed')) {
+      throw new ImageUploadError(
+        'Network error. Please check your internet connection and try again.',
+        'NETWORK_ERROR'
+      );
+    } else {
+      throw new ImageUploadError(
+        `Upload failed: ${error.message || 'Unknown error'}. Please try again.`,
+        'UNKNOWN'
+      );
+    }
   }
 
   // Get public URL
   const {
     data: { publicUrl },
-  } = supabase.storage.from('listing-images').getPublicUrl(data.path);
+  } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
 
   return publicUrl;
 }
@@ -89,7 +127,7 @@ export async function deleteImage(imageUrl) {
     if (!pathMatch) return;
 
     const filePath = pathMatch[1];
-    await supabase.storage.from('listing-images').remove([filePath]);
+    await supabase.storage.from(BUCKET_NAME).remove([filePath]);
   } catch (error) {
     console.error('Failed to delete image:', error);
   }
