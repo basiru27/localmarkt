@@ -58,9 +58,17 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
-  const getAuthHeader = () => {
-    if (session?.access_token) {
-      return { Authorization: `Bearer ${session.access_token}` };
+  const getAuthHeader = async () => {
+    // Always get fresh session to handle token refresh
+    const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error getting session:', error);
+      return {};
+    }
+    
+    if (currentSession?.access_token) {
+      return { Authorization: `Bearer ${currentSession.access_token}` };
     }
     return {};
   };

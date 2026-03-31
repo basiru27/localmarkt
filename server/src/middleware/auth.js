@@ -19,6 +19,11 @@ export function authenticate(req, res, next) {
 
   const token = authHeader.substring(7);
 
+  if (!JWT_SECRET) {
+    console.error('SUPABASE_JWT_SECRET is not configured');
+    return res.status(500).json({ error: 'Server authentication not configured' });
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = {
@@ -28,10 +33,14 @@ export function authenticate(req, res, next) {
     };
     next();
   } catch (err) {
+    console.error('JWT verification failed:', err.name, err.message);
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
+      return res.status(401).json({ error: 'Token expired. Please sign in again.' });
     }
-    return res.status(401).json({ error: 'Invalid token' });
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token. Please sign in again.' });
+    }
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 }
 

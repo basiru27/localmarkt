@@ -51,8 +51,8 @@ export function useCreateListing() {
         return { pending: true, pendingId };
       }
 
-      // If online, post to API
-      const authHeader = getAuthHeader();
+      // If online, post to API (getAuthHeader is async to ensure fresh token)
+      const authHeader = await getAuthHeader();
       return listingsApi.create(data, authHeader);
     },
     onSuccess: (data) => {
@@ -70,7 +70,7 @@ export function useUpdateListing() {
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      const authHeader = getAuthHeader();
+      const authHeader = await getAuthHeader();
       return listingsApi.update(id, data, authHeader);
     },
     onSuccess: (_, { id }) => {
@@ -87,7 +87,7 @@ export function useDeleteListing() {
 
   return useMutation({
     mutationFn: async (id) => {
-      const authHeader = getAuthHeader();
+      const authHeader = await getAuthHeader();
       return listingsApi.delete(id, authHeader);
     },
     onSuccess: () => {
