@@ -18,15 +18,18 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Enable RLS on profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
+-- Profiles policies (drop if exists to allow re-running)
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
 CREATE POLICY "Public profiles are viewable by everyone"
   ON profiles FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
 CREATE POLICY "Users can insert their own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
@@ -42,7 +45,8 @@ CREATE TABLE IF NOT EXISTS regions (
 -- Enable RLS on regions
 ALTER TABLE regions ENABLE ROW LEVEL SECURITY;
 
--- Regions policy - public read
+-- Regions policy - public read (drop if exists to allow re-running)
+DROP POLICY IF EXISTS "Regions are viewable by everyone" ON regions;
 CREATE POLICY "Regions are viewable by everyone"
   ON regions FOR SELECT
   USING (true);
@@ -69,7 +73,8 @@ CREATE TABLE IF NOT EXISTS categories (
 -- Enable RLS on categories
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
--- Categories policy - public read
+-- Categories policy - public read (drop if exists to allow re-running)
+DROP POLICY IF EXISTS "Categories are viewable by everyone" ON categories;
 CREATE POLICY "Categories are viewable by everyone"
   ON categories FOR SELECT
   USING (true);
@@ -113,21 +118,24 @@ CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at DESC);
 ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
--- LISTINGS RLS POLICIES
+-- LISTINGS RLS POLICIES (drop if exists to allow re-running)
 -- ============================================
 
 -- SELECT: Anyone can view listings (public)
+DROP POLICY IF EXISTS "Listings are viewable by everyone" ON listings;
 CREATE POLICY "Listings are viewable by everyone"
   ON listings FOR SELECT
   USING (true);
 
 -- INSERT: Only authenticated users can create listings
+DROP POLICY IF EXISTS "Authenticated users can create listings" ON listings;
 CREATE POLICY "Authenticated users can create listings"
   ON listings FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
 -- UPDATE: Only the owner can update their listings
+DROP POLICY IF EXISTS "Users can update their own listings" ON listings;
 CREATE POLICY "Users can update their own listings"
   ON listings FOR UPDATE
   TO authenticated
@@ -135,6 +143,7 @@ CREATE POLICY "Users can update their own listings"
   WITH CHECK (auth.uid() = user_id);
 
 -- DELETE: Only the owner can delete their listings
+DROP POLICY IF EXISTS "Users can delete their own listings" ON listings;
 CREATE POLICY "Users can delete their own listings"
   ON listings FOR DELETE
   TO authenticated
