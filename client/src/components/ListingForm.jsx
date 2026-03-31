@@ -231,7 +231,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             name="price"
             value={formData.price}
             onChange={handleChange}
-            className={`input pl-16 text-lg font-semibold ${errors.price ? 'input-error' : ''}`}
+            className={`input pl-20 text-lg font-semibold ${errors.price ? 'input-error' : ''}`}
             placeholder="0.00"
             min="0"
             step="0.01"
