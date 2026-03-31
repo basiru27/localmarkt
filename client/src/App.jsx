@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { OfflineProvider } from './context/OfflineContext';
+import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -31,46 +32,48 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <OfflineProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                {/* Public routes */}
-                <Route index element={<ListingFeed />} />
-                <Route path="listings/:id" element={<ListingDetail />} />
-                <Route path="login" element={<Login />} />
-                <Route path="register" element={<Register />} />
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  {/* Public routes */}
+                  <Route index element={<ListingFeed />} />
+                  <Route path="listings/:id" element={<ListingDetail />} />
+                  <Route path="login" element={<Login />} />
+                  <Route path="register" element={<Register />} />
 
-                {/* Protected routes */}
-                <Route
-                  path="listings/new"
-                  element={
-                    <ProtectedRoute>
-                      <CreateListing />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="listings/:id/edit"
-                  element={
-                    <ProtectedRoute>
-                      <EditListing />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="my-listings"
-                  element={
-                    <ProtectedRoute>
-                      <MyListings />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Protected routes */}
+                  <Route
+                    path="listings/new"
+                    element={
+                      <ProtectedRoute>
+                        <CreateListing />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="listings/:id/edit"
+                    element={
+                      <ProtectedRoute>
+                        <EditListing />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="my-listings"
+                    element={
+                      <ProtectedRoute>
+                        <MyListings />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
+                  {/* 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
         </OfflineProvider>
       </AuthProvider>
     </QueryClientProvider>
