@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { getPendingCount } from '../lib/offlineStorage';
 
 const OfflineContext = createContext(null);
@@ -7,6 +7,7 @@ export function OfflineProvider({ children }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [showCachedDataNotice, setShowCachedDataNotice] = useState(false);
+  const isInitialized = useRef(false);
 
   // Update online status
   useEffect(() => {
@@ -39,8 +40,13 @@ export function OfflineProvider({ children }) {
     }
   }, []);
 
+  // Initial load and online status listener
   useEffect(() => {
-    refreshPendingCount();
+    // Initial load
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      getPendingCount().then(count => setPendingCount(count)).catch(console.error);
+    }
 
     // Refresh when coming back online
     const handleOnline = () => {

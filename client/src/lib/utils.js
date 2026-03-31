@@ -60,6 +60,51 @@ export function isValidPhone(phone) {
   return phoneRegex.test(phone.replace(/\s/g, ''));
 }
 
+// Normalize phone number for WhatsApp (ensure it has country code)
+export function normalizePhoneForWhatsApp(phone) {
+  if (!phone) return null;
+  
+  // Remove all non-digit characters except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  
+  // Remove leading + if present
+  if (cleaned.startsWith('+')) {
+    cleaned = cleaned.slice(1);
+  }
+  
+  // If it starts with 220, it's already got country code
+  if (cleaned.startsWith('220')) {
+    return cleaned;
+  }
+  
+  // If it's a 7-digit Gambian number, add country code
+  if (cleaned.length >= 7 && cleaned.length <= 9) {
+    return '220' + cleaned;
+  }
+  
+  // Return as-is for other formats (international numbers)
+  return cleaned;
+}
+
+// Check if contact looks like a phone number (for showing WhatsApp button)
+export function looksLikePhoneNumber(contact) {
+  if (!contact) return false;
+  // Contains at least 7 consecutive digits
+  const digitsOnly = contact.replace(/\D/g, '');
+  return digitsOnly.length >= 7;
+}
+
+// Generate WhatsApp link
+export function getWhatsAppLink(phone, listingTitle) {
+  const normalizedPhone = normalizePhoneForWhatsApp(phone);
+  if (!normalizedPhone) return null;
+  
+  const message = encodeURIComponent(
+    `Hi! I'm interested in your listing: "${listingTitle}" on LocalMarkt.`
+  );
+  return `https://wa.me/${normalizedPhone}?text=${message}`;
+}
+
 // Debounce function for search
 export function debounce(func, wait) {
   let timeout;
