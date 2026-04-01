@@ -8,7 +8,8 @@ import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/uti
 export default function MyListings() {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const { data: allListings, isLoading, isError } = useListings({});
+  const { data: listingsData, isLoading, isError } = useListings({ limit: 100 });
+  const allListings = listingsData?.data || [];
   const deleteMutation = useDeleteListing();
   const [deleteModal, setDeleteModal] = useState({ open: false, listing: null });
 

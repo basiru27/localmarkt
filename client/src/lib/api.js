@@ -99,6 +99,10 @@ export const listingsApi = {
     if (params.category) searchParams.append('category', params.category);
     if (params.region) searchParams.append('region', params.region);
     if (params.search) searchParams.append('search', params.search);
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
+    if (params.sort) searchParams.append('sort', params.sort);
+    if (params.cursor) searchParams.append('cursor', params.cursor);
     const query = searchParams.toString();
     return fetchApi(`/listings${query ? `?${query}` : ''}`);
   },

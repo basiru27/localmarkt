@@ -7,6 +7,8 @@ import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
 
+import Pagination from '../components/Pagination';
+
 export default function ListingFeed() {
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -16,9 +18,17 @@ export default function ListingFeed() {
     const search = searchParams.get('search');
     const category = searchParams.get('category');
     const region = searchParams.get('region');
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
+    const sort = searchParams.get('sort');
+
     if (search) params.search = search;
     if (category) params.category = category;
     if (region) params.region = region;
+    if (page) params.page = page;
+    if (limit) params.limit = limit;
+    if (sort) params.sort = sort;
+
     return params;
   }, [searchParams]);
 
@@ -28,11 +38,25 @@ export default function ListingFeed() {
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.category) params.set('category', newFilters.category);
     if (newFilters.region) params.set('region', newFilters.region);
+    if (newFilters.limit) params.set('limit', newFilters.limit);
+    if (newFilters.sort) params.set('sort', newFilters.sort);
+    
+    // Always reset to page 1 on filter changes
+    params.set('page', 1);
     
     setSearchParams(params, { replace: true });
   }, [setSearchParams]);
 
-  const { data: listings, isLoading, isError, error } = useListings(filters);
+  const handlePageChange = useCallback((page) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page);
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
+
+  const { data: listingsData, isLoading, isError, error } = useListings(filters);
+  const listings = listingsData?.data;
+  const pagination = listingsData?.pagination;
+
   const { isOnline } = useOffline();
   const { isAuthenticated } = useAuth();
 
@@ -224,6 +248,7 @@ export default function ListingFeed() {
                     <ListingCard key={listing.id} listing={listing} index={index} />
                   ))}
                 </div>
+                <Pagination pagination={pagination} onPageChange={handlePageChange} />
               </>
             )}
           </>
