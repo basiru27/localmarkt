@@ -12,11 +12,16 @@ const router = Router();
 /**
  * GET /api/listings
  * List all listings with optional filters
- * Query params: category, region, search
+ * Query params: category, region, search, page, limit, sort, cursor
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { category, region, search } = req.query;
+    const { category, region, search, page, limit, sort, cursor } = req.query;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 24;
+    const from = (pageNum - 1) * limitNum;
+    const to = from + limitNum - 1;
 
     let query = supabase
       .from('listings')
@@ -24,8 +29,23 @@ router.get('/', async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name)
-      `)
-      .order('created_at', { ascending: false });
+      `, { count: 'exact' });
+
+    // Apply sorting
+    if (sort === 'price_asc') {
+      query = query.order('price', { ascending: true });
+    } else if (sort === 'price_desc') {
+      query = query.order('price', { ascending: false });
+    } else if (sort === 'oldest') {
+      query = query.order('created_at', { ascending: true });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    // Apply cursor
+    if (cursor) {
+      query = query.lt('created_at', cursor);
+    }
 
     // Apply filters
     if (category) {
@@ -41,13 +61,31 @@ router.get('/', async (req, res, next) => {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
-    const { data, error } = await query;
+    if (!cursor) {
+      query = query.range(from, to);
+    } else {
+      query = query.limit(limitNum);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw error;
     }
 
-    res.json(data);
+    const totalPages = Math.ceil((count || 0) / limitNum);
+
+    res.json({
+      data,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: count || 0,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (err) {
     next(err);
   }
