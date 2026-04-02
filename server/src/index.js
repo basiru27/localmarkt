@@ -1,12 +1,28 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import listingsRouter from './routes/listings.js';
 import regionsRouter from './routes/regions.js';
 import categoriesRouter from './routes/categories.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Rate limiting configuration - 100 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+  message: {
+    error: 'Too many requests, please try again later.',
+  },
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/api/health';
+  },
+});
 
 // CORS configuration
 const corsOptions = {
@@ -22,6 +38,7 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
+app.use('/api', apiLimiter); // Apply rate limiting to all API routes
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -10,13 +10,30 @@ import {
 const router = Router();
 
 /**
+ * Sanitize search input to prevent PostgREST filter injection
+ * Escapes special characters used in PostgREST query syntax
+ */
+function sanitizeSearchInput(input) {
+  if (!input || typeof input !== 'string') return '';
+  
+  // Escape PostgREST special characters: % _ * , . ( ) 
+  // Also escape backslash which is used for escaping
+  return input
+    .replace(/\\/g, '\\\\')  // Escape backslashes first
+    .replace(/%/g, '\\%')    // Escape wildcard %
+    .replace(/_/g, '\\_')    // Escape wildcard _
+    .replace(/\*/g, '\\*')   // Escape wildcard *
+    .slice(0, 100);          // Limit length to prevent abuse
+}
+
+/**
  * GET /api/listings
  * List all listings with optional filters
- * Query params: category, region, search, page, limit, sort, cursor
+ * Query params: category, region, search, page, limit, sort, cursor, user_id
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { category, region, search, page, limit, sort, cursor } = req.query;
+    const { category, region, search, page, limit, sort, cursor, user_id } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 24;
@@ -56,9 +73,16 @@ router.get('/', async (req, res, next) => {
       query = query.eq('region_id', parseInt(region));
     }
 
+    if (user_id) {
+      query = query.eq('user_id', user_id);
+    }
+
     if (search) {
-      // Search in title and description
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+      // Search in title and description (sanitized to prevent injection)
+      const sanitized = sanitizeSearchInput(search);
+      if (sanitized) {
+        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+      }
     }
 
     if (!cursor) {
