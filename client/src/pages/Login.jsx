@@ -108,9 +108,17 @@ export default function Login() {
 
             {/* Password */}
             <div className="form-group">
-              <label htmlFor="password" className="label">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="label">
+                  Password
+                </label>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
                   <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
