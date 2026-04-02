@@ -56,7 +56,6 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
       // Check if we should retry
       if (retryCount < RETRY_CONFIG.maxRetries && isRetryable(null, response.status)) {
         const retryDelay = getRetryDelay(retryCount);
-        console.log(`Request failed with status ${response.status}. Retrying in ${retryDelay}ms... (attempt ${retryCount + 1}/${RETRY_CONFIG.maxRetries})`);
         await delay(retryDelay);
         return fetchApi(endpoint, options, retryCount + 1);
       }
@@ -75,7 +74,6 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
     if (error.name === 'TypeError' || error.name === 'NetworkError') {
       if (retryCount < RETRY_CONFIG.maxRetries) {
         const retryDelay = getRetryDelay(retryCount);
-        console.log(`Network error. Retrying in ${retryDelay}ms... (attempt ${retryCount + 1}/${RETRY_CONFIG.maxRetries})`);
         await delay(retryDelay);
         return fetchApi(endpoint, options, retryCount + 1);
       }
@@ -103,6 +101,7 @@ export const listingsApi = {
     if (params.limit) searchParams.append('limit', params.limit);
     if (params.sort) searchParams.append('sort', params.sort);
     if (params.cursor) searchParams.append('cursor', params.cursor);
+    if (params.user_id) searchParams.append('user_id', params.user_id);
     const query = searchParams.toString();
     return fetchApi(`/listings${query ? `?${query}` : ''}`);
   },

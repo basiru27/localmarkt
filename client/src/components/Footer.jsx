@@ -84,22 +84,22 @@ export default function Footer() {
             <h4 className="font-semibold text-text mb-4">Categories</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/?category=Electronics" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=1" className="text-sm text-text-secondary hover:text-primary transition-colors">
                   Electronics
                 </Link>
               </li>
               <li>
-                <Link to="/?category=Clothing" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=2" className="text-sm text-text-secondary hover:text-primary transition-colors">
                   Clothing
                 </Link>
               </li>
               <li>
-                <Link to="/?category=Food%20%26%20Produce" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=3" className="text-sm text-text-secondary hover:text-primary transition-colors">
                   Food & Produce
                 </Link>
               </li>
               <li>
-                <Link to="/?category=Services" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=6" className="text-sm text-text-secondary hover:text-primary transition-colors">
                   Services
                 </Link>
               </li>

@@ -8,13 +8,15 @@ import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/uti
 export default function MyListings() {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const { data: listingsData, isLoading, isError } = useListings({ limit: 100 });
-  const allListings = listingsData?.data || [];
+  
+  // Filter by user_id on server-side for better performance
+  const { data: listingsData, isLoading, isError } = useListings({ 
+    user_id: user?.id,
+    limit: 100 
+  });
+  const myListings = listingsData?.data || [];
   const deleteMutation = useDeleteListing();
   const [deleteModal, setDeleteModal] = useState({ open: false, listing: null });
-
-  // Filter to only user's listings
-  const myListings = allListings?.filter((listing) => listing.user_id === user?.id) || [];
 
   const handleDelete = async () => {
     if (!deleteModal.listing) return;
