@@ -60,6 +60,45 @@ export function isValidPhone(phone) {
   return phoneRegex.test(phone.replace(/\s/g, ''));
 }
 
+// Strict Gambian phone validation for form input
+// Format: +220 XXXXXXX where first digit after +220 is 2-9
+export function isValidGambianPhone(phone) {
+  const regex = /^\+220\s[2-9]\d{6}$/;
+  return regex.test(phone);
+}
+
+// Format input as Gambian phone number with masking
+// Returns formatted string: "+220 XXXXXXX"
+export function formatGambianPhone(input) {
+  // Always ensure +220 prefix
+  const prefix = '+220 ';
+  
+  // Extract only digits from input (excluding the +220 prefix)
+  let value = input;
+  
+  // Remove the prefix if present to get just the number part
+  if (value.startsWith('+220 ')) {
+    value = value.slice(5);
+  } else if (value.startsWith('+220')) {
+    value = value.slice(4);
+  } else if (value.startsWith('+22')) {
+    value = value.slice(3);
+  } else if (value.startsWith('+2')) {
+    value = value.slice(2);
+  } else if (value.startsWith('+')) {
+    value = value.slice(1);
+  }
+  
+  // Remove any non-digit characters
+  const digits = value.replace(/\D/g, '');
+  
+  // Limit to 7 digits
+  const limitedDigits = digits.slice(0, 7);
+  
+  // Return formatted number
+  return prefix + limitedDigits;
+}
+
 // Normalize phone number for WhatsApp (ensure it has country code)
 export function normalizePhoneForWhatsApp(phone) {
   if (!phone) return null;
