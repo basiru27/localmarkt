@@ -27,6 +27,33 @@ function sanitizeSearchInput(input) {
 }
 
 /**
+ * Delete an image from Supabase Storage
+ * Extracts the file path from the public URL and removes it from the bucket
+ * @param {string} imageUrl - The public URL of the image
+ */
+async function deleteStorageImage(imageUrl) {
+  if (!imageUrl) return;
+
+  try {
+    // Extract path from URL: .../listing-images/{userId}/{filename}
+    const match = imageUrl.match(/\/listing-images\/(.+)$/);
+    if (!match) return; // Not a storage URL (e.g., external Unsplash URL)
+
+    const filePath = match[1];
+    const { error } = await supabase.storage
+      .from('listing-images')
+      .remove([filePath]);
+
+    if (error) {
+      console.error('Failed to delete image from storage:', error);
+    }
+  } catch (error) {
+    // Log but don't throw - image cleanup is best-effort
+    console.error('Error during image cleanup:', error);
+  }
+}
+
+/**
  * GET /api/listings
  * List all listings with optional filters
  * Query params: category, region, search, page, limit, sort, cursor, user_id
@@ -186,9 +213,10 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
     const { id } = req.params;
 
     // First, check if the listing exists and belongs to the user
+    // Also fetch image_url to check if we need to clean up old image
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
-      .select('id, user_id')
+      .select('id, user_id, image_url')
       .eq('id', id)
       .single();
 
@@ -203,6 +231,14 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
     if (existing.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only edit your own listings' });
     }
+
+    // Check if image is being replaced
+    const oldImageUrl = existing.image_url;
+    const newImageUrl = req.body.image_url;
+    const imageIsBeingReplaced = 
+      oldImageUrl && 
+      newImageUrl !== undefined && 
+      oldImageUrl !== newImageUrl;
 
     // Update the listing
     const { data, error } = await supabase
@@ -220,6 +256,11 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       throw error;
     }
 
+    // Clean up old image if it was replaced (best-effort)
+    if (imageIsBeingReplaced) {
+      await deleteStorageImage(oldImageUrl);
+    }
+
     res.json(data);
   } catch (err) {
     next(err);
@@ -235,9 +276,10 @@ router.delete('/:id', authenticate, async (req, res, next) => {
     const { id } = req.params;
 
     // First, check if the listing exists and belongs to the user
+    // Also fetch image_url for storage cleanup
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
-      .select('id, user_id')
+      .select('id, user_id, image_url')
       .eq('id', id)
       .single();
 
@@ -253,7 +295,7 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       return res.status(403).json({ error: 'You can only delete your own listings' });
     }
 
-    // Delete the listing
+    // Delete the listing from database
     const { error } = await supabase
       .from('listings')
       .delete()
@@ -262,6 +304,9 @@ router.delete('/:id', authenticate, async (req, res, next) => {
     if (error) {
       throw error;
     }
+
+    // Clean up the image from storage (best-effort, don't fail if this errors)
+    await deleteStorageImage(existing.image_url);
 
     res.status(204).send();
   } catch (err) {
