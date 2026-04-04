@@ -117,6 +117,11 @@ export async function uploadImage(file, userId) {
   return publicUrl;
 }
 
+/**
+ * Delete an image from Supabase Storage
+ * NOTE: Image cleanup is now handled server-side in the listings API.
+ * This function is kept for potential future use or manual cleanup needs.
+ */
 export async function deleteImage(imageUrl) {
   if (!imageUrl) return;
 
