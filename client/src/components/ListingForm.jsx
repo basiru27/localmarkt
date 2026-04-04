@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRegions, useCategories } from '../hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
 import { uploadImage, validateImage, ImageUploadError } from '../lib/imageUpload';
+import { isValidGambianPhone, formatGambianPhone } from '../lib/utils';
 
 export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     price: initialData?.price || '',
     region_id: initialData?.region_id || '',
     category_id: initialData?.category_id || '',
-    contact: initialData?.contact || '',
+    contact: initialData?.contact || '+220 ',
     image_url: initialData?.image_url || '',
   });
 
@@ -35,6 +36,20 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const { value } = e.target;
+    
+    // Format the phone number with Gambian mask
+    const formattedValue = formatGambianPhone(value);
+    
+    setFormData((prev) => ({ ...prev, contact: formattedValue }));
+    
+    // Clear error when user starts typing
+    if (errors.contact) {
+      setErrors((prev) => ({ ...prev, contact: null }));
     }
   };
 
@@ -110,8 +125,10 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       newErrors.price = 'Price must be greater than 0';
     }
 
-    if (!formData.contact.trim()) {
-      newErrors.contact = 'Contact information is required';
+    if (!formData.contact.trim() || formData.contact.trim() === '+220') {
+      newErrors.contact = 'Phone number is required';
+    } else if (!isValidGambianPhone(formData.contact)) {
+      newErrors.contact = 'Please enter a valid Gambian phone number (e.g. +220 3XXXXXX)';
     }
 
     if (!formData.region_id) {
@@ -313,7 +330,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       {/* Contact */}
       <div className="form-group">
         <label htmlFor="contact" className="label">
-          Contact Information <span className="text-error">*</span>
+          Phone Number <span className="text-error">*</span>
         </label>
         <div className="relative">
           <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -322,13 +339,13 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             </svg>
           </div>
           <input
-            type="text"
+            type="tel"
             id="contact"
             name="contact"
             value={formData.contact}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
             className={`input pl-12 ${errors.contact ? 'input-error' : ''}`}
-            placeholder="+220 XXX XXXX or email@example.com"
+            placeholder="+220 XXXXXXX"
           />
         </div>
         {errors.contact && (
@@ -343,7 +360,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          Only visible to logged-in users
+          Gambian numbers only. Only visible to logged-in users.
         </p>
       </div>
 
