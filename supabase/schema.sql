@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS listings (
   title TEXT NOT NULL,
   description TEXT,
   price NUMERIC NOT NULL CHECK (price >= 0),
+  condition TEXT NOT NULL CHECK (condition IN ('new', 'used_like_new', 'used_good', 'used_fair')),
   region_id INTEGER REFERENCES regions(id),
   category_id INTEGER REFERENCES categories(id),
   contact TEXT NOT NULL,
