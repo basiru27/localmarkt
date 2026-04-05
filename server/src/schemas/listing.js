@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Valid condition values
+export const LISTING_CONDITIONS = ['new', 'used_like_new', 'used_good', 'used_fair'];
+
 // Schema for creating a listing
 export const createListingSchema = z.object({
   title: z
@@ -15,6 +18,8 @@ export const createListingSchema = z.object({
     .number()
     .positive('Price must be greater than 0')
     .max(999999999, 'Price is too large'),
+  condition: z
+    .enum(LISTING_CONDITIONS, { errorMap: () => ({ message: 'Please select a valid condition' }) }),
   region_id: z
     .number()
     .int()
@@ -50,6 +55,9 @@ export const updateListingSchema = z.object({
     .number()
     .positive('Price must be greater than 0')
     .max(999999999, 'Price is too large')
+    .optional(),
+  condition: z
+    .enum(LISTING_CONDITIONS, { errorMap: () => ({ message: 'Please select a valid condition' }) })
     .optional(),
   region_id: z
     .number()
