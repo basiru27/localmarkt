@@ -5,6 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatPrice, formatRelativeDate, getPlaceholderImage, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
 
+// Condition display configuration
+const CONDITION_CONFIG = {
+  new: { label: 'New', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
+  used_like_new: { label: 'Used – Like New', bgColor: 'bg-teal-50', textColor: 'text-teal-700', borderColor: 'border-teal-200' },
+  used_good: { label: 'Used – Good', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
+  used_fair: { label: 'Used – Fair', bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200' },
+};
+
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -156,6 +164,14 @@ export default function ListingDetail() {
 
             {/* Meta info */}
             <div className="flex flex-wrap gap-3">
+              {listing.condition && CONDITION_CONFIG[listing.condition] && (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border ${CONDITION_CONFIG[listing.condition].bgColor} ${CONDITION_CONFIG[listing.condition].textColor} ${CONDITION_CONFIG[listing.condition].borderColor}`}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {CONDITION_CONFIG[listing.condition].label}
+                </span>
+              )}
               {listing.region && (
                 <span className="badge-secondary">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

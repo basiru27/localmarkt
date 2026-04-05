@@ -1,6 +1,14 @@
 import { Link } from 'react-router-dom';
 import { formatPrice, truncateText, getPlaceholderImage, formatRelativeDate } from '../lib/utils';
 
+// Condition display labels and colors
+const CONDITION_CONFIG = {
+  new: { label: 'New', color: 'text-green-600' },
+  used_like_new: { label: 'Used – Like New', color: 'text-teal-600' },
+  used_good: { label: 'Used – Good', color: 'text-amber-600' },
+  used_fair: { label: 'Used – Fair', color: 'text-orange-600' },
+};
+
 export default function ListingCard({ listing, index = 0 }) {
   const {
     id,
@@ -9,10 +17,12 @@ export default function ListingCard({ listing, index = 0 }) {
     image_url,
     region,
     category,
+    condition,
     created_at,
   } = listing;
 
   const imageUrl = image_url || getPlaceholderImage(category?.name);
+  const conditionConfig = condition ? CONDITION_CONFIG[condition] : null;
 
   // Category color mapping
   const categoryColors = {
@@ -77,6 +87,16 @@ export default function ListingCard({ listing, index = 0 }) {
         <p className="price text-xl font-extrabold mb-3 group-hover:hidden sm:group-hover:block">
           {formatPrice(price)}
         </p>
+
+        {/* Condition */}
+        {conditionConfig && (
+          <div className="flex items-center gap-1.5 text-xs mb-3">
+            <svg className={`w-3.5 h-3.5 ${conditionConfig.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className={`font-medium ${conditionConfig.color}`}>{conditionConfig.label}</span>
+          </div>
+        )}
 
         {/* Meta info */}
         <div className="flex items-center justify-between text-xs text-text-secondary">
