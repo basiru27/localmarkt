@@ -1,13 +1,26 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRegions, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 
 export default function SearchFilters({ filters, onFiltersChange }) {
-  // Use filters.search as key for controlled input sync
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: regions, isLoading: regionsLoading } = useRegions();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+
+  // Sync searchInput with filters.search when it changes externally
+  // (e.g., back/forward navigation, clearing filters)
+  useEffect(() => {
+    // Only sync if the external value differs from local input
+    // This prevents overwriting while user is typing
+    if (filters.search !== searchInput && filters.search !== undefined) {
+      setSearchInput(filters.search);
+    } else if (filters.search === undefined && searchInput !== '') {
+      // Handle case when search is cleared externally
+      setSearchInput('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search]);
 
   // Debounced search handler - use useMemo to create a stable debounced function
   const debouncedSearch = useMemo(
@@ -46,7 +59,7 @@ export default function SearchFilters({ filters, onFiltersChange }) {
       {/* Search Bar */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
             <svg
               className="w-5 h-5 text-text-muted"
               fill="none"
@@ -62,11 +75,12 @@ export default function SearchFilters({ filters, onFiltersChange }) {
             </svg>
           </div>
           <input
-            type="text"
+            type="search"
             placeholder="Search for products, services..."
             value={searchInput}
             onChange={handleSearchChange}
-            className="input pl-12 pr-4 py-3 text-base"
+            className="input pl-12 pr-10 py-3 text-base"
+            aria-label="Search listings"
           />
           {searchInput && (
             <button
@@ -74,9 +88,10 @@ export default function SearchFilters({ filters, onFiltersChange }) {
                 setSearchInput('');
                 onFiltersChange({ ...filters, search: undefined });
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-gray-100 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+              aria-label="Clear search"
             >
-              <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -86,13 +101,16 @@ export default function SearchFilters({ filters, onFiltersChange }) {
         {/* Filter Toggle Button - Mobile */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="sm:hidden btn-secondary px-3 relative"
+          className="sm:hidden btn-secondary px-3 relative min-w-[44px] min-h-[44px]"
+          aria-expanded={isExpanded}
+          aria-controls="mobile-filters"
+          aria-label={`${isExpanded ? 'Hide' : 'Show'} filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center" aria-hidden="true">
               {activeFilterCount}
             </span>
           )}
@@ -101,46 +119,62 @@ export default function SearchFilters({ filters, onFiltersChange }) {
         {/* Desktop Filters */}
         <div className="hidden sm:flex gap-3">
           {/* Category filter */}
-          <div className="w-44">
+          <div className="w-44 relative">
+            <label htmlFor="category-filter" className="sr-only">Filter by category</label>
             <select
+              id="category-filter"
               value={filters.category || ''}
               onChange={handleCategoryChange}
               className="input py-3"
               disabled={categoriesLoading}
+              aria-busy={categoriesLoading}
             >
-              <option value="">All Categories</option>
+              <option value="">{categoriesLoading ? 'Loading...' : 'All Categories'}</option>
               {categories?.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
               ))}
             </select>
+            {categoriesLoading && (
+              <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+              </div>
+            )}
           </div>
 
           {/* Region filter */}
-          <div className="w-44">
+          <div className="w-44 relative">
+            <label htmlFor="region-filter" className="sr-only">Filter by region</label>
             <select
+              id="region-filter"
               value={filters.region || ''}
               onChange={handleRegionChange}
               className="input py-3"
               disabled={regionsLoading}
+              aria-busy={regionsLoading}
             >
-              <option value="">All Regions</option>
+              <option value="">{regionsLoading ? 'Loading...' : 'All Regions'}</option>
               {regions?.map((region) => (
                 <option key={region.id} value={region.id}>
                   {region.name}
                 </option>
               ))}
             </select>
+            {regionsLoading && (
+              <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+              </div>
+            )}
           </div>
 
           {/* Clear filters button */}
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="btn-ghost text-sm px-3 text-text-secondary hover:text-error"
+              className="btn-ghost text-sm px-3 text-text-secondary hover:text-error min-h-[44px]"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
               Clear
@@ -151,51 +185,69 @@ export default function SearchFilters({ filters, onFiltersChange }) {
 
       {/* Mobile Expanded Filters */}
       {isExpanded && (
-        <div className="sm:hidden mt-4 pt-4 border-t border-border animate-fade-in-down">
+        <div id="mobile-filters" className="sm:hidden mt-4 pt-4 border-t border-border animate-fade-in-down">
           <div className="space-y-3">
             {/* Category filter */}
             <div>
-              <label className="label">Category</label>
-              <select
-                value={filters.category || ''}
-                onChange={handleCategoryChange}
-                className="input"
-                disabled={categoriesLoading}
-              >
-                <option value="">All Categories</option>
-                {categories?.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="mobile-category-filter" className="label">Category</label>
+              <div className="relative">
+                <select
+                  id="mobile-category-filter"
+                  value={filters.category || ''}
+                  onChange={handleCategoryChange}
+                  className="input"
+                  disabled={categoriesLoading}
+                  aria-busy={categoriesLoading}
+                >
+                  <option value="">{categoriesLoading ? 'Loading categories...' : 'All Categories'}</option>
+                  {categories?.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                {categoriesLoading && (
+                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Region filter */}
             <div>
-              <label className="label">Region</label>
-              <select
-                value={filters.region || ''}
-                onChange={handleRegionChange}
-                className="input"
-                disabled={regionsLoading}
-              >
-                <option value="">All Regions</option>
-                {regions?.map((region) => (
-                  <option key={region.id} value={region.id}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="mobile-region-filter" className="label">Region</label>
+              <div className="relative">
+                <select
+                  id="mobile-region-filter"
+                  value={filters.region || ''}
+                  onChange={handleRegionChange}
+                  className="input"
+                  disabled={regionsLoading}
+                  aria-busy={regionsLoading}
+                >
+                  <option value="">{regionsLoading ? 'Loading regions...' : 'All Regions'}</option>
+                  {regions?.map((region) => (
+                    <option key={region.id} value={region.id}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+                {regionsLoading && (
+                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Clear filters */}
             {hasActiveFilters && (
               <button
                 onClick={handleClearFilters}
-                className="btn-secondary w-full"
+                className="btn-secondary w-full min-h-[44px]"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 Clear All Filters
@@ -207,53 +259,56 @@ export default function SearchFilters({ filters, onFiltersChange }) {
 
       {/* Active Filter Pills */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-light">
+        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-light" role="list" aria-label="Active filters">
           {filters.search && (
-            <span className="badge-primary flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="badge-primary flex items-center gap-1.5" role="listitem">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              "{filters.search}"
+              <span>Search: "{filters.search}"</span>
               <button
                 onClick={() => {
                   setSearchInput('');
                   onFiltersChange({ ...filters, search: undefined });
                 }}
-                className="ml-1 hover:text-primary-dark"
+                className="ml-1 hover:text-primary-dark p-0.5"
+                aria-label={`Remove search filter: ${filters.search}`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </span>
           )}
           {filters.category && categories && (
-            <span className="badge-primary flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="badge-primary flex items-center gap-1.5" role="listitem">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              {categories.find(c => c.id === filters.category)?.name}
+              <span>Category: {categories.find(c => c.id === filters.category)?.name}</span>
               <button
                 onClick={() => onFiltersChange({ ...filters, category: undefined })}
-                className="ml-1 hover:text-primary-dark"
+                className="ml-1 hover:text-primary-dark p-0.5"
+                aria-label={`Remove category filter: ${categories.find(c => c.id === filters.category)?.name}`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </span>
           )}
           {filters.region && regions && (
-            <span className="badge-primary flex items-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="badge-primary flex items-center gap-1.5" role="listitem">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
-              {regions.find(r => r.id === filters.region)?.name}
+              <span>Region: {regions.find(r => r.id === filters.region)?.name}</span>
               <button
                 onClick={() => onFiltersChange({ ...filters, region: undefined })}
-                className="ml-1 hover:text-primary-dark"
+                className="ml-1 hover:text-primary-dark p-0.5"
+                aria-label={`Remove region filter: ${regions.find(r => r.id === filters.region)?.name}`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
