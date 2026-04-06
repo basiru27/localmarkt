@@ -32,47 +32,72 @@ export default function Pagination({ pagination, onPageChange }) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between mt-8 mb-4 gap-4">
-      <div className="text-sm text-text-secondary">
+    <nav 
+      className="flex flex-col sm:flex-row items-center justify-between mt-8 mb-4 gap-4"
+      aria-label="Pagination"
+    >
+      <p className="text-sm text-text-secondary" aria-live="polite">
         Showing <span className="font-semibold text-text">{startItem}</span> to <span className="font-semibold text-text">{endItem}</span> of <span className="font-semibold text-text">{totalItems}</span> results
-      </div>
+      </p>
       
       <div className="flex items-center gap-1">
         <button
           onClick={handlePrev}
           disabled={!hasPrevPage}
-          className="btn-secondary px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          aria-label="Go to previous page"
         >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Previous
         </button>
         
-        <div className="hidden sm:flex items-center gap-1 mx-2">
+        <div className="hidden sm:flex items-center gap-1 mx-2" role="list">
           {getPageNumbers().map((page, index) => (
-            <button
-              key={index}
-              onClick={() => typeof page === 'number' ? onPageChange(page) : null}
-              disabled={page === '...'}
-              className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                page === currentPage 
-                  ? 'bg-primary text-white' 
-                  : page === '...' 
-                    ? 'cursor-default text-text-secondary' 
+            page === '...' ? (
+              <span 
+                key={`ellipsis-${index}`} 
+                className="w-10 h-10 flex items-center justify-center text-text-secondary"
+                aria-hidden="true"
+              >
+                ...
+              </span>
+            ) : (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                  page === currentPage 
+                    ? 'bg-primary text-white' 
                     : 'text-text hover:bg-gray-100'
-              }`}
-            >
-              {page}
-            </button>
+                }`}
+                aria-label={`Page ${page}`}
+                aria-current={page === currentPage ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            )
           ))}
         </div>
+        
+        {/* Mobile page indicator */}
+        <span className="sm:hidden px-4 text-sm text-text-secondary">
+          Page <span className="font-semibold text-text">{currentPage}</span> of <span className="font-semibold text-text">{totalPages}</span>
+        </span>
         
         <button
           onClick={handleNext}
           disabled={!hasNextPage}
-          className="btn-secondary px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          aria-label="Go to next page"
         >
           Next
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
-    </div>
+    </nav>
   );
 }
