@@ -51,6 +51,8 @@ export default function ListingFeed() {
     const params = new URLSearchParams(searchParams);
     params.set('page', page);
     setSearchParams(params);
+    // Scroll to top of listings for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams, setSearchParams]);
 
   const { data: listingsData, isLoading, isError, error } = useListings(filters);
@@ -108,7 +110,13 @@ export default function ListingFeed() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-10 text-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                <div className="text-2xl font-bold">{listings?.length || '0'}+</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? (
+                    <span className="inline-block w-8 h-6 bg-white/20 rounded animate-pulse" />
+                  ) : (
+                    `${pagination?.totalItems || listings?.length || 0}+`
+                  )}
+                </div>
                 <div className="text-sm text-white/80">Listings</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
@@ -133,9 +141,8 @@ export default function ListingFeed() {
           </div>
         )}
 
-        {/* Search and filters - key ensures re-render on URL change (back/forward) */}
+        {/* Search and filters */}
         <SearchFilters 
-          key={filters.search || 'no-search'} 
           filters={filters} 
           onFiltersChange={handleFiltersChange} 
         />
