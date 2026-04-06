@@ -205,7 +205,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       {/* Title */}
       <div className="form-group">
         <label htmlFor="title" className="label">
-          Title <span className="text-error">*</span>
+          Title <span className="text-error" aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
         </label>
         <input
           type="text"
@@ -216,16 +217,19 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           className={`input ${errors.title ? 'input-error' : ''}`}
           placeholder="What are you selling?"
           maxLength={100}
+          aria-required="true"
+          aria-invalid={errors.title ? 'true' : 'false'}
+          aria-describedby={errors.title ? 'title-error title-hint' : 'title-hint'}
         />
         {errors.title && (
-          <p className="error-message">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id="title-error" className="error-message" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errors.title}
           </p>
         )}
-        <p className="text-xs text-text-muted mt-1">{formData.title.length}/100 characters</p>
+        <p id="title-hint" className="text-xs text-text-muted mt-1">{formData.title.length}/100 characters</p>
       </div>
 
       {/* Description */}
@@ -249,10 +253,11 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       {/* Price */}
       <div className="form-group">
         <label htmlFor="price" className="label">
-          Price (GMD) <span className="text-error">*</span>
+          Price (GMD) <span className="text-error" aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
         </label>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-14 bg-gray-50 border-r border-border rounded-l-xl">
+          <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-14 bg-gray-50 border-r border-border rounded-l-xl" aria-hidden="true">
             <span className="text-sm font-semibold text-text-secondary">GMD</span>
           </div>
           <input
@@ -265,11 +270,14 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             placeholder="0.00"
             min="0"
             step="0.01"
+            aria-required="true"
+            aria-invalid={errors.price ? 'true' : 'false'}
+            aria-describedby={errors.price ? 'price-error' : undefined}
           />
         </div>
         {errors.price && (
-          <p className="error-message">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id="price-error" className="error-message" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errors.price}
@@ -282,7 +290,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
         {/* Category */}
         <div className="form-group">
           <label htmlFor="category_id" className="label">
-            Category <span className="text-error">*</span>
+            Category <span className="text-error" aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
           </label>
           <select
             id="category_id"
@@ -291,6 +300,10 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             onChange={handleChange}
             className={`input ${errors.category_id ? 'input-error' : ''}`}
             disabled={categoriesLoading}
+            aria-required="true"
+            aria-invalid={errors.category_id ? 'true' : 'false'}
+            aria-describedby={errors.category_id ? 'category-error' : undefined}
+            aria-busy={categoriesLoading}
           >
             <option value="">Select category</option>
             {categories?.map((cat) => (
@@ -300,8 +313,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             ))}
           </select>
           {errors.category_id && (
-            <p className="error-message">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <p id="category-error" className="error-message" role="alert">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               {errors.category_id}
@@ -312,7 +325,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
         {/* Region */}
         <div className="form-group">
           <label htmlFor="region_id" className="label">
-            Region <span className="text-error">*</span>
+            Region <span className="text-error" aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
           </label>
           <select
             id="region_id"
@@ -321,6 +335,10 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             onChange={handleChange}
             className={`input ${errors.region_id ? 'input-error' : ''}`}
             disabled={regionsLoading}
+            aria-required="true"
+            aria-invalid={errors.region_id ? 'true' : 'false'}
+            aria-describedby={errors.region_id ? 'region-error' : undefined}
+            aria-busy={regionsLoading}
           >
             <option value="">Select region</option>
             {regions?.map((region) => (
@@ -330,8 +348,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             ))}
           </select>
           {errors.region_id && (
-            <p className="error-message">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <p id="region-error" className="error-message" role="alert">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               {errors.region_id}
@@ -343,7 +361,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       {/* Condition */}
       <div className="form-group">
         <label htmlFor="condition" className="label">
-          Condition <span className="text-error">*</span>
+          Condition <span className="text-error" aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
         </label>
         <select
           id="condition"
@@ -351,6 +370,9 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           value={formData.condition}
           onChange={handleChange}
           className={`input ${errors.condition ? 'input-error' : ''}`}
+          aria-required="true"
+          aria-invalid={errors.condition ? 'true' : 'false'}
+          aria-describedby={errors.condition ? 'condition-error' : undefined}
         >
           <option value="">Select condition</option>
           {CONDITION_OPTIONS.map((option) => (
@@ -360,8 +382,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           ))}
         </select>
         {errors.condition && (
-          <p className="error-message">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id="condition-error" className="error-message" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errors.condition}
@@ -372,10 +394,11 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       {/* Contact */}
       <div className="form-group">
         <label htmlFor="contact" className="label">
-          Phone Number <span className="text-error">*</span>
+          Phone Number <span className="text-error" aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
         </label>
         <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true">
             <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
@@ -388,18 +411,21 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             onChange={handlePhoneChange}
             className={`input pl-12 ${errors.contact ? 'input-error' : ''}`}
             placeholder="+220 XXXXXXX"
+            aria-required="true"
+            aria-invalid={errors.contact ? 'true' : 'false'}
+            aria-describedby={errors.contact ? 'contact-error contact-hint' : 'contact-hint'}
           />
         </div>
         {errors.contact && (
-          <p className="error-message">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id="contact-error" className="error-message" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errors.contact}
           </p>
         )}
-        <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <p id="contact-hint" className="text-xs text-text-muted mt-1 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
           Gambian numbers only. Only visible to logged-in users.
@@ -408,7 +434,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
 
       {/* Image Upload */}
       <div className="form-group">
-        <label className="label">
+        <label id="image-upload-label" className="label">
           Product Image
           <span className="text-text-muted font-normal ml-1">(optional)</span>
         </label>
@@ -417,35 +443,46 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           <div className="relative inline-block animate-scale-in">
             <img
               src={imagePreview}
-              alt="Preview"
+              alt="Preview of selected product image"
               className="w-full max-w-sm h-auto rounded-xl object-cover shadow-lg"
             />
             <button
               type="button"
               onClick={removeImage}
-              className="absolute top-3 right-3 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+              aria-label="Remove selected image"
+              className="absolute top-3 right-3 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             {imageFile && (
-              <div className="mt-2 text-sm text-text-secondary flex items-center gap-2">
-                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mt-2 text-sm text-text-secondary flex items-center gap-2" aria-live="polite">
+                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {imageFile.name}
+                <span>Selected: {imageFile.name}</span>
               </div>
             )}
           </div>
         ) : (
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+            aria-labelledby="image-upload-label"
+            aria-describedby="image-upload-hint"
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               dragActive 
                 ? 'border-primary bg-primary-50 scale-[1.02]' 
                 : 'border-border hover:border-primary hover:bg-gray-50'
@@ -453,7 +490,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           >
             <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-colors ${
               dragActive ? 'bg-primary text-white' : 'bg-gray-100 text-text-muted'
-            }`}>
+            }`} aria-hidden="true">
               <svg
                 className="w-8 h-8"
                 fill="none"
@@ -471,7 +508,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             <p className="text-base font-medium text-text mb-1">
               {dragActive ? 'Drop your image here' : 'Click to upload or drag and drop'}
             </p>
-            <p className="text-sm text-text-muted">JPEG, PNG, or WebP (max 5MB)</p>
+            <p id="image-upload-hint" className="text-sm text-text-muted">JPEG, PNG, or WebP (max 5MB)</p>
           </div>
         )}
 
@@ -480,7 +517,9 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={handleImageSelect}
-          className="hidden"
+          className="sr-only"
+          aria-labelledby="image-upload-label"
+          aria-describedby="image-upload-hint"
         />
         
         {errors.image && (
@@ -495,12 +534,12 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
 
       {/* Upload Progress */}
       {uploading && (
-        <div className="bg-primary-50 rounded-xl p-4 animate-fade-in">
+        <div className="bg-primary-50 rounded-xl p-4 animate-fade-in" role="status" aria-live="polite">
           <div className="flex items-center gap-3 mb-2">
-            <div className="spinner" />
-            <span className="text-sm font-medium text-primary">Uploading image...</span>
+            <div className="spinner" aria-hidden="true" />
+            <span className="text-sm font-medium text-primary">Uploading image... {uploadProgress}%</span>
           </div>
-          <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100}>
             <div 
               className="h-full bg-gradient-to-r from-primary to-teal-500 transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}

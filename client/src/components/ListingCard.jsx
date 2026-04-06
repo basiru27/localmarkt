@@ -68,8 +68,8 @@ export default function ListingCard({ listing, index = 0 }) {
           </div>
         )}
 
-        {/* Price tag - bottom right */}
-        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+        {/* Price tag - always visible, enhanced on hover */}
+        <div className="absolute bottom-3 right-3 transition-all duration-300 transform group-hover:scale-105">
           <span className="price-tag">
             {formatPrice(price)}
           </span>
@@ -83,8 +83,8 @@ export default function ListingCard({ listing, index = 0 }) {
           {truncateText(title, 60)}
         </h3>
 
-        {/* Price - visible on mobile, hidden on hover for desktop */}
-        <p className="price text-xl font-extrabold mb-3 group-hover:hidden sm:group-hover:block">
+        {/* Price - always visible for accessibility */}
+        <p className="price text-xl font-extrabold mb-3">
           {formatPrice(price)}
         </p>
 
