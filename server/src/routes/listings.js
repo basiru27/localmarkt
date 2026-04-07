@@ -72,7 +72,8 @@ router.get('/', async (req, res, next) => {
       .select(`
         *,
         region:regions(id, name),
-        category:categories(id, name)
+        category:categories(id, name),
+        seller:profiles!user_id(id, display_name, created_at)
       `, { count: 'exact' });
 
     // Apply sorting
@@ -124,10 +125,47 @@ router.get('/', async (req, res, next) => {
       throw error;
     }
 
+    // Fetch rating stats for all listings
+    const listingIds = data.map(l => l.id);
+    const ratingsMap = {};
+    
+    if (listingIds.length > 0) {
+      const { data: reviewStats, error: reviewError } = await supabase
+        .from('reviews')
+        .select('listing_id, rating')
+        .in('listing_id', listingIds);
+
+      if (!reviewError && reviewStats) {
+        // Calculate average rating and count for each listing
+        const statsMap = {};
+        reviewStats.forEach(r => {
+          if (!statsMap[r.listing_id]) {
+            statsMap[r.listing_id] = { total: 0, count: 0 };
+          }
+          statsMap[r.listing_id].total += r.rating;
+          statsMap[r.listing_id].count += 1;
+        });
+
+        Object.keys(statsMap).forEach(listingId => {
+          ratingsMap[listingId] = {
+            rating_avg: Math.round((statsMap[listingId].total / statsMap[listingId].count) * 10) / 10,
+            review_count: statsMap[listingId].count,
+          };
+        });
+      }
+    }
+
+    // Attach rating stats to each listing
+    const dataWithRatings = data.map(listing => ({
+      ...listing,
+      rating_avg: ratingsMap[listing.id]?.rating_avg || null,
+      review_count: ratingsMap[listing.id]?.review_count || 0,
+    }));
+
     const totalPages = Math.ceil((count || 0) / limitNum);
 
     res.json({
-      data,
+      data: dataWithRatings,
       pagination: {
         currentPage: pageNum,
         totalPages,
@@ -144,7 +182,7 @@ router.get('/', async (req, res, next) => {
 
 /**
  * GET /api/listings/:id
- * Get a single listing by ID
+ * Get a single listing by ID with seller info and rating stats
  */
 router.get('/:id', async (req, res, next) => {
   try {
@@ -155,7 +193,8 @@ router.get('/:id', async (req, res, next) => {
       .select(`
         *,
         region:regions(id, name),
-        category:categories(id, name)
+        category:categories(id, name),
+        seller:profiles!user_id(id, display_name, created_at)
       `)
       .eq('id', id)
       .single();
@@ -167,7 +206,26 @@ router.get('/:id', async (req, res, next) => {
       throw error;
     }
 
-    res.json(data);
+    // Get rating stats for this listing
+    const { data: reviews, error: reviewError } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('listing_id', id);
+
+    let rating_avg = null;
+    let review_count = 0;
+
+    if (!reviewError && reviews && reviews.length > 0) {
+      const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+      rating_avg = Math.round((total / reviews.length) * 10) / 10;
+      review_count = reviews.length;
+    }
+
+    res.json({
+      ...data,
+      rating_avg,
+      review_count,
+    });
   } catch (err) {
     next(err);
   }

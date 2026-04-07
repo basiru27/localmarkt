@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import listingsRouter from './routes/listings.js';
 import regionsRouter from './routes/regions.js';
 import categoriesRouter from './routes/categories.js';
+import reviewsRouter from './routes/reviews.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/listings', listingsRouter);
 app.use('/api/regions', regionsRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api', reviewsRouter);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
