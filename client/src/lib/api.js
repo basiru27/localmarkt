@@ -139,4 +139,29 @@ export const categoriesApi = {
   getAll: () => fetchApi('/categories'),
 };
 
+// Reviews API
+export const reviewsApi = {
+  getByListingId: (listingId) => fetchApi(`/listings/${listingId}/reviews`),
+
+  create: (listingId, data, authHeader) =>
+    fetchApi(`/listings/${listingId}/reviews`, {
+      method: 'POST',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  update: (reviewId, data, authHeader) =>
+    fetchApi(`/reviews/${reviewId}`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  delete: (reviewId, authHeader) =>
+    fetchApi(`/reviews/${reviewId}`, {
+      method: 'DELETE',
+      headers: authHeader,
+    }),
+};
+
 export { ApiError };
