@@ -39,6 +39,52 @@ function randomPrice(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Helper to get random integer within range
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Sample review comments for different rating levels
+const reviewComments = {
+  5: [
+    'Excellent! Exactly as described. Highly recommend this seller.',
+    'Perfect condition, fast response. Would buy again!',
+    'Amazing quality! The seller was very professional.',
+    'Best purchase I\'ve made on LocalMarkt. Thank you!',
+    'Exceeded my expectations. Great communication from seller.',
+    'Top notch! Very satisfied with this transaction.',
+  ],
+  4: [
+    'Good product, minor delay in delivery but overall satisfied.',
+    'Very good quality. Seller was helpful and responsive.',
+    'Happy with the purchase. Would recommend.',
+    'Product as described. Good experience overall.',
+    'Nice item, fair price. Would buy from seller again.',
+    'Good value for money. Slight wear but acceptable.',
+  ],
+  3: [
+    'Decent product. Met basic expectations.',
+    'Average experience. Product works but nothing special.',
+    'Okay purchase. Some issues but seller tried to help.',
+    'Product is fine. Communication could be better.',
+    'Fair deal. Item has some wear not mentioned in listing.',
+    'It\'s alright. Expected a bit more for the price.',
+  ],
+  2: [
+    'Not as described. Disappointed with quality.',
+    'Product had issues. Seller was slow to respond.',
+    'Below expectations. Would not recommend.',
+    'Some problems with the item. Not fully satisfied.',
+    'Quality wasn\'t great. Be cautious with this listing.',
+  ],
+  1: [
+    'Very poor experience. Product was damaged.',
+    'Not as advertised. Do not buy!',
+    'Terrible quality. Complete waste of money.',
+    'Seller unresponsive. Had many issues.',
+  ],
+};
+
 // Valid condition values
 const CONDITIONS = ['new', 'used_like_new', 'used_good', 'used_fair'];
 
@@ -812,6 +858,87 @@ async function seed() {
     }
     for (const [cat, count] of Object.entries(categoryCounts)) {
       console.log(`  ${cat}: ${count}`);
+    }
+
+    // 5. Generate reviews for listings
+    console.log('\nGenerating reviews...');
+    
+    // Clear existing reviews first
+    const { error: deleteReviewsError } = await supabase
+      .from('reviews')
+      .delete()
+      .not('id', 'is', null);
+    
+    if (deleteReviewsError) {
+      console.warn('Could not clear existing reviews (table may not exist):', deleteReviewsError.message);
+    } else {
+      console.log('Existing reviews cleared.');
+    }
+
+    // Fetch inserted listings to get their IDs
+    const { data: insertedListings, error: fetchListingsError } = await supabase
+      .from('listings')
+      .select('id, user_id');
+    
+    if (fetchListingsError) throw fetchListingsError;
+
+    const reviews = [];
+    
+    // Generate reviews for approximately 60% of listings
+    for (const listing of insertedListings) {
+      // Skip some listings (40% won't have reviews)
+      if (Math.random() < 0.4) continue;
+      
+      // Get potential reviewers (users who are NOT the listing owner)
+      const potentialReviewers = profiles.filter(p => p.id !== listing.user_id);
+      if (potentialReviewers.length === 0) continue;
+      
+      // Generate 1-4 reviews per listing
+      const numReviews = randomInt(1, Math.min(4, potentialReviewers.length));
+      const selectedReviewers = [...potentialReviewers]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, numReviews);
+      
+      for (const reviewer of selectedReviewers) {
+        // Weight ratings towards positive (more 4-5 stars)
+        const ratingWeights = [1, 2, 3, 4, 4, 4, 5, 5, 5, 5];
+        const rating = randomElement(ratingWeights);
+        
+        // 70% of reviews have comments
+        const hasComment = Math.random() < 0.7;
+        const comment = hasComment ? randomElement(reviewComments[rating]) : null;
+        
+        reviews.push({
+          listing_id: listing.id,
+          reviewer_id: reviewer.id,
+          rating,
+          comment,
+        });
+      }
+    }
+
+    if (reviews.length > 0) {
+      const { error: insertReviewsError } = await supabase
+        .from('reviews')
+        .insert(reviews);
+      
+      if (insertReviewsError) {
+        console.warn('Could not insert reviews:', insertReviewsError.message);
+      } else {
+        console.log(`Successfully seeded ${reviews.length} reviews!`);
+        
+        // Print review stats
+        const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        reviews.forEach(r => ratingCounts[r.rating]++);
+        console.log('\nReviews by rating:');
+        for (const [rating, count] of Object.entries(ratingCounts)) {
+          const stars = '★'.repeat(parseInt(rating)) + '☆'.repeat(5 - parseInt(rating));
+          console.log(`  ${stars}: ${count}`);
+        }
+        
+        const withComments = reviews.filter(r => r.comment).length;
+        console.log(`\nReviews with comments: ${withComments}/${reviews.length}`);
+      }
     }
     
   } catch (err) {
