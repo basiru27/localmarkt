@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useListing, useDeleteListing } from '../hooks/useListings';
+import { useReviews } from '../hooks/useReviews';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatPrice, formatRelativeDate, getPlaceholderImage, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
+import StarRating from '../components/StarRating';
+import SellerInfo from '../components/SellerInfo';
+import ReviewForm from '../components/ReviewForm';
+import ReviewList from '../components/ReviewList';
 
 // Condition display configuration
 const CONDITION_CONFIG = {
@@ -20,11 +25,27 @@ export default function ListingDetail() {
   const { user, isAuthenticated } = useAuth();
   const { success, error: showError } = useToast();
   const { data: listing, isLoading, isError, error } = useListing(id);
+  const { data: reviews, isLoading: reviewsLoading } = useReviews(id);
   const deleteMutation = useDeleteListing();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
 
   const isOwner = user && listing && user.id === listing.user_id;
+  
+  // Check if current user has already reviewed this listing
+  const userReview = reviews?.find(r => r.reviewer_id === user?.id);
+  
+  // Can review: logged in, not the owner, hasn't already reviewed (unless editing)
+  const canReview = isAuthenticated && !isOwner && !userReview;
+
+  const handleEditReview = (review) => {
+    setEditingReview(review);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReview(null);
+  };
 
   const handleDelete = async () => {
     try {
@@ -155,9 +176,19 @@ export default function ListingDetail() {
           <div className="lg:col-span-2 space-y-6">
             {/* Title & Price */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text leading-tight mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-text leading-tight mb-2">
                 {listing.title}
               </h1>
+              
+              {/* Rating summary */}
+              {listing.review_count > 0 && (
+                <div className="flex items-center gap-2 mb-4">
+                  <StarRating rating={listing.rating_avg} readonly size="sm" />
+                  <span className="text-sm font-semibold text-text">{listing.rating_avg?.toFixed(1)}</span>
+                  <span className="text-sm text-text-secondary">({listing.review_count} review{listing.review_count !== 1 ? 's' : ''})</span>
+                </div>
+              )}
+              
               <div className="price-tag text-xl inline-flex">
                 {formatPrice(listing.price)}
               </div>
@@ -260,6 +291,11 @@ export default function ListingDetail() {
               )}
             </div>
 
+            {/* Seller Info Section - hidden for listing owner */}
+            {!isOwner && (
+              <SellerInfo seller={listing.seller} sellerId={listing.user_id} />
+            )}
+
             {/* Owner actions */}
             {isOwner && (
               <div className="card-static p-4 sm:p-5 border-2 border-dashed border-border">
@@ -294,6 +330,58 @@ export default function ListingDetail() {
             )}
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <div className="mt-8 space-y-6">
+          {/* Review Form - Show for logged in non-owners who haven't reviewed yet, or when editing */}
+          {(canReview || editingReview) && (
+            <ReviewForm
+              key={editingReview?.id || 'new'}
+              listingId={id}
+              existingReview={editingReview}
+              onCancel={editingReview ? handleCancelEdit : undefined}
+            />
+          )}
+          
+          {/* If user already has a review but isn't editing, show prompt */}
+          {userReview && !editingReview && (
+            <div className="card-static p-4 sm:p-5 bg-primary/5 border-primary/10">
+              <p className="text-sm text-text-secondary">
+                You have already reviewed this listing. 
+                <button
+                  onClick={() => handleEditReview(userReview)}
+                  className="ml-1 text-primary font-medium hover:underline"
+                >
+                  Edit your review
+                </button>
+              </p>
+            </div>
+          )}
+          
+          {/* Login prompt for non-authenticated users (only if not owner) */}
+          {!isAuthenticated && !isOwner && (
+            <div className="card-static p-4 sm:p-5 text-center">
+              <p className="text-text-secondary mb-3">
+                Want to leave a review?
+              </p>
+              <Link
+                to="/login"
+                state={{ from: { pathname: `/listings/${id}` } }}
+                className="btn-primary inline-flex"
+              >
+                Log in to review
+              </Link>
+            </div>
+          )}
+          
+          {/* Reviews List */}
+          <ReviewList
+            reviews={reviews}
+            listingId={id}
+            isLoading={reviewsLoading}
+            onEditReview={handleEditReview}
+          />
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -313,7 +401,7 @@ export default function ListingDetail() {
             Are you sure you want to delete this listing?
           </p>
           <p className="font-semibold text-text mb-4">
-            "{listing.title}"
+            &quot;{listing.title}&quot;
           </p>
           <p className="text-sm text-error mb-6">
             This action cannot be undone.

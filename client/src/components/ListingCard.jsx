@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { formatPrice, truncateText, getPlaceholderImage, formatRelativeDate } from '../lib/utils';
+import { StarRatingCompact } from './StarRating';
 
 // Condition display labels and colors
 const CONDITION_CONFIG = {
@@ -19,6 +20,8 @@ export default function ListingCard({ listing, index = 0 }) {
     category,
     condition,
     created_at,
+    rating_avg,
+    review_count,
   } = listing;
 
   const imageUrl = image_url || getPlaceholderImage(category?.name);
@@ -95,6 +98,13 @@ export default function ListingCard({ listing, index = 0 }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className={`font-medium ${conditionConfig.color}`}>{conditionConfig.label}</span>
+          </div>
+        )}
+
+        {/* Rating */}
+        {review_count > 0 && (
+          <div className="mb-3">
+            <StarRatingCompact rating={rating_avg} reviewCount={review_count} />
           </div>
         )}
 

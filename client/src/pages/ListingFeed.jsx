@@ -21,6 +21,7 @@ export default function ListingFeed() {
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
     const sort = searchParams.get('sort');
+    const user_id = searchParams.get('user_id');
 
     if (search) params.search = search;
     if (category) params.category = category;
@@ -28,6 +29,7 @@ export default function ListingFeed() {
     if (page) params.page = page;
     if (limit) params.limit = limit;
     if (sort) params.sort = sort;
+    if (user_id) params.user_id = user_id;
 
     return params;
   }, [searchParams]);
@@ -62,7 +64,8 @@ export default function ListingFeed() {
   const { isOnline } = useOffline();
   const { isAuthenticated } = useAuth();
 
-  const hasActiveFilters = filters.search || filters.category || filters.region;
+  const hasActiveFilters = filters.search || filters.category || filters.region || filters.user_id;
+  const isSellerFilter = !!filters.user_id;
 
   return (
     <div>
@@ -136,16 +139,40 @@ export default function ListingFeed() {
         {/* Page title when filters are active */}
         {hasActiveFilters && (
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-text">Search Results</h1>
-            <p className="text-text-secondary">Browse filtered listings</p>
+            {isSellerFilter ? (
+              <>
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to all listings
+                </Link>
+                <h1 className="text-2xl font-bold text-text">
+                  {listings?.[0]?.seller?.display_name || 'Seller'}'s Listings
+                </h1>
+                <p className="text-text-secondary">
+                  {pagination?.totalItems || listings?.length || 0} listing{(pagination?.totalItems || listings?.length || 0) !== 1 ? 's' : ''} from this seller
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-text">Search Results</h1>
+                <p className="text-text-secondary">Browse filtered listings</p>
+              </>
+            )}
           </div>
         )}
 
-        {/* Search and filters */}
-        <SearchFilters 
-          filters={filters} 
-          onFiltersChange={handleFiltersChange} 
-        />
+        {/* Search and filters - hide when viewing seller's listings */}
+        {!isSellerFilter && (
+          <SearchFilters 
+            filters={filters} 
+            onFiltersChange={handleFiltersChange} 
+          />
+        )}
 
         {/* Offline notice */}
         {!isOnline && listings && (
