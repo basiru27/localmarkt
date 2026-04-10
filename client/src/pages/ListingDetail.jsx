@@ -4,6 +4,7 @@ import { useListing, useDeleteListing } from '../hooks/useListings';
 import { useReviews } from '../hooks/useReviews';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useCreateReport } from '../hooks/useReports';
 import { formatPrice, formatRelativeDate, getPlaceholderImage, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 import StarRating from '../components/StarRating';
@@ -27,7 +28,11 @@ export default function ListingDetail() {
   const { data: listing, isLoading, isError, error } = useListing(id);
   const { data: reviews, isLoading: reviewsLoading } = useReviews(id);
   const deleteMutation = useDeleteListing();
+  const createReportMutation = useCreateReport();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
 
@@ -55,6 +60,28 @@ export default function ListingDetail() {
     } catch (err) {
       showError('Failed to delete listing: ' + (err.message || 'Unknown error'));
       setShowDeleteModal(false);
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportReason.trim()) {
+      showError('Please enter a reason before submitting a report.');
+      return;
+    }
+
+    try {
+      await createReportMutation.mutateAsync({
+        listing_id: id,
+        reason: reportReason.trim(),
+        details: reportDetails.trim() || null,
+      });
+
+      success('Report submitted. Thank you for helping keep the marketplace safe.');
+      setShowReportModal(false);
+      setReportReason('');
+      setReportDetails('');
+    } catch (err) {
+      showError(err.message || 'Failed to submit report. Please try again.');
     }
   };
 
@@ -330,6 +357,21 @@ export default function ListingDetail() {
                 </div>
               </div>
             )}
+
+            {/* Report listing */}
+            {isAuthenticated && !isOwner && (
+              <div className="card-static p-4 sm:p-5">
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="btn-ghost w-full justify-center text-error hover:bg-red-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Report this listing
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -429,6 +471,57 @@ export default function ListingDetail() {
             ) : (
               <span>Delete Listing</span>
             )}
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        title="Report Listing"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Report listings that are fraudulent, abusive, or violate marketplace rules.
+          </p>
+
+          <div className="form-group">
+            <label htmlFor="report-reason" className="label">Reason</label>
+            <input
+              id="report-reason"
+              value={reportReason}
+              onChange={(event) => setReportReason(event.target.value)}
+              className="input"
+              maxLength={120}
+              placeholder="Example: Suspected scam / misleading details"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="report-details" className="label">Details (optional)</label>
+            <textarea
+              id="report-details"
+              value={reportDetails}
+              onChange={(event) => setReportDetails(event.target.value)}
+              className="input"
+              maxLength={2000}
+              rows={4}
+              placeholder="Add context to help moderators review faster"
+            />
+          </div>
+        </div>
+
+        <ModalFooter>
+          <button onClick={() => setShowReportModal(false)} className="btn-secondary">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmitReport}
+            disabled={createReportMutation.isPending}
+            className="btn-danger"
+          >
+            Submit Report
           </button>
         </ModalFooter>
       </Modal>

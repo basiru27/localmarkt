@@ -23,7 +23,7 @@ export default function CreateListing() {
         setTimeout(() => navigate('/'), 2000);
       } else {
         // Posted successfully
-        success('Listing created successfully!');
+        success('Listing submitted for review. It will appear after admin approval.');
         navigate(`/listings/${result.id}`);
       }
     } catch (error) {

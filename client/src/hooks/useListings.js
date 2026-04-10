@@ -15,18 +15,50 @@ export const listingKeys = {
 
 // Get all listings with optional filters
 export function useListings(filters = {}) {
+  const { isAuthenticated, getAuthHeader } = useAuth();
+
   return useQuery({
     queryKey: listingKeys.list(filters),
-    queryFn: () => listingsApi.getAll(filters),
+    queryFn: async () => {
+      if (filters.mine) {
+        if (!isAuthenticated) {
+          return {
+            data: [],
+            pagination: {
+              currentPage: 1,
+              totalPages: 0,
+              totalItems: 0,
+              itemsPerPage: 0,
+              hasNextPage: false,
+              hasPrevPage: false,
+            },
+          };
+        }
+
+        const authHeader = await getAuthHeader();
+        return listingsApi.getMine(filters, authHeader);
+      }
+
+      return listingsApi.getAll(filters);
+    },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
 // Get single listing by ID
 export function useListing(id) {
+  const { isAuthenticated, getAuthHeader } = useAuth();
+
   return useQuery({
     queryKey: listingKeys.detail(id),
-    queryFn: () => listingsApi.getById(id),
+    queryFn: async () => {
+      if (!isAuthenticated) {
+        return listingsApi.getById(id);
+      }
+
+      const authHeader = await getAuthHeader();
+      return listingsApi.getById(id, authHeader);
+    },
     enabled: !!id,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

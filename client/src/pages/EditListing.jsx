@@ -18,7 +18,7 @@ export default function EditListing() {
   const handleSubmit = async (data) => {
     try {
       await updateMutation.mutateAsync({ id, data });
-      success('Listing updated successfully!');
+      success('Listing updated and resubmitted for admin review.');
       navigate(`/listings/${id}`);
     } catch (error) {
       showError('Failed to update listing: ' + (error.message || 'Unknown error'));

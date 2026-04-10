@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useListings, useDeleteListing } from '../hooks/useListings';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 
 export default function MyListings() {
-  const { user } = useAuth();
   const { success, error: showError } = useToast();
   
   // Filter by user_id on server-side for better performance
   const { data: listingsData, isLoading, isError } = useListings({ 
-    user_id: user?.id,
+    mine: true,
     limit: 100 
   });
   const myListings = listingsData?.data || [];
@@ -150,6 +148,18 @@ export default function MyListings() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
+                        {listing.moderation_status && (
+                          <span className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full inline-flex mb-2 ${
+                            listing.moderation_status === 'approved'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : listing.moderation_status === 'pending'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                          }`}>
+                            {listing.moderation_status}
+                          </span>
+                        )}
+
                         {listing.category && (
                           <span className="badge-secondary text-xs mb-1.5">
                             {listing.category.name}

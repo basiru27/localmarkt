@@ -5,6 +5,8 @@ import { OfflineProvider } from './context/OfflineContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './components/admin/AdminLayout';
 
 // Pages
 import ListingFeed from './pages/ListingFeed';
@@ -17,6 +19,11 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminListings from './pages/admin/AdminListings';
+import AdminReports from './pages/admin/AdminReports';
+import AdminLogs from './pages/admin/AdminLogs';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -71,6 +78,29 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Admin routes */}
+                  <Route
+                    path="admin"
+                    element={
+                      <AdminRoute>
+                        <AdminLayout />
+                      </AdminRoute>
+                    }
+                  >
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="listings" element={<AdminListings />} />
+                    <Route path="reports" element={<AdminReports />} />
+                    <Route
+                      path="logs"
+                      element={
+                        <AdminRoute requireSuperAdmin>
+                          <AdminLogs />
+                        </AdminRoute>
+                      }
+                    />
+                  </Route>
 
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />

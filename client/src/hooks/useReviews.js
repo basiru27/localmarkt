@@ -12,9 +12,18 @@ export const reviewKeys = {
 
 // Get all reviews for a listing
 export function useReviews(listingId) {
+  const { isAuthenticated, getAuthHeader } = useAuth();
+
   return useQuery({
     queryKey: reviewKeys.list(listingId),
-    queryFn: () => reviewsApi.getByListingId(listingId),
+    queryFn: async () => {
+      if (!isAuthenticated) {
+        return reviewsApi.getByListingId(listingId);
+      }
+
+      const authHeader = await getAuthHeader();
+      return reviewsApi.getByListingId(listingId, authHeader);
+    },
     enabled: !!listingId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

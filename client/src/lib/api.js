@@ -106,7 +106,21 @@ export const listingsApi = {
     return fetchApi(`/listings${query ? `?${query}` : ''}`);
   },
 
-  getById: id => fetchApi(`/listings/${id}`),
+  getById: (id, authHeader = {}) =>
+    fetchApi(`/listings/${id}`, {
+      headers: authHeader,
+    }),
+
+  getMine: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
+    const query = searchParams.toString();
+
+    return fetchApi(`/listings/mine${query ? `?${query}` : ''}`, {
+      headers: authHeader,
+    });
+  },
 
   create: (data, authHeader) =>
     fetchApi('/listings', {
@@ -141,7 +155,10 @@ export const categoriesApi = {
 
 // Reviews API
 export const reviewsApi = {
-  getByListingId: (listingId) => fetchApi(`/listings/${listingId}/reviews`),
+  getByListingId: (listingId, authHeader = {}) =>
+    fetchApi(`/listings/${listingId}/reviews`, {
+      headers: authHeader,
+    }),
 
   create: (listingId, data, authHeader) =>
     fetchApi(`/listings/${listingId}/reviews`, {
@@ -162,6 +179,83 @@ export const reviewsApi = {
       method: 'DELETE',
       headers: authHeader,
     }),
+};
+
+// Reports API
+export const reportsApi = {
+  create: (data, authHeader) =>
+    fetchApi('/reports', {
+      method: 'POST',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+};
+
+// Admin API
+export const adminApi = {
+  getStats: (authHeader) => fetchApi('/admin/stats', { headers: authHeader }),
+
+  getUsers: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    if (params.role) searchParams.append('role', params.role);
+    if (params.banned !== undefined) searchParams.append('banned', params.banned);
+    const query = searchParams.toString();
+
+    return fetchApi(`/admin/users${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
+
+  updateBanStatus: (userId, data, authHeader) =>
+    fetchApi(`/admin/users/${userId}/ban`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  hardDeleteUser: (userId, authHeader) =>
+    fetchApi(`/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: authHeader,
+    }),
+
+  getListings: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.status) searchParams.append('status', params.status);
+    if (params.search) searchParams.append('search', params.search);
+    const query = searchParams.toString();
+
+    return fetchApi(`/admin/listings${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
+
+  moderateListing: (listingId, data, authHeader) =>
+    fetchApi(`/admin/listings/${listingId}/moderate`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  deleteListing: (listingId, authHeader) =>
+    fetchApi(`/admin/listings/${listingId}`, {
+      method: 'DELETE',
+      headers: authHeader,
+    }),
+
+  getReports: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.status) searchParams.append('status', params.status);
+    const query = searchParams.toString();
+
+    return fetchApi(`/admin/reports${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
+
+  updateReport: (reportId, data, authHeader) =>
+    fetchApi(`/admin/reports/${reportId}`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  getLogs: (authHeader) => fetchApi('/admin/logs', { headers: authHeader }),
 };
 
 export { ApiError };
