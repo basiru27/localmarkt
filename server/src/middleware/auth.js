@@ -1,5 +1,22 @@
 import { supabase } from '../supabase.js';
 
+async function getProfileAuthState(userId) {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id, role, is_banned')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    role: profile?.role || 'user',
+    isBanned: profile?.is_banned || false,
+  };
+}
+
 /**
  * Middleware to verify JWT token
  * Sets req.user with decoded token payload if valid
@@ -25,10 +42,19 @@ export async function authenticate(req, res, next) {
       return res.status(401).json({ error: 'Invalid token. Please sign in again.' });
     }
 
+    const profileAuth = await getProfileAuthState(user.id);
+
+    if (profileAuth.isBanned) {
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
+    }
+
     req.user = {
       id: user.id,
       email: user.email,
-      role: user.role,
+      role: profileAuth.role,
+      is_banned: profileAuth.isBanned,
+      isAdmin: profileAuth.role === 'admin' || profileAuth.role === 'super_admin',
+      isSuperAdmin: profileAuth.role === 'super_admin',
     };
     next();
   } catch (err) {
@@ -67,10 +93,20 @@ export async function optionalAuth(req, res, next) {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (user && !error) {
+      const profileAuth = await getProfileAuthState(user.id);
+
+      if (profileAuth.isBanned) {
+        req.user = null;
+        return next();
+      }
+
       req.user = {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: profileAuth.role,
+        is_banned: profileAuth.isBanned,
+        isAdmin: profileAuth.role === 'admin' || profileAuth.role === 'super_admin',
+        isSuperAdmin: profileAuth.role === 'super_admin',
       };
     } else {
       req.user = null;

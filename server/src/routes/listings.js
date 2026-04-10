@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../supabase.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuth } from '../middleware/auth.js';
 import {
   createListingSchema,
   updateListingSchema,
@@ -53,6 +53,64 @@ async function deleteStorageImage(imageUrl) {
   }
 }
 
+function sanitizeListingForResponse(listing) {
+  if (!listing) return listing;
+
+  const { seller, ...rest } = listing;
+  const sanitizedSeller = seller
+    ? {
+      id: seller.id,
+      display_name: seller.display_name,
+      created_at: seller.created_at,
+    }
+    : null;
+
+  return {
+    ...rest,
+    seller: sanitizedSeller,
+  };
+}
+
+async function attachRatingStats(listings) {
+  const listingIds = listings.map((listing) => listing.id);
+  const ratingsMap = {};
+
+  if (listingIds.length > 0) {
+    const { data: reviewStats, error: reviewError } = await supabase
+      .from('reviews')
+      .select('listing_id, rating')
+      .in('listing_id', listingIds);
+
+    if (!reviewError && reviewStats) {
+      const statsMap = {};
+      reviewStats.forEach((review) => {
+        if (!statsMap[review.listing_id]) {
+          statsMap[review.listing_id] = { total: 0, count: 0 };
+        }
+        statsMap[review.listing_id].total += review.rating;
+        statsMap[review.listing_id].count += 1;
+      });
+
+      Object.keys(statsMap).forEach((listingId) => {
+        ratingsMap[listingId] = {
+          rating_avg: Math.round((statsMap[listingId].total / statsMap[listingId].count) * 10) / 10,
+          review_count: statsMap[listingId].count,
+        };
+      });
+    }
+  }
+
+  return listings.map((listing) => ({
+    ...listing,
+    rating_avg: ratingsMap[listing.id]?.rating_avg || null,
+    review_count: ratingsMap[listing.id]?.review_count || 0,
+  }));
+}
+
+function isPubliclyVisibleListing(listing) {
+  return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
+}
+
 /**
  * GET /api/listings
  * List all listings with optional filters
@@ -73,8 +131,12 @@ router.get('/', async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!user_id(id, display_name, created_at)
+        seller:profiles!inner(id, display_name, created_at, is_banned)
       `, { count: 'exact' });
+
+    query = query
+      .eq('moderation_status', 'approved')
+      .eq('seller.is_banned', false);
 
     // Apply sorting
     if (sort === 'price_asc') {
@@ -125,42 +187,8 @@ router.get('/', async (req, res, next) => {
       throw error;
     }
 
-    // Fetch rating stats for all listings
-    const listingIds = data.map(l => l.id);
-    const ratingsMap = {};
-    
-    if (listingIds.length > 0) {
-      const { data: reviewStats, error: reviewError } = await supabase
-        .from('reviews')
-        .select('listing_id, rating')
-        .in('listing_id', listingIds);
-
-      if (!reviewError && reviewStats) {
-        // Calculate average rating and count for each listing
-        const statsMap = {};
-        reviewStats.forEach(r => {
-          if (!statsMap[r.listing_id]) {
-            statsMap[r.listing_id] = { total: 0, count: 0 };
-          }
-          statsMap[r.listing_id].total += r.rating;
-          statsMap[r.listing_id].count += 1;
-        });
-
-        Object.keys(statsMap).forEach(listingId => {
-          ratingsMap[listingId] = {
-            rating_avg: Math.round((statsMap[listingId].total / statsMap[listingId].count) * 10) / 10,
-            review_count: statsMap[listingId].count,
-          };
-        });
-      }
-    }
-
-    // Attach rating stats to each listing
-    const dataWithRatings = data.map(listing => ({
-      ...listing,
-      rating_avg: ratingsMap[listing.id]?.rating_avg || null,
-      review_count: ratingsMap[listing.id]?.review_count || 0,
-    }));
+    const sanitizedListings = data.map(sanitizeListingForResponse);
+    const dataWithRatings = await attachRatingStats(sanitizedListings);
 
     const totalPages = Math.ceil((count || 0) / limitNum);
 
@@ -181,10 +209,58 @@ router.get('/', async (req, res, next) => {
 });
 
 /**
+ * GET /api/listings/mine
+ * Get authenticated user's listings (all moderation statuses)
+ */
+router.get('/mine', authenticate, async (req, res, next) => {
+  try {
+    const { page, limit } = req.query;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 50;
+    const from = (pageNum - 1) * limitNum;
+    const to = from + limitNum - 1;
+
+    const { data, error, count } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        region:regions(id, name),
+        category:categories(id, name),
+        seller:profiles!user_id(id, display_name, created_at)
+      `, { count: 'exact' })
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw error;
+    }
+
+    const dataWithRatings = await attachRatingStats(data.map(sanitizeListingForResponse));
+    const totalPages = Math.ceil((count || 0) / limitNum);
+
+    res.json({
+      data: dataWithRatings,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: count || 0,
+        itemsPerPage: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/listings/:id
  * Get a single listing by ID with seller info and rating stats
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -194,7 +270,7 @@ router.get('/:id', async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!user_id(id, display_name, created_at)
+        seller:profiles!user_id(id, display_name, created_at, is_banned)
       `)
       .eq('id', id)
       .single();
@@ -204,6 +280,11 @@ router.get('/:id', async (req, res, next) => {
         return res.status(404).json({ error: 'Listing not found' });
       }
       throw error;
+    }
+
+    const canViewHiddenListing = req.user && (req.user.id === data.user_id || req.user.isAdmin);
+    if (!isPubliclyVisibleListing(data) && !canViewHiddenListing) {
+      return res.status(404).json({ error: 'Listing not found' });
     }
 
     // Get rating stats for this listing
@@ -222,7 +303,7 @@ router.get('/:id', async (req, res, next) => {
     }
 
     res.json({
-      ...data,
+      ...sanitizeListingForResponse(data),
       rating_avg,
       review_count,
     });
@@ -240,6 +321,10 @@ router.post('/', authenticate, validateBody(createListingSchema), async (req, re
     const listingData = {
       ...req.body,
       user_id: req.user.id,
+      moderation_status: 'pending',
+      moderated_by: null,
+      moderated_at: null,
+      moderation_note: null,
     };
 
     const { data, error } = await supabase
@@ -299,9 +384,17 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       oldImageUrl !== newImageUrl;
 
     // Update the listing
+    const updateData = {
+      ...req.body,
+      moderation_status: 'pending',
+      moderated_by: null,
+      moderated_at: null,
+      moderation_note: null,
+    };
+
     const { data, error } = await supabase
       .from('listings')
-      .update(req.body)
+      .update(updateData)
       .eq('id', id)
       .select(`
         *,

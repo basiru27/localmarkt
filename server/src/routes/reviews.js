@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../supabase.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuth } from '../middleware/auth.js';
 import {
   createReviewSchema,
   updateReviewSchema,
@@ -9,18 +9,22 @@ import {
 
 const router = Router();
 
+function isListingVisible(listing) {
+  return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
+}
+
 /**
  * GET /api/listings/:listingId/reviews
  * Get all reviews for a listing
  */
-router.get('/listings/:listingId/reviews', async (req, res, next) => {
+router.get('/listings/:listingId/reviews', optionalAuth, async (req, res, next) => {
   try {
     const { listingId } = req.params;
 
     // Verify listing exists
-    const { error: listingError } = await supabase
+    const { data: listing, error: listingError } = await supabase
       .from('listings')
-      .select('id')
+      .select('id, user_id, moderation_status, seller:profiles!user_id(id, is_banned)')
       .eq('id', listingId)
       .single();
 
@@ -29,6 +33,11 @@ router.get('/listings/:listingId/reviews', async (req, res, next) => {
         return res.status(404).json({ error: 'Listing not found' });
       }
       throw listingError;
+    }
+
+    const canView = req.user && (req.user.isAdmin || req.user.id === listing.user_id);
+    if (!isListingVisible(listing) && !canView) {
+      return res.status(404).json({ error: 'Listing not found' });
     }
 
     // Get reviews with reviewer profile info
@@ -63,7 +72,7 @@ router.post('/listings/:listingId/reviews', authenticate, validateBody(createRev
     // Get listing to check ownership
     const { data: listing, error: listingError } = await supabase
       .from('listings')
-      .select('id, user_id')
+      .select('id, user_id, moderation_status, seller:profiles!user_id(id, is_banned)')
       .eq('id', listingId)
       .single();
 
@@ -72,6 +81,10 @@ router.post('/listings/:listingId/reviews', authenticate, validateBody(createRev
         return res.status(404).json({ error: 'Listing not found' });
       }
       throw listingError;
+    }
+
+    if (!isListingVisible(listing)) {
+      return res.status(404).json({ error: 'Listing not found' });
     }
 
     // Prevent self-review

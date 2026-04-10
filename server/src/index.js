@@ -6,6 +6,8 @@ import listingsRouter from './routes/listings.js';
 import regionsRouter from './routes/regions.js';
 import categoriesRouter from './routes/categories.js';
 import reviewsRouter from './routes/reviews.js';
+import reportsRouter from './routes/reports.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,6 +53,8 @@ app.use('/api/listings', listingsRouter);
 app.use('/api/regions', regionsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api', reviewsRouter);
+app.use('/api', reportsRouter);
+app.use('/api', adminRouter);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
@@ -58,7 +62,7 @@ app.use('/api/*', (req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Error:', err);
 
   // Zod validation errors
@@ -81,7 +85,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.warn(`Server running on port ${PORT}`);
 });
 
 export default app;
