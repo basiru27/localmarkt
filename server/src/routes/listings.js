@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { supabase } from '../supabase.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import {
@@ -8,6 +9,16 @@ import {
 } from '../schemas/listing.js';
 
 const router = Router();
+
+const createListingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 listing creations per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many listings created, please try again later.',
+  },
+});
 
 /**
  * Sanitize search input to prevent PostgREST filter injection
@@ -316,7 +327,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
  * POST /api/listings
  * Create a new listing (authenticated)
  */
-router.post('/', authenticate, validateBody(createListingSchema), async (req, res, next) => {
+router.post('/', authenticate, createListingLimiter, validateBody(createListingSchema), async (req, res, next) => {
   try {
     const listingData = {
       ...req.body,
