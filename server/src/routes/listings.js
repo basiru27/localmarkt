@@ -225,14 +225,14 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/mine', authenticate, async (req, res, next) => {
   try {
-    const { page, limit } = req.query;
+    const { category, region, search, sort, page, limit } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 50;
     const from = (pageNum - 1) * limitNum;
     const to = from + limitNum - 1;
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('listings')
       .select(`
         *,
@@ -240,9 +240,38 @@ router.get('/mine', authenticate, async (req, res, next) => {
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, created_at)
       `, { count: 'exact' })
-      .eq('user_id', req.user.id)
-      .order('created_at', { ascending: false })
-      .range(from, to);
+      .eq('user_id', req.user.id);
+
+    // Apply filters
+    if (category) {
+      query = query.eq('category_id', parseInt(category));
+    }
+
+    if (region) {
+      query = query.eq('region_id', parseInt(region));
+    }
+
+    if (search) {
+      const sanitized = sanitizeSearchInput(search);
+      if (sanitized) {
+        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+      }
+    }
+
+    // Apply sorting
+    if (sort === 'price_asc') {
+      query = query.order('price', { ascending: true });
+    } else if (sort === 'price_desc') {
+      query = query.order('price', { ascending: false });
+    } else if (sort === 'oldest') {
+      query = query.order('created_at', { ascending: true });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw error;

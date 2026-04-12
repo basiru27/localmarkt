@@ -48,7 +48,7 @@ export function OfflineProvider({ children }) {
       for (const listing of pendingListings) {
         try {
           // Remove the internal offline metadata before sending
-          const { pendingId, createdAt, ...apiData } = listing;
+          const { pendingId, createdAt: _ignoredCreatedAt, ...apiData } = listing;
           
           await listingsApi.create(apiData, authHeader);
           await removePendingListing(pendingId);

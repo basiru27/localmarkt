@@ -4,14 +4,17 @@ import { useListings, useDeleteListing } from '../hooks/useListings';
 import { useToast } from '../context/ToastContext';
 import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
+import SearchFilters from '../components/SearchFilters';
 
 export default function MyListings() {
   const { success, error: showError } = useToast();
+  const [filters, setFilters] = useState({});
   
   // Filter by user_id on server-side for better performance
   const { data: listingsData, isLoading, isError } = useListings({ 
     mine: true,
-    limit: 100 
+    limit: 100,
+    ...filters
   });
   const myListings = listingsData?.data || [];
   const deleteMutation = useDeleteListing();
@@ -79,6 +82,8 @@ export default function MyListings() {
           </Link>
         </div>
 
+        <SearchFilters filters={filters} onFiltersChange={setFilters} />
+
         {isError ? (
           <div className="empty-state py-12 animate-fade-in" role="alert">
             <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center mb-6">
@@ -93,34 +98,52 @@ export default function MyListings() {
             </button>
           </div>
         ) : myListings.length === 0 ? (
-          <div className="empty-state py-16 animate-fade-in">
-            <div className="empty-state-icon">
-              <svg
-                className="w-10 h-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+          Object.keys(filters).length > 0 && Object.values(filters).some(v => v !== undefined && v !== '') ? (
+            <div className="empty-state py-12 animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No listings found</h3>
+              <p className="text-gray-500 mb-4">We couldn't find any of your listings matching these filters.</p>
+              <button 
+                onClick={() => setFilters({})}
+                className="btn-secondary"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
+                Clear all filters
+              </button>
             </div>
-            <h3 className="text-xl font-bold text-text mb-2">No listings yet</h3>
-            <p className="text-text-secondary mb-6 max-w-sm">
-              Start selling by posting your first listing. It's quick and easy!
-            </p>
-            <Link to="/listings/new" className="btn-primary">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Post Your First Listing
-            </Link>
-          </div>
+          ) : (
+            <div className="empty-state py-16 animate-fade-in">
+              <div className="empty-state-icon">
+                <svg
+                  className="w-10 h-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-text mb-2">No listings yet</h3>
+              <p className="text-text-secondary mb-6 max-w-sm">
+                Start selling by posting your first listing. It's quick and easy!
+              </p>
+              <Link to="/listings/new" className="btn-primary">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Post Your First Listing
+              </Link>
+            </div>
+          )
         ) : (
           <div className="space-y-4">
             {myListings.map((listing, index) => (

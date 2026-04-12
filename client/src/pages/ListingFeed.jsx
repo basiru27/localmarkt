@@ -42,6 +42,7 @@ export default function ListingFeed() {
     if (newFilters.region) params.set('region', newFilters.region);
     if (newFilters.limit) params.set('limit', newFilters.limit);
     if (newFilters.sort) params.set('sort', newFilters.sort);
+    if (newFilters.user_id) params.set('user_id', newFilters.user_id);
     
     // Always reset to page 1 on filter changes
     params.set('page', 1);
@@ -166,13 +167,11 @@ export default function ListingFeed() {
           </div>
         )}
 
-        {/* Search and filters - hide when viewing seller's listings */}
-        {!isSellerFilter && (
-          <SearchFilters 
-            filters={filters} 
-            onFiltersChange={handleFiltersChange} 
-          />
-        )}
+        {/* Search and filters */}
+        <SearchFilters 
+          filters={filters} 
+          onFiltersChange={handleFiltersChange} 
+        />
 
         {/* Offline notice */}
         {!isOnline && listings && (
@@ -249,7 +248,7 @@ export default function ListingFeed() {
                 </p>
                 {hasActiveFilters ? (
                   <button 
-                    onClick={() => handleFiltersChange({})} 
+                    onClick={() => handleFiltersChange({ user_id: filters.user_id })} 
                     className="btn-secondary"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

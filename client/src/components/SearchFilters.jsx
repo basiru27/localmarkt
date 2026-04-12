@@ -48,7 +48,12 @@ export default function SearchFilters({ filters, onFiltersChange }) {
 
   const handleClearFilters = () => {
     setSearchInput('');
-    onFiltersChange({});
+    onFiltersChange({
+      ...filters,
+      search: undefined,
+      category: undefined,
+      region: undefined
+    });
   };
 
   const hasActiveFilters = filters.search || filters.category || filters.region;
