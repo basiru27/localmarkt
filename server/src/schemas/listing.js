@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const phoneRegex = /^(\+220|220)?[2-9]\d{6}$/;
+const phoneRegex = /^(\+220|220)?\s?[2-9]\d{6}$/;
 
 // Valid condition values
 export const LISTING_CONDITIONS = ['new', 'used_like_new', 'used_good', 'used_fair'];
