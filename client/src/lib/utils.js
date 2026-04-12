@@ -6,10 +6,12 @@ export function formatPrice(price) {
     return 'GMD 0';
   }
   
-  return `GMD ${numPrice.toLocaleString('en-GM', {
+  return new Intl.NumberFormat('en-GM', {
+    style: 'currency',
+    currency: 'GMD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  })}`;
+  }).format(numPrice);
 }
 
 // Format date relative to now

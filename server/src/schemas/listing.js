@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const phoneRegex = /^(\+220|220)?[2-9]\d{6}$/;
+
 // Valid condition values
 export const LISTING_CONDITIONS = ['new', 'used_like_new', 'used_good', 'used_fair'];
 
@@ -30,8 +32,7 @@ export const createListingSchema = z.object({
     .positive('Invalid category'),
   contact: z
     .string()
-    .min(5, 'Contact must be at least 5 characters')
-    .max(200, 'Contact must be at most 200 characters'),
+    .regex(phoneRegex, 'Must be a valid Gambian phone number'),
   image_url: z
     .string()
     .url('Invalid image URL')
@@ -71,8 +72,7 @@ export const updateListingSchema = z.object({
     .optional(),
   contact: z
     .string()
-    .min(5, 'Contact must be at least 5 characters')
-    .max(200, 'Contact must be at most 200 characters')
+    .regex(phoneRegex, 'Must be a valid Gambian phone number')
     .optional(),
   image_url: z
     .string()
