@@ -180,6 +180,8 @@ export default function ListingDetail() {
               <img
                 src={imageUrl}
                 alt={listing.title}
+                loading="lazy"
+                decoding="async"
                 className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}
                 onError={(e) => {

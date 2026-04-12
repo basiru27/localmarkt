@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
@@ -8,22 +9,29 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './components/admin/AdminLayout';
 
-// Pages
-import ListingFeed from './pages/ListingFeed';
-import ListingDetail from './pages/ListingDetail';
-import CreateListing from './pages/CreateListing';
-import EditListing from './pages/EditListing';
-import MyListings from './pages/MyListings';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import NotFound from './pages/NotFound';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminListings from './pages/admin/AdminListings';
-import AdminReports from './pages/admin/AdminReports';
-import AdminLogs from './pages/admin/AdminLogs';
+// Lazy Pages
+const ListingFeed = lazy(() => import('./pages/ListingFeed'));
+const ListingDetail = lazy(() => import('./pages/ListingDetail'));
+const CreateListing = lazy(() => import('./pages/CreateListing'));
+const EditListing = lazy(() => import('./pages/EditListing'));
+const MyListings = lazy(() => import('./pages/MyListings'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminListings = lazy(() => import('./pages/admin/AdminListings'));
+const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
+const AdminLogs = lazy(() => import('./pages/admin/AdminLogs'));
+
+// Loading Fallback Component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+);
 
 // Create a client
 const queryClient = new QueryClient({
@@ -37,78 +45,87 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Wake up the backend (Render free tier) on initial load
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/health`).catch(() => {
+      // Silently fail if offline or unreachable
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <OfflineProvider>
-          <ToastProvider>
+        <ToastProvider>
+          <OfflineProvider>
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  {/* Public routes */}
-                  <Route index element={<ListingFeed />} />
-                  <Route path="listings/:id" element={<ListingDetail />} />
-                  <Route path="login" element={<Login />} />
-                  <Route path="register" element={<Register />} />
-                  <Route path="forgot-password" element={<ForgotPassword />} />
-                  <Route path="reset-password" element={<ResetPassword />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    {/* Public routes */}
+                    <Route index element={<ListingFeed />} />
+                    <Route path="listings/:id" element={<ListingDetail />} />
+                    <Route path="login" element={<Login />} />
+                    <Route path="register" element={<Register />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="reset-password" element={<ResetPassword />} />
 
-                  {/* Protected routes */}
-                  <Route
-                    path="listings/new"
-                    element={
-                      <ProtectedRoute>
-                        <CreateListing />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="listings/:id/edit"
-                    element={
-                      <ProtectedRoute>
-                        <EditListing />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="my-listings"
-                    element={
-                      <ProtectedRoute>
-                        <MyListings />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Admin routes */}
-                  <Route
-                    path="admin"
-                    element={
-                      <AdminRoute>
-                        <AdminLayout />
-                      </AdminRoute>
-                    }
-                  >
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="listings" element={<AdminListings />} />
-                    <Route path="reports" element={<AdminReports />} />
+                    {/* Protected routes */}
                     <Route
-                      path="logs"
+                      path="listings/new"
                       element={
-                        <AdminRoute requireSuperAdmin>
-                          <AdminLogs />
-                        </AdminRoute>
+                        <ProtectedRoute>
+                          <CreateListing />
+                        </ProtectedRoute>
                       }
                     />
-                  </Route>
+                    <Route
+                      path="listings/:id/edit"
+                      element={
+                        <ProtectedRoute>
+                          <EditListing />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="my-listings"
+                      element={
+                        <ProtectedRoute>
+                          <MyListings />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* 404 */}
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
+                    {/* Admin routes */}
+                    <Route
+                      path="admin"
+                      element={
+                        <AdminRoute>
+                          <AdminLayout />
+                        </AdminRoute>
+                      }
+                    >
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="listings" element={<AdminListings />} />
+                      <Route path="reports" element={<AdminReports />} />
+                      <Route
+                        path="logs"
+                        element={
+                          <AdminRoute requireSuperAdmin>
+                            <AdminLogs />
+                          </AdminRoute>
+                        }
+                      />
+                    </Route>
+
+                    {/* 404 */}
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </Suspense>
             </BrowserRouter>
-          </ToastProvider>
-        </OfflineProvider>
+          </OfflineProvider>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
