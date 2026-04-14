@@ -4,6 +4,8 @@ import { listingsApi } from '../lib/api';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
+import { uploadImage } from '../lib/imageUpload';
+
 const OfflineContext = createContext(null);
 
 export function OfflineProvider({ children }) {
@@ -14,7 +16,7 @@ export function OfflineProvider({ children }) {
   const isInitialized = useRef(false);
   
   // Inject context dependencies safely
-  const { getAuthHeader } = useAuth();
+  const { getAuthHeader, user } = useAuth();
   const { success, error: showError, info } = useToast();
 
   // Update pending count
@@ -48,7 +50,20 @@ export function OfflineProvider({ children }) {
       for (const listing of pendingListings) {
         try {
           // Remove the internal offline metadata before sending
-          const { pendingId, createdAt: _ignoredCreatedAt, ...apiData } = listing;
+          const { pendingId, createdAt: _ignoredCreatedAt, offlineImageData, ...apiData } = listing;
+          
+          if (offlineImageData && user?.id) {
+            try {
+              const res = await fetch(offlineImageData.dataUrl);
+              const blob = await res.blob();
+              const file = new File([blob], offlineImageData.name || 'offline_image.jpg', { type: offlineImageData.type });
+              const uploadedUrl = await uploadImage(file, user.id);
+              apiData.image_url = uploadedUrl;
+            } catch (imgErr) {
+              console.error('Failed to upload offline image:', imgErr);
+              // continue without image or let it fail? Let's just submit without the image if it fails
+            }
+          }
           
           await listingsApi.create(apiData, authHeader);
           await removePendingListing(pendingId);
@@ -73,7 +88,7 @@ export function OfflineProvider({ children }) {
     } finally {
       setIsSyncing(false);
     }
-  }, [getAuthHeader, isSyncing, refreshPendingCount, success, showError, info]);
+  }, [getAuthHeader, isSyncing, refreshPendingCount, success, showError, info, user?.id]);
 
   // Update online status
   useEffect(() => {

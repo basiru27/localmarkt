@@ -20,11 +20,18 @@ export default function AdminListings() {
   const deleteMutation = useAdminDeleteListing();
 
   const handleModeration = async (listingId, moderation_status) => {
+    let moderation_note = '';
+    if (moderation_status === 'rejected') {
+      moderation_note = window.prompt("Reason for rejection:");
+      if (moderation_note === null) return; // cancelled
+    }
+
     try {
       await moderateMutation.mutateAsync({
         listingId,
         data: {
           moderation_status,
+          moderation_note
         },
       });
 
@@ -86,8 +93,15 @@ export default function AdminListings() {
         <div className="space-y-3">
           {listings?.map((listing) => (
             <article key={listing.id} className="card-static p-4">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-md overflow-hidden">
+                  {listing.image_url ? (
+                    <img src={listing.image_url} alt="Thumbnail" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="text-xs text-gray-400 h-full w-full flex items-center justify-center">No Image</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="badge-secondary uppercase tracking-wide">{listing.moderation_status}</span>
                     {listing.seller?.is_banned && <span className="badge-error">Seller banned</span>}
@@ -99,9 +113,18 @@ export default function AdminListings() {
                   <p className="text-xs text-text-muted mt-2">
                     Seller: {listing.seller?.display_name || 'Unknown'} • Posted {formatRelativeDate(listing.created_at)}
                   </p>
+                  {listing.description && (
+                    <details className="mt-2 text-sm text-text-secondary">
+                      <summary className="cursor-pointer text-primary">View Description</summary>
+                      <p className="mt-2 whitespace-pre-wrap">{listing.description}</p>
+                    </details>
+                  )}
+                  {listing.moderation_note && (
+                    <p className="text-xs text-error mt-2">Moderation Note: {listing.moderation_note}</p>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 md:justify-end">
+                <div className="flex flex-wrap gap-2 md:justify-end md:flex-col lg:flex-row">
                   {listing.moderation_status !== 'approved' && (
                     <button
                       onClick={() => handleModeration(listing.id, 'approved')}

@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './components/admin/AdminLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy Pages
 const ListingFeed = lazy(() => import('./pages/ListingFeed'));
@@ -58,71 +59,73 @@ function App() {
         <ToastProvider>
           <OfflineProvider>
             <BrowserRouter>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    {/* Public routes */}
-                    <Route index element={<ListingFeed />} />
-                    <Route path="listings/:id" element={<ListingDetail />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="register" element={<Register />} />
-                    <Route path="forgot-password" element={<ForgotPassword />} />
-                    <Route path="reset-password" element={<ResetPassword />} />
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      {/* Public routes */}
+                      <Route index element={<ListingFeed />} />
+                      <Route path="listings/:id" element={<ListingDetail />} />
+                      <Route path="login" element={<Login />} />
+                      <Route path="register" element={<Register />} />
+                      <Route path="forgot-password" element={<ForgotPassword />} />
+                      <Route path="reset-password" element={<ResetPassword />} />
 
-                    {/* Protected routes */}
-                    <Route
-                      path="listings/new"
-                      element={
-                        <ProtectedRoute>
-                          <CreateListing />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="listings/:id/edit"
-                      element={
-                        <ProtectedRoute>
-                          <EditListing />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="my-listings"
-                      element={
-                        <ProtectedRoute>
-                          <MyListings />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Admin routes */}
-                    <Route
-                      path="admin"
-                      element={
-                        <AdminRoute>
-                          <AdminLayout />
-                        </AdminRoute>
-                      }
-                    >
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="users" element={<AdminUsers />} />
-                      <Route path="listings" element={<AdminListings />} />
-                      <Route path="reports" element={<AdminReports />} />
+                      {/* Protected routes */}
                       <Route
-                        path="logs"
+                        path="listings/new"
                         element={
-                          <AdminRoute requireSuperAdmin>
-                            <AdminLogs />
-                          </AdminRoute>
+                          <ProtectedRoute>
+                            <CreateListing />
+                          </ProtectedRoute>
                         }
                       />
-                    </Route>
+                      <Route
+                        path="listings/:id/edit"
+                        element={
+                          <ProtectedRoute>
+                            <EditListing />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-listings"
+                        element={
+                          <ProtectedRoute>
+                            <MyListings />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* 404 */}
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
-              </Suspense>
+                      {/* Admin routes */}
+                      <Route
+                        path="admin"
+                        element={
+                          <AdminRoute>
+                            <AdminLayout />
+                          </AdminRoute>
+                        }
+                      >
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="users" element={<AdminUsers />} />
+                        <Route path="listings" element={<AdminListings />} />
+                        <Route path="reports" element={<AdminReports />} />
+                        <Route
+                          path="logs"
+                          element={
+                            <AdminRoute requireSuperAdmin>
+                              <AdminLogs />
+                            </AdminRoute>
+                          }
+                        />
+                      </Route>
+
+                      {/* 404 */}
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
             </BrowserRouter>
           </OfflineProvider>
         </ToastProvider>

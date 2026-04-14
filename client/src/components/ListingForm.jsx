@@ -13,9 +13,12 @@ const CONDITION_OPTIONS = [
   { value: 'used_fair', label: 'Used – Fair' },
 ];
 
+import { useOffline } from '../context/OfflineContext';
+
 export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isOnline } = useOffline();
   const fileInputRef = useRef(null);
   
   const { data: regions, isLoading: regionsLoading } = useRegions();
@@ -162,28 +165,45 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     if (!validate()) return;
 
     let finalImageUrl = formData.image_url;
+    let offlineImageData = null;
 
     // Upload new image if selected
     if (imageFile) {
-      try {
-        setUploading(true);
-        setUploadProgress(0);
-        // Simulate progress for better UX
-        const progressInterval = setInterval(() => {
-          setUploadProgress(prev => Math.min(prev + 10, 90));
-        }, 200);
-        
-        finalImageUrl = await uploadImage(imageFile, user.id);
-        
-        clearInterval(progressInterval);
-        setUploadProgress(100);
-      } catch (error) {
-        setErrors((prev) => ({ ...prev, image: error.message }));
+      if (!isOnline) {
+        try {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+          offlineImageData = { dataUrl: base64, type: imageFile.type, name: imageFile.name };
+        } catch (err) {
+          console.error(err);
+          setErrors((prev) => ({ ...prev, image: 'Failed to process image for offline saving' }));
+          return;
+        }
+      } else {
+        try {
+          setUploading(true);
+          setUploadProgress(0);
+          // Simulate progress for better UX
+          const progressInterval = setInterval(() => {
+            setUploadProgress(prev => Math.min(prev + 10, 90));
+          }, 200);
+          
+          finalImageUrl = await uploadImage(imageFile, user.id);
+          
+          clearInterval(progressInterval);
+          setUploadProgress(100);
+        } catch (error) {
+          setErrors((prev) => ({ ...prev, image: error.message }));
+          setUploading(false);
+          setUploadProgress(0);
+          return;
+        }
         setUploading(false);
-        setUploadProgress(0);
-        return;
       }
-      setUploading(false);
     }
 
     // Prepare submission data
@@ -193,6 +213,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       region_id: parseInt(formData.region_id),
       category_id: parseInt(formData.category_id),
       image_url: finalImageUrl || null,
+      ...(offlineImageData && { offlineImageData }),
     };
 
     onSubmit(submitData);

@@ -26,6 +26,7 @@ export function useAdminStats() {
       const authHeader = await getAuthHeader();
       return adminApi.getStats(authHeader);
     },
+    refetchInterval: 30000,
   });
 }
 
