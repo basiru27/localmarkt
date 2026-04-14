@@ -9,6 +9,7 @@ import categoriesRouter from './routes/categories.js';
 import reviewsRouter from './routes/reviews.js';
 import reportsRouter from './routes/reports.js';
 import adminRouter from './routes/admin.js';
+import profileRouter from './routes/profile.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +58,7 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api', reviewsRouter);
 app.use('/api', reportsRouter);
 app.use('/api', adminRouter);
+app.use('/api', profileRouter);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
