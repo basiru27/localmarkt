@@ -73,6 +73,9 @@ function sanitizeListingForResponse(listing) {
       id: seller.id,
       display_name: seller.display_name,
       created_at: seller.created_at,
+      avatar_url: seller.avatar_url,
+      bio: seller.bio,
+      phone_number: seller.phone_number,
     }
     : null;
 

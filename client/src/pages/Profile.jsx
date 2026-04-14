@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import imageCompression from 'browser-image-compression';
 import { supabase } from '../lib/supabase';
+import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('+220 ');
+  const [phoneError, setPhoneError] = useState('');
 
   const getAuthHeader = () => {
     if (!session?.access_token) return {};
@@ -24,6 +27,12 @@ export default function Profile() {
       return res;
     }
   });
+
+  useEffect(() => {
+    if (profile?.phone_number) {
+      setPhoneValue(profile.phone_number);
+    }
+  }, [profile]);
 
   const mutation = useMutation({
     mutationFn: async (updatedData) => {
@@ -61,7 +70,7 @@ export default function Profile() {
 
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${profile?.id || user.id}-${Math.random()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('avatars')
@@ -88,12 +97,30 @@ export default function Profile() {
     }
   };
 
+  const handlePhoneChange = (e) => {
+    setPhoneValue(formatGambianPhone(e.target.value));
+    if (phoneError) setPhoneError('');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (phoneValue && phoneValue.trim() !== '+220' && phoneValue.trim() !== '') {
+      if (!isValidGambianPhone(phoneValue)) {
+        setPhoneError('Please enter a valid Gambian phone number (e.g. +220 3XXXXXX)');
+        return;
+      }
+    } else {
+       // Clear if it's just the prefix or empty
+       if (phoneValue.trim() === '+220') {
+           setPhoneValue('');
+       }
+    }
+
     const formData = new FormData(e.target);
     mutation.mutate({
       display_name: formData.get('display_name'),
-      phone_number: formData.get('phone_number'),
+      phone_number: phoneValue.trim() === '+220' ? '' : phoneValue,
       bio: formData.get('bio'),
       avatar_url: profile?.avatar_url
     });
@@ -108,6 +135,10 @@ export default function Profile() {
       </div>
     );
   }
+
+  const displayName = profile?.display_name || user?.user_metadata?.display_name || '';
+  const email = profile?.email || user?.email || '';
+  const initial = (displayName.charAt(0) || email.charAt(0) || 'U').toUpperCase();
 
   return (
     <div className="container-app py-8 max-w-2xl">
@@ -138,7 +169,7 @@ export default function Profile() {
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                {profile?.display_name?.charAt(0).toUpperCase() || profile?.email?.charAt(0).toUpperCase()}
+                {initial}
               </div>
             )}
             
@@ -164,46 +195,63 @@ export default function Profile() {
             </label>
           </div>
           <div className="text-center sm:text-left">
-            <h2 className="text-lg font-bold text-text">{profile?.display_name || 'Anonymous User'}</h2>
-            <p className="text-sm text-text-muted">{profile?.email}</p>
+            <h2 className="text-lg font-bold text-text">{displayName || 'Anonymous User'}</h2>
+            <p className="text-sm text-text-muted">{email}</p>
             <p className="text-xs text-text-muted mt-1 bg-gray-100 px-2 py-1 rounded inline-block">
-              Role: <span className="capitalize font-semibold text-primary">{profile?.role}</span>
+              Role: <span className="capitalize font-semibold text-primary">{profile?.role || 'user'}</span>
             </p>
           </div>
         </div>
 
         {/* Form Section */}
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
-          <div>
-            <label htmlFor="display_name" className="block text-sm font-semibold text-text mb-1">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="form-group">
+            <label htmlFor="display_name" className="label">
               Display Name
             </label>
             <input
               type="text"
               id="display_name"
               name="display_name"
-              defaultValue={profile?.display_name || ''}
-              className="input w-full"
+              defaultValue={displayName}
+              className="input"
               placeholder="e.g., Momodou Jallow"
             />
           </div>
 
-          <div>
-            <label htmlFor="phone_number" className="block text-sm font-semibold text-text mb-1">
-              Phone Number <span className="text-xs text-text-muted font-normal">(Buyers will see this to contact you)</span>
+          <div className="form-group">
+            <label htmlFor="phone_number" className="label">
+              Phone Number <span className="text-text-muted font-normal ml-1">(Buyers will see this to contact you)</span>
             </label>
-            <input
-              type="tel"
-              id="phone_number"
-              name="phone_number"
-              defaultValue={profile?.phone_number || ''}
-              className="input w-full"
-              placeholder="+220 700 0000"
-            />
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true">
+                <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
+              <input
+                type="tel"
+                id="phone_number"
+                name="phone_number"
+                value={phoneValue}
+                onChange={handlePhoneChange}
+                className={`input pl-12 ${phoneError ? 'input-error' : ''}`}
+                placeholder="+220 XXXXXXX"
+                aria-invalid={phoneError ? 'true' : 'false'}
+              />
+            </div>
+            {phoneError && (
+              <p className="error-message" role="alert">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {phoneError}
+              </p>
+            )}
           </div>
 
-          <div>
-            <label htmlFor="bio" className="block text-sm font-semibold text-text mb-1">
+          <div className="form-group">
+            <label htmlFor="bio" className="label">
               Bio
             </label>
             <textarea
@@ -211,16 +259,16 @@ export default function Profile() {
               name="bio"
               rows={4}
               defaultValue={profile?.bio || ''}
-              className="input w-full resize-none"
+              className="input min-h-[120px]"
               placeholder="Tell buyers a bit about yourself or your shop..."
             />
           </div>
 
-          <div className="pt-4 border-t border-border-light flex justify-end">
+          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
             <button 
               type="submit" 
               disabled={mutation.isPending || uploading}
-              className="btn-primary w-full sm:w-auto"
+              className="btn-primary flex-1 py-3.5 text-base"
             >
               {mutation.isPending ? 'Saving...' : 'Save Profile'}
             </button>
