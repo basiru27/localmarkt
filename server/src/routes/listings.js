@@ -179,10 +179,12 @@ router.get('/', async (req, res, next) => {
     }
 
     if (search) {
-      // Search in title and description (sanitized to prevent injection)
+      // Search using Full Text Search
       const sanitized = sanitizeSearchInput(search);
       if (sanitized) {
-        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+        // Convert to a valid tsquery, e.g., 'foo & bar'
+        const tsQuery = sanitized.trim().split(/\s+/).join(' & ');
+        query = query.textSearch('fts', tsQuery);
       }
     }
 

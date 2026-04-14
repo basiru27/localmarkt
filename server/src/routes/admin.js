@@ -50,7 +50,7 @@ router.get('/admin/users', async (req, res, next) => {
 
     let query = supabase
       .from('profiles')
-      .select('id, display_name, role, is_banned, created_at, listing_count:listings(count)')
+      .select('id, display_name, email, role, is_banned, created_at, listing_count:listings(count)')
       .order('created_at', { ascending: false });
 
     if (role) {
@@ -75,42 +75,8 @@ router.get('/admin/users', async (req, res, next) => {
       throw error;
     }
 
-    const profileIds = profiles.map((profile) => profile.id);
-
-    let emailsById = {};
-    if (profileIds.length > 0) {
-      const users = [];
-      const pageSize = 200;
-      let page = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data: userPage, error: usersError } = await supabase.auth.admin.listUsers({
-          page,
-          perPage: pageSize,
-        });
-
-        if (usersError) {
-          throw usersError;
-        }
-
-        const fetchedUsers = userPage?.users || [];
-        users.push(...fetchedUsers);
-        hasMore = fetchedUsers.length === pageSize;
-        page += 1;
-      }
-
-      emailsById = users.reduce((acc, user) => {
-        if (profileIds.includes(user.id)) {
-          acc[user.id] = user.email;
-        }
-        return acc;
-      }, {});
-    }
-
     const response = profiles.map((profile) => ({
       ...profile,
-      email: emailsById[profile.id] || null,
       listing_count: profile.listing_count?.[0]?.count || 0,
     }));
 
@@ -251,7 +217,9 @@ router.get('/admin/listings', async (req, res, next) => {
       .select(`
         id,
         title,
+        description,
         price,
+        image_url,
         moderation_status,
         moderation_note,
         created_at,
@@ -260,7 +228,8 @@ router.get('/admin/listings', async (req, res, next) => {
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, is_banned)
       `)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (status) {
       query = query.eq('moderation_status', status);
@@ -283,6 +252,21 @@ router.get('/admin/listings', async (req, res, next) => {
 });
 
 /**
+ * Delete an image from Supabase Storage
+ */
+async function deleteStorageImage(imageUrl) {
+  if (!imageUrl) return;
+  try {
+    const match = imageUrl.match(/\/listing-images\/(.+)$/);
+    if (!match) return;
+    const filePath = match[1];
+    await supabase.storage.from('listing-images').remove([filePath]);
+  } catch (error) {
+    console.error('Error during image cleanup:', error);
+  }
+}
+
+/**
  * PUT /api/admin/listings/:id/moderate
  */
 router.put('/admin/listings/:id/moderate', validateAdminBody(moderateListingSchema), async (req, res, next) => {
@@ -290,34 +274,35 @@ router.put('/admin/listings/:id/moderate', validateAdminBody(moderateListingSche
     const listingId = req.params.id;
     const { moderation_status, moderation_note } = req.body;
 
-    const { data, error } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('listings')
-      .update({
-        moderation_status,
-        moderation_note: moderation_note || null,
-        moderated_by: req.user.id,
-        moderated_at: new Date().toISOString(),
-      })
+      .select('id, image_url')
       .eq('id', listingId)
-      .select('*')
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if (existingError) {
+      if (existingError.code === 'PGRST116') {
         return res.status(404).json({ error: 'Listing not found' });
       }
-      throw error;
+      throw existingError;
     }
 
-    await createAdminLog({
-      adminId: req.user.id,
-      action: moderation_status === 'approved' ? 'APPROVE_LISTING' : 'REJECT_LISTING',
-      targetType: 'LISTING',
-      targetId: listingId,
-      details: {
-        moderation_note: moderation_note || null,
-      },
+    const { data, error } = await supabase.rpc('moderate_listing_transaction', {
+      p_listing_id: listingId,
+      p_status: moderation_status,
+      p_note: moderation_note || null,
+      p_admin_id: req.user.id,
     });
+
+    if (error) throw error;
+
+    if (moderation_status === 'rejected' && existing.image_url) {
+      await deleteStorageImage(existing.image_url);
+      
+      // Also clear it from DB so it doesn't show a broken image link
+      await supabase.from('listings').update({ image_url: null }).eq('id', listingId);
+      if (data) data.image_url = null;
+    }
 
     return res.json(data);
   } catch (err) {
@@ -334,7 +319,7 @@ router.delete('/admin/listings/:id', async (req, res, next) => {
 
     const { data: existing, error: existingError } = await supabase
       .from('listings')
-      .select('id')
+      .select('id, image_url')
       .eq('id', listingId)
       .single();
 
@@ -352,6 +337,10 @@ router.delete('/admin/listings/:id', async (req, res, next) => {
 
     if (error) {
       throw error;
+    }
+
+    if (existing.image_url) {
+      await deleteStorageImage(existing.image_url);
     }
 
     await createAdminLog({
