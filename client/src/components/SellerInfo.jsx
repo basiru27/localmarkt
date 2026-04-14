@@ -76,9 +76,17 @@ export default function SellerInfo({ seller, sellerId }) {
       
       <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
-          {initials}
-        </div>
+        {seller?.avatar_url ? (
+          <img 
+            src={seller.avatar_url} 
+            alt={displayName} 
+            className="w-14 h-14 rounded-full object-cover shadow-md border border-border-light"
+          />
+        ) : (
+          <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
+            {initials}
+          </div>
+        )}
         
         {/* Seller details */}
         <div className="flex-1 min-w-0">
@@ -93,6 +101,12 @@ export default function SellerInfo({ seller, sellerId }) {
           </p>
         </div>
       </div>
+      
+      {seller?.bio && (
+        <div className="mt-4 mb-2 bg-gray-50 rounded-lg p-3 border border-border-light text-sm text-text-secondary">
+          <p className="line-clamp-3">{seller.bio}</p>
+        </div>
+      )}
       
       {/* View all listings link */}
       <Link
@@ -111,7 +125,7 @@ export default function SellerInfo({ seller, sellerId }) {
 /**
  * Compact avatar for use in review lists
  */
-export function SellerAvatar({ name, userId, size = 'md' }) {
+export function SellerAvatar({ name, userId, avatarUrl, size = 'md' }) {
   const initials = getInitials(name);
   const avatarColor = getAvatarColor(userId);
   
@@ -120,6 +134,16 @@ export function SellerAvatar({ name, userId, size = 'md' }) {
     md: 'w-10 h-10 text-sm',
     lg: 'w-12 h-12 text-base',
   };
+
+  if (avatarUrl) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt={name} 
+        className={`${sizeClasses[size]} rounded-full object-cover shadow-sm border border-border-light`}
+      />
+    );
+  }
 
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-semibold shadow-sm`}>

@@ -16,6 +16,7 @@ const ListingDetail = lazy(() => import('./pages/ListingDetail'));
 const CreateListing = lazy(() => import('./pages/CreateListing'));
 const EditListing = lazy(() => import('./pages/EditListing'));
 const MyListings = lazy(() => import('./pages/MyListings'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -93,6 +94,14 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <MyListings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
                           </ProtectedRoute>
                         }
                       />

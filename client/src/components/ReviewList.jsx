@@ -72,7 +72,7 @@ function ReviewItem({ review, listingId, onEdit }) {
       <div className="py-4 first:pt-0 last:pb-0">
         <div className="flex gap-3">
           {/* Avatar */}
-          <SellerAvatar name={reviewerName} userId={review.reviewer_id} size="md" />
+          <SellerAvatar name={reviewerName} userId={review.reviewer_id} avatarUrl={review.reviewer?.avatar_url} size="md" />
           
           {/* Content */}
           <div className="flex-1 min-w-0">
