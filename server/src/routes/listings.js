@@ -142,7 +142,7 @@ router.get('/', async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!inner(id, display_name, created_at, is_banned)
+        seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number)
       `, { count: 'exact' });
 
     query = query
@@ -240,7 +240,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!user_id(id, display_name, created_at)
+        seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number)
       `, { count: 'exact' })
       .eq('user_id', req.user.id);
 
@@ -312,7 +312,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!user_id(id, display_name, created_at, is_banned)
+        seller:profiles!user_id(id, display_name, created_at, is_banned, avatar_url, bio, phone_number)
       `)
       .eq('id', id)
       .single();

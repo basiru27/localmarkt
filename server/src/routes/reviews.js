@@ -45,7 +45,7 @@ router.get('/listings/:listingId/reviews', optionalAuth, async (req, res, next) 
       .from('reviews')
       .select(`
         *,
-        reviewer:profiles!reviewer_id(id, display_name, created_at)
+        reviewer:profiles!reviewer_id(id, display_name, created_at, avatar_url)
       `)
       .eq('listing_id', listingId)
       .order('created_at', { ascending: false });
@@ -115,7 +115,7 @@ router.post('/listings/:listingId/reviews', authenticate, validateBody(createRev
       })
       .select(`
         *,
-        reviewer:profiles!reviewer_id(id, display_name, created_at)
+        reviewer:profiles!reviewer_id(id, display_name, created_at, avatar_url)
       `)
       .single();
 
@@ -163,7 +163,7 @@ router.put('/reviews/:reviewId', authenticate, validateBody(updateReviewSchema),
       .eq('id', reviewId)
       .select(`
         *,
-        reviewer:profiles!reviewer_id(id, display_name, created_at)
+        reviewer:profiles!reviewer_id(id, display_name, created_at, avatar_url)
       `)
       .single();
 
