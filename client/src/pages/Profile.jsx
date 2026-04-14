@@ -1,27 +1,34 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../api';
+import { profileApi } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import imageCompression from 'browser-image-compression';
-import { supabase } from '../supabase';
+import { supabase } from '../lib/supabase';
 
 export default function Profile() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  const getAuthHeader = () => {
+    if (!session?.access_token) return {};
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const res = await api.get('/api/profile');
-      return res.data;
+      const res = await profileApi.get(getAuthHeader());
+      return res;
     }
   });
 
   const mutation = useMutation({
     mutationFn: async (updatedData) => {
-      const res = await api.put('/api/profile', updatedData);
-      return res.data;
+      const res = await profileApi.update(updatedData, getAuthHeader());
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });

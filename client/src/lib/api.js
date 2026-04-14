@@ -262,4 +262,14 @@ export const adminApi = {
   getLogs: (authHeader) => fetchApi('/admin/logs', { headers: authHeader }),
 };
 
+export const profileApi = {
+  get: (authHeader) => fetchApi('/profile', { headers: authHeader }),
+  update: (data, authHeader) =>
+    fetchApi('/profile', {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+};
+
 export { ApiError };
