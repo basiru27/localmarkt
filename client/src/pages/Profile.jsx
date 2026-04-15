@@ -8,7 +8,7 @@ import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { session, user } = useAuth();
+  const { session, user, refreshProfile } = useAuth();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -41,6 +41,7 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      refreshProfile(user.id);
       setSuccessMessage('Profile updated successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
       setErrorMsg('');

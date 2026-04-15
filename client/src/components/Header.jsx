@@ -5,7 +5,7 @@ import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
 
 export default function Header() {
-  const { user, signOut, isAuthenticated, isAdmin } = useAuth();
+  const { user, profile, signOut, isAuthenticated, isAdmin } = useAuth();
   const { isOnline } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -172,11 +172,19 @@ export default function Header() {
                     aria-haspopup="true"
                     aria-label="User menu"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white font-semibold text-sm" aria-hidden="true">
-                      {user?.email?.charAt(0).toUpperCase()}
-                    </div>
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white font-semibold text-sm" aria-hidden="true">
+                        {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
+                      </div>
+                    )}
                     <span className="hidden sm:block text-sm font-medium text-text max-w-[100px] truncate">
-                      {user?.user_metadata?.display_name || user?.email?.split('@')[0]}
+                      {profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0]}
                     </span>
                     <svg
                       className={`w-4 h-4 text-text-secondary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
@@ -204,7 +212,7 @@ export default function Header() {
                       >
                         <div className="px-4 py-2 border-b border-border-light">
                           <p className="text-sm font-semibold text-text truncate">
-                            {user?.user_metadata?.display_name || 'User'}
+                            {profile?.display_name || user?.user_metadata?.display_name || 'User'}
                           </p>
                           <p className="text-xs text-text-muted truncate">{user?.email}</p>
                         </div>
