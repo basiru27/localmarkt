@@ -5,7 +5,7 @@ import { updateProfileSchema, validateBody } from '../schemas/user.js';
 
 const router = Router();
 
-router.use(authenticate);
+router.use('/profile', authenticate);
 
 /**
  * GET /api/profile

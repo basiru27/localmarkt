@@ -8,7 +8,7 @@ import { createAdminLog } from '../utils/adminLogs.js';
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use('/admin', authenticate, requireAdmin);
 
 /**
  * GET /api/admin/stats
