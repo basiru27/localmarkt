@@ -146,7 +146,7 @@ router.get('/', async (req, res, next) => {
         region:regions(id, name),
         category:categories(id, name),
         seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number)
-      `, { count: 'exact' });
+      `, { count: 'estimated' });
 
     query = query
       .eq('moderation_status', 'approved')
@@ -185,9 +185,7 @@ router.get('/', async (req, res, next) => {
       // Search using Full Text Search
       const sanitized = sanitizeSearchInput(search);
       if (sanitized) {
-        // Convert to a valid tsquery, e.g., 'foo & bar'
-        const tsQuery = sanitized.trim().split(/\s+/).join(' & ');
-        query = query.textSearch('fts', tsQuery);
+        query = query.textSearch('fts', sanitized, { type: 'websearch' });
       }
     }
 
@@ -244,7 +242,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
         region:regions(id, name),
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number)
-      `, { count: 'exact' })
+      `, { count: 'estimated' })
       .eq('user_id', req.user.id);
 
     // Apply filters
@@ -259,7 +257,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
     if (search) {
       const sanitized = sanitizeSearchInput(search);
       if (sanitized) {
-        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+        query = query.textSearch('fts', sanitized, { type: 'websearch' });
       }
     }
 
