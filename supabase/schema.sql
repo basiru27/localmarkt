@@ -211,12 +211,6 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Storage policies for listing-images bucket
 
--- Policy 1: Allow public read access (for viewing listing images)
-DROP POLICY IF EXISTS "Public read access for listing images" ON storage.objects;
-CREATE POLICY "Public read access for listing images"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'listing-images');
-
 -- Policy 2: Allow authenticated users to upload images
 DROP POLICY IF EXISTS "Authenticated users can upload listing images" ON storage.objects;
 CREATE POLICY "Authenticated users can upload listing images"
