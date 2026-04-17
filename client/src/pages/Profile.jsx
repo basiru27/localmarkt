@@ -98,6 +98,35 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarRemove = async () => {
+    if (!window.confirm('Are you sure you want to remove your profile picture?')) return;
+
+    setUploading(true);
+    setErrorMsg('');
+    setSuccessMessage('');
+
+    try {
+      if (profile?.avatar_url) {
+        const urlParts = profile.avatar_url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        if (fileName) {
+          await supabase.storage.from('avatars').remove([fileName]);
+        }
+      }
+
+      mutation.mutate({ 
+        ...profile, 
+        avatar_url: null 
+      }, {
+        onSettled: () => setUploading(false)
+      });
+    } catch (err) {
+      console.error('Avatar remove error:', err);
+      setErrorMsg('Failed to remove avatar.');
+      setUploading(false);
+    }
+  };
+
   const handlePhoneChange = (e) => {
     setPhoneValue(formatGambianPhone(e.target.value));
     if (phoneError) setPhoneError('');
@@ -161,13 +190,30 @@ export default function Profile() {
         
         {/* Avatar Section */}
         <div className="p-6 border-b border-border-light flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative group">
+          <div className="relative group inline-block">
             {profile?.avatar_url ? (
-              <img 
-                src={profile.avatar_url} 
-                alt="Profile" 
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-              />
+              <>
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Profile" 
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAvatarRemove();
+                  }}
+                  disabled={uploading}
+                  className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  title="Remove avatar"
+                  aria-label="Remove avatar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </>
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
                 {initial}
