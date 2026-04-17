@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRegions, useCategories } from '../hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
-import { uploadImage, validateImage, ImageUploadError } from '../lib/imageUpload';
+import { uploadImage, validateImage, compressImage, ImageUploadError } from '../lib/imageUpload';
 import { isValidGambianPhone, formatGambianPhone } from '../lib/utils';
 
 // Condition options for the listing
@@ -171,13 +171,14 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     if (imageFile) {
       if (!isOnline) {
         try {
+          const compressed = await compressImage(imageFile);
           const base64 = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
             reader.onerror = reject;
-            reader.readAsDataURL(imageFile);
+            reader.readAsDataURL(compressed);
           });
-          offlineImageData = { dataUrl: base64, type: imageFile.type, name: imageFile.name };
+          offlineImageData = { dataUrl: base64, type: compressed.type, name: compressed.name };
         } catch (err) {
           console.error(err);
           setErrors((prev) => ({ ...prev, image: 'Failed to process image for offline saving' }));

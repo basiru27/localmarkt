@@ -4,7 +4,7 @@ import { listingsApi } from '../lib/api';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
-import { uploadImage } from '../lib/imageUpload';
+import { uploadImage, deleteImage } from '../lib/imageUpload';
 
 const OfflineContext = createContext(null);
 
@@ -48,6 +48,7 @@ export function OfflineProvider({ children }) {
       
       let successCount = 0;
       for (const listing of pendingListings) {
+        let uploadedUrl = null;
         try {
           // Remove the internal offline metadata before sending
           const { pendingId, createdAt: _ignoredCreatedAt, offlineImageData, ...apiData } = listing;
@@ -57,7 +58,7 @@ export function OfflineProvider({ children }) {
               const res = await fetch(offlineImageData.dataUrl);
               const blob = await res.blob();
               const file = new File([blob], offlineImageData.name || 'offline_image.jpg', { type: offlineImageData.type });
-              const uploadedUrl = await uploadImage(file, user.id);
+              uploadedUrl = await uploadImage(file, user.id);
               apiData.image_url = uploadedUrl;
             } catch (imgErr) {
               console.error('Failed to upload offline image:', imgErr);
@@ -70,6 +71,9 @@ export function OfflineProvider({ children }) {
           successCount++;
         } catch (err) {
           console.error(`Failed to sync listing ${listing.pendingId}:`, err);
+          if (uploadedUrl) {
+            await deleteImage(uploadedUrl).catch(console.error);
+          }
         }
       }
 
