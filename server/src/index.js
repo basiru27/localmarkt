@@ -14,6 +14,9 @@ import profileRouter from './routes/profile.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy to ensure rate limiting uses the correct IP behind Render
+app.set('trust proxy', 1);
+
 // Rate limiting configuration - 1000 requests per 15 minutes per IP globally
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
