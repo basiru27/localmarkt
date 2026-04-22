@@ -12,26 +12,21 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Gambia Marketplace',
-        short_name: 'GamMarket',
-        description: 'Local marketplace for The Gambia',
-        theme_color: '#1a7a5e',
+        name: 'LocalMarkt',
+        short_name: 'LocalMarkt',
+        description: 'The Gambia Marketplace',
+        theme_color: '#0B6E4F',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-          },
-          {
-            src: 'pwa-512x512.svg',
+            src: 'logo.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
           },
           {
-            src: 'pwa-512x512.svg',
+            src: 'logo.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'maskable',
@@ -76,6 +71,7 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
+        suppressWarnings: true,
       },
     }),
   ],
