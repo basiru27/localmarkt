@@ -4,8 +4,8 @@ import { StarRatingCompact } from './StarRating';
 
 // Condition display labels and colors
 const CONDITION_CONFIG = {
-  new: { label: 'New', color: 'text-green-600' },
-  used_like_new: { label: 'Used – Like New', color: 'text-teal-600' },
+  new: { label: 'New', color: 'text-primary-dark' },
+  used_like_new: { label: 'Used – Like New', color: 'text-primary' },
   used_good: { label: 'Used – Good', color: 'text-amber-600' },
   used_fair: { label: 'Used – Fair', color: 'text-orange-600' },
 };
@@ -31,11 +31,11 @@ export default function ListingCard({ listing, index = 0 }) {
   const categoryColors = {
     Electronics: 'from-blue-500 to-indigo-600',
     Clothing: 'from-pink-500 to-rose-600',
-    'Food & Produce': 'from-green-500 to-emerald-600',
+    'Food & Produce': 'from-primary to-primary-dark',
     Furniture: 'from-amber-500 to-orange-600',
     Vehicles: 'from-violet-500 to-purple-600',
-    Services: 'from-cyan-500 to-teal-600',
-    Agriculture: 'from-lime-500 to-green-600',
+    Services: 'from-primary-light to-primary',
+    Agriculture: 'from-primary-dark to-primary',
     Other: 'from-gray-500 to-slate-600',
   };
 

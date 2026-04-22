@@ -14,8 +14,8 @@ import ReviewList from '../components/ReviewList';
 
 // Condition display configuration
 const CONDITION_CONFIG = {
-  new: { label: 'New', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
-  used_like_new: { label: 'Used – Like New', bgColor: 'bg-teal-50', textColor: 'text-teal-700', borderColor: 'border-teal-200' },
+  new: { label: 'New', bgColor: 'bg-primary-50', textColor: 'text-primary-dark', borderColor: 'border-primary-100' },
+  used_like_new: { label: 'Used – Like New', bgColor: 'bg-primary-50', textColor: 'text-primary', borderColor: 'border-primary-100' },
   used_good: { label: 'Used – Good', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
   used_fair: { label: 'Used – Fair', bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200' },
 };
@@ -146,11 +146,11 @@ export default function ListingDetail() {
   const categoryColors = {
     Electronics: 'from-blue-500 to-indigo-600',
     Clothing: 'from-pink-500 to-rose-600',
-    'Food & Produce': 'from-green-500 to-emerald-600',
+    'Food & Produce': 'from-primary to-primary-dark',
     Furniture: 'from-amber-500 to-orange-600',
     Vehicles: 'from-violet-500 to-purple-600',
-    Services: 'from-cyan-500 to-teal-600',
-    Agriculture: 'from-lime-500 to-green-600',
+    Services: 'from-primary-light to-primary',
+    Agriculture: 'from-primary-dark to-primary',
     Other: 'from-gray-500 to-slate-600',
   };
 
@@ -277,7 +277,7 @@ export default function ListingDetail() {
                 
                 {isAuthenticated ? (
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-primary-50 to-teal-50 rounded-xl p-4 border border-primary/10">
+                    <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-4 border border-primary/10">
                       <p className="text-text font-semibold text-lg">{listing.contact}</p>
                     </div>
                     

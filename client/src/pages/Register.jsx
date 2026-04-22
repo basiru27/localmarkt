@@ -102,7 +102,7 @@ export default function Register() {
     if (strength <= 2) return { strength, label: 'Weak', color: 'bg-red-500', textColor: 'text-red-600' };
     if (strength <= 3) return { strength, label: 'Fair', color: 'bg-yellow-500', textColor: 'text-yellow-600' };
     if (strength <= 4) return { strength, label: 'Good', color: 'bg-blue-500', textColor: 'text-blue-600' };
-    return { strength, label: 'Strong', color: 'bg-green-500', textColor: 'text-green-600' };
+    return { strength, label: 'Strong', color: 'bg-primary', textColor: 'text-primary-dark' };
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
@@ -159,7 +159,7 @@ export default function Register() {
       <div className="min-h-[calc(100vh-12rem)] flex items-center justify-center py-8 sm:py-12 px-4">
         <div className="w-full max-w-md animate-scale-in">
           <div className="card-static p-8 text-center" role="status" aria-live="polite">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-lg">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>

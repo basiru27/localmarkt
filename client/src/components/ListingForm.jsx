@@ -563,7 +563,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           </div>
           <div className="w-full bg-white rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100}>
             <div 
-              className="h-full bg-gradient-to-r from-primary to-teal-500 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-primary to-primary-dark transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>

@@ -18,12 +18,12 @@ function getInitials(name) {
 function getAvatarColor(userId) {
   const colors = [
     'from-blue-500 to-indigo-600',
-    'from-emerald-500 to-teal-600',
+    'from-primary to-primary-dark',
     'from-amber-500 to-orange-600',
     'from-pink-500 to-rose-600',
     'from-violet-500 to-purple-600',
-    'from-cyan-500 to-blue-600',
-    'from-lime-500 to-green-600',
+    'from-primary-light to-primary',
+    'from-primary-dark to-primary',
     'from-red-500 to-pink-600',
   ];
   

@@ -6,11 +6,11 @@ export default function NotFound() {
       <div className="text-center animate-fade-in">
         {/* 404 Illustration */}
         <div className="relative mb-8">
-          <div className="text-[150px] sm:text-[200px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-teal-500 to-cyan-500 leading-none select-none">
+          <div className="text-[150px] sm:text-[200px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark leading-none select-none">
             404
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center shadow-lg animate-bounce">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-lg animate-bounce">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

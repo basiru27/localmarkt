@@ -174,7 +174,7 @@ export default function MyListings() {
                         {listing.moderation_status && (
                           <span className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full inline-flex mb-2 ${
                             listing.moderation_status === 'approved'
-                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              ? 'bg-primary-50 text-primary-dark border border-primary-100'
                               : listing.moderation_status === 'pending'
                                 ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                 : 'bg-red-50 text-red-700 border border-red-200'

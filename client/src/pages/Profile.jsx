@@ -215,7 +215,7 @@ export default function Profile() {
                 </button>
               </>
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl font-bold shadow-md">
                 {initial}
               </div>
             )}

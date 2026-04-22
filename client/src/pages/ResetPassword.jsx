@@ -54,7 +54,7 @@ export default function ResetPassword() {
     if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500', textColor: 'text-red-600' };
     if (score <= 3) return { score, label: 'Fair', color: 'bg-yellow-500', textColor: 'text-yellow-600' };
     if (score <= 4) return { score, label: 'Good', color: 'bg-blue-500', textColor: 'text-blue-600' };
-    return { score, label: 'Strong', color: 'bg-green-500', textColor: 'text-green-600' };
+    return { score, label: 'Strong', color: 'bg-primary', textColor: 'text-primary-dark' };
   };
 
   const passwordStrength = getPasswordStrength(password);
@@ -194,8 +194,8 @@ export default function ResetPassword() {
         <div className="card-static p-6 sm:p-8">
           {success ? (
             <div className="text-center animate-fade-in" role="status" aria-live="polite">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>

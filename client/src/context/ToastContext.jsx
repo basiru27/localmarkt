@@ -81,7 +81,7 @@ function Toast({ toast, onDismiss }) {
 
   const typeStyles = {
     success: {
-      bg: 'bg-gradient-to-r from-green-500 to-emerald-600',
+      bg: 'bg-gradient-to-r from-primary to-primary-dark',
       label: 'Success',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
