@@ -1,4 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+:root {
+  /* Brand */
+  --color-brand-primary:     #0B6E4F;
+  --color-brand-dark:        #084d37;
+  --color-brand-light:       #edf7f3;
+  --color-brand-muted:       #7a9e8e;
+  --color-brand-ink:         #0a1f17;
+
+  /* Text */
+  --color-text-nav:          #4a7060;
+  --color-text-nav-active:   #0B6E4F;
+
+  /* Borders */
+  --color-border-page:       #e8ede9;
+
+  /* Typography */
+  --font-brand:              'Sora', sans-serif;
+}
 
 /* ============================================
    LOCALMARKT - Bold & Vibrant Design System
@@ -8,11 +28,11 @@
 /* Custom theme colors - Vibrant Gambian palette */
 @theme {
   /* Primary: Rich emerald green (Gambian flag inspired) */
-  --color-primary: #059669;
-  --color-primary-dark: #047857;
-  --color-primary-light: #10b981;
-  --color-primary-50: #ecfdf5;
-  --color-primary-100: #d1fae5;
+  --color-primary: var(--color-brand-primary);
+  --color-primary-dark: var(--color-brand-dark);
+  --color-primary-light: var(--color-brand-light);
+  --color-primary-50: var(--color-brand-light);
+  --color-primary-100: var(--color-border-page);
   
   /* Secondary: Vibrant golden yellow (Gambian flag inspired) */
   --color-secondary: #f59e0b;
@@ -43,9 +63,9 @@
   --color-info-light: #f0f9ff;
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-dark) 100%);
   --gradient-secondary: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  --gradient-hero: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+  --gradient-hero: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-dark) 100%);
   --gradient-card: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(0,0,0,0.02) 100%);
   --gradient-shimmer: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
   
@@ -54,7 +74,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(5, 150, 105, 0.3);
+  --shadow-glow: 0 0 20px rgba(11, 110, 79, 0.3);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 12px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
 }
@@ -65,6 +85,13 @@
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2 {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  color: #0a1f17;
+  letter-spacing: -0.02em;
 }
 
 html {
@@ -229,7 +256,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
   .btn:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4);
+    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
   }
 
   .btn:disabled {
@@ -249,29 +276,31 @@ input[type="search"]::-webkit-search-results-decoration {
     justify-content: center;
     gap: 0.5rem;
     padding: 0.625rem 1.25rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    font-size: 0.9375rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    
+    /* New Global Primary Button Styles */
+    background: #0B6E4F;
+    color: #ffffff;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    border-radius: 8px;
     border: none;
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+    font-size: 0.9375rem;
+    box-shadow: 0 2px 8px rgba(11, 110, 79, 0.35);
   }
 
   .btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+    background: #084d37;
   }
 
   .btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4);
+    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
   }
 
   .btn-primary:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
+    transform: scale(0.98);
   }
 
   .btn-primary:disabled {
@@ -341,7 +370,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
   .btn-outline:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
+    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.3);
   }
 
   .btn-outline:disabled {
@@ -470,7 +499,7 @@ input[type="search"]::-webkit-search-results-decoration {
   .input:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
   }
 
   .input:disabled {
@@ -585,9 +614,9 @@ input[type="search"]::-webkit-search-results-decoration {
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 600;
-    background: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%);
+    background: linear-gradient(135deg, rgba(11, 110, 79, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%);
     color: var(--color-primary-dark);
-    border: 1px solid rgba(5, 150, 105, 0.2);
+    border: 1px solid rgba(11, 110, 79, 0.2);
   }
 
   .badge-secondary {
@@ -606,13 +635,14 @@ input[type="search"]::-webkit-search-results-decoration {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%);
-    color: #b45309;
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    background: #fef3e2;
+    color: #92570a;
+    border: 0.5px solid #f5c842;
+    font-family: var(--font-brand);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
   }
 
   .badge-success {
@@ -659,7 +689,7 @@ input[type="search"]::-webkit-search-results-decoration {
     font-weight: 700;
     font-size: 0.9375rem;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+    box-shadow: 0 2px 8px rgba(11, 110, 79, 0.3);
   }
 
   /* ============================================
@@ -766,35 +796,38 @@ input[type="search"]::-webkit-search-results-decoration {
    ============================================ */
 
 .navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-border-light);
+  background: #ffffff;
+  border-bottom: 1px solid var(--color-border-page);
+  height: 56px;
   position: sticky;
   top: 0;
   z-index: 50;
+  display: flex;
+  align-items: center;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.625rem;
+  gap: 6px;
+  font-family: var(--font-brand);
+  font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  transition: all 0.2s ease;
+  color: var(--color-text-nav);
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
 }
 
 .nav-link:hover {
-  color: var(--color-primary);
-  background-color: var(--color-primary-50);
+  background: var(--color-brand-light);
+  color: var(--color-text-nav-active);
 }
 
 .nav-link.active {
-  color: var(--color-primary);
-  background-color: var(--color-primary-50);
-  font-weight: 600;
+  background: var(--color-brand-light);
+  color: var(--color-text-nav-active);
 }
 
 /* ============================================
@@ -813,7 +846,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
 .search-bar:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
 }
 
 .filter-chip {
@@ -1017,7 +1050,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4);
+  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
 }
 
 /* ============================================
