@@ -67,21 +67,24 @@ export default function Header() {
 
   return (
     <header className="navbar">
-      <div className="container-app">
-        <div className="flex items-center justify-between h-16">
+      <div className="container-app w-full">
+        <div className="flex items-center justify-between h-full">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/" className="flex items-center gap-2 group">
             {/* Logo Icon */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+            <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: '#0B6E4F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6h18M3 6l2 13h14L21 6M3 6l1.5-3h15L21 6" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round"/>
+                <circle cx="9" cy="21" r="1" fill="#ffffff"/>
+                <circle cx="15" cy="21" r="1" fill="#ffffff"/>
+                <path d="M9 10v5M12 9v6M15 10v5" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round"/>
               </svg>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-extrabold bg-gradient-to-r from-primary via-primary-dark to-teal-600 bg-clip-text text-transparent">
-                LocalMarkt
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-brand)', fontSize: '16px', fontWeight: 700, color: '#0a1f17', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                Local<span style={{ color: '#0B6E4F' }}>Markt</span>
               </span>
-              <span className="text-[10px] font-medium text-text-muted -mt-1 hidden sm:block">
+              <span style={{ fontSize: '9px', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-brand-muted)', marginTop: '2px' }} className="hidden sm:block">
                 The Gambia Marketplace
               </span>
             </div>
@@ -93,8 +96,9 @@ export default function Header() {
               to="/"
               className={`nav-link ${isActive('/') ? 'active' : ''}`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" strokeWidth="1.7"/>
+                <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.7"/>
               </svg>
               Browse
             </Link>
@@ -104,8 +108,9 @@ export default function Header() {
                 to="/my-listings"
                 className={`nav-link ${isActive('/my-listings') ? 'active' : ''}`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.7"/>
+                  <path d="M8 4V2M16 4V2M3 9h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
                 </svg>
                 My Listings
               </Link>
@@ -116,9 +121,9 @@ export default function Header() {
                 to="/admin"
                 className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/>
+                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
                 </svg>
                 Admin
               </Link>
@@ -144,10 +149,27 @@ export default function Header() {
                 {/* Post Listing Button - Desktop */}
                 <Link
                   to="/listings/new"
-                  className="hidden sm:inline-flex btn-primary text-sm py-2 px-4"
+                  style={{
+                    background: 'var(--color-brand-primary)',
+                    color: '#ffffff',
+                    fontFamily: 'var(--font-brand)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    padding: '7px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s'
+                  }}
+                  className="hidden sm:inline-flex hover:bg-brand-dark"
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-brand-dark)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-brand-primary)'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                   Post Listing
                 </Link>
@@ -155,11 +177,18 @@ export default function Header() {
                 {/* Post Listing Button - Mobile */}
                 <Link
                   to="/listings/new"
-                  className="sm:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white shadow-md active:scale-95 transition-transform"
+                  className="sm:hidden flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                  style={{
+                    background: 'var(--color-brand-primary)',
+                    color: '#ffffff',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                  }}
                   aria-label="Post Listing"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                 </Link>
 
@@ -167,7 +196,7 @@ export default function Header() {
                 <div className="relative">
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px]"
+                    className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px]"
                     aria-expanded={dropdownOpen}
                     aria-haspopup="true"
                     aria-label="User menu"
@@ -176,24 +205,22 @@ export default function Header() {
                       <img 
                         src={profile.avatar_url} 
                         alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover shadow-sm"
+                        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white font-semibold text-sm" aria-hidden="true">
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-brand-primary)', color: '#ffffff', fontFamily: 'var(--font-brand)', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
                         {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
                       </div>
                     )}
-                    <span className="hidden sm:block text-sm font-medium text-text max-w-[100px] truncate">
+                    <span className="hidden sm:block truncate max-w-[100px]" style={{ fontSize: '13px', fontWeight: 500, color: '#0a1f17' }}>
                       {profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0]}
                     </span>
                     <svg
-                      className={`w-4 h-4 text-text-secondary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
                       aria-hidden="true"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path d="M6 9l6 6 6-6" stroke="#4a7060" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
 
