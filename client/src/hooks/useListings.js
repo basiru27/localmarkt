@@ -90,7 +90,18 @@ export function useCreateListing() {
     },
     onSuccess: (data) => {
       if (!data.pending) {
-        queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+        queryClient.setQueriesData({ queryKey: listingKeys.lists() }, (oldData) => {
+          if (!oldData || !oldData.data) return oldData;
+          return {
+            ...oldData,
+            data: [data, ...oldData.data],
+            pagination: oldData.pagination ? {
+              ...oldData.pagination,
+              totalItems: oldData.pagination.totalItems + 1,
+            } : undefined,
+          };
+        });
+        return queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
       }
     },
   });
@@ -106,9 +117,19 @@ export function useUpdateListing() {
       const authHeader = await getAuthHeader();
       return listingsApi.update(id, data, authHeader);
     },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+    onSuccess: (updatedData, { id }) => {
+      queryClient.setQueriesData({ queryKey: listingKeys.detail(id) }, updatedData);
+      queryClient.setQueriesData({ queryKey: listingKeys.lists() }, (oldData) => {
+        if (!oldData || !oldData.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((item) => (item.id === id ? { ...item, ...updatedData } : item)),
+        };
+      });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.lists() }),
+      ]);
     },
   });
 }
@@ -123,8 +144,19 @@ export function useDeleteListing() {
       const authHeader = await getAuthHeader();
       return listingsApi.delete(id, authHeader);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+    onSuccess: (_, id) => {
+      queryClient.setQueriesData({ queryKey: listingKeys.lists() }, (oldData) => {
+        if (!oldData || !oldData.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.filter((item) => item.id !== id),
+          pagination: oldData.pagination ? {
+            ...oldData.pagination,
+            totalItems: Math.max(0, oldData.pagination.totalItems - 1),
+          } : undefined,
+        };
+      });
+      return queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
     },
   });
 }

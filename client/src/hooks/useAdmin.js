@@ -89,8 +89,11 @@ export function useUpdateUserBanStatus() {
       return adminApi.updateBanStatus(userId, data, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.all });
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
+      
+        queryClient.invalidateQueries({ queryKey: listingKeys.all })
+      ]);
     },
   });
 }
@@ -105,8 +108,11 @@ export function useHardDeleteUser() {
       return adminApi.hardDeleteUser(userId, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.all });
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
+      
+        queryClient.invalidateQueries({ queryKey: listingKeys.all })
+      ]);
     },
   });
 }
@@ -121,8 +127,11 @@ export function useModerateListing() {
       return adminApi.moderateListing(listingId, data, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.all });
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
+      
+        queryClient.invalidateQueries({ queryKey: listingKeys.all })
+      ]);
     },
   });
 }
@@ -137,8 +146,11 @@ export function useAdminDeleteListing() {
       return adminApi.deleteListing(listingId, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.all });
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
+      
+        queryClient.invalidateQueries({ queryKey: listingKeys.all })
+      ]);
     },
   });
 }
@@ -153,8 +165,11 @@ export function useUpdateReportStatus() {
       return adminApi.updateReport(reportId, data, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.all });
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
+      
+        queryClient.invalidateQueries({ queryKey: listingKeys.all })
+      ]);
     },
   });
 }

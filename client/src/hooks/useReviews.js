@@ -40,12 +40,11 @@ export function useCreateReview() {
       return reviewsApi.create(listingId, data, authHeader);
     },
     onSuccess: (_, { listingId }) => {
-      // Invalidate reviews list for this listing
-      queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) });
-      // Invalidate listing detail to refresh rating stats
-      queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) });
-      // Invalidate listings list to refresh rating stats in feed
-      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.lists() })
+      ]);
     },
   });
 }
@@ -61,12 +60,11 @@ export function useUpdateReview() {
       return reviewsApi.update(reviewId, data, authHeader);
     },
     onSuccess: (_, { listingId }) => {
-      // Invalidate reviews list for this listing
-      queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) });
-      // Invalidate listing detail to refresh rating stats
-      queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) });
-      // Invalidate listings list to refresh rating stats in feed
-      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.lists() })
+      ]);
     },
   });
 }
@@ -82,12 +80,11 @@ export function useDeleteReview() {
       return reviewsApi.delete(reviewId, authHeader);
     },
     onSuccess: (_, { listingId }) => {
-      // Invalidate reviews list for this listing
-      queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) });
-      // Invalidate listing detail to refresh rating stats
-      queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) });
-      // Invalidate listings list to refresh rating stats in feed
-      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: reviewKeys.list(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.detail(listingId) }),
+        queryClient.invalidateQueries({ queryKey: listingKeys.lists() })
+      ]);
     },
   });
 }

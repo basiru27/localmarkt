@@ -39,8 +39,8 @@ export default function Profile() {
       const res = await profileApi.update(updatedData, getAuthHeader());
       return res;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       refreshProfile(user.id);
       setSuccessMessage('Profile updated successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);

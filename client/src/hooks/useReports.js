@@ -13,7 +13,7 @@ export function useCreateReport() {
       return reportsApi.create(data, authHeader);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+      return queryClient.invalidateQueries({ queryKey: listingKeys.all });
     },
   });
 }
