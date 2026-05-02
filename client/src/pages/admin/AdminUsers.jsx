@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useHardDeleteUser, useUpdateUserBanStatus, useAdminUsers } from '../../hooks/useAdmin';
+import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers } from '../../hooks/useAdmin';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Modal, { ModalFooter } from '../../components/Modal';
@@ -23,6 +23,7 @@ export default function AdminUsers() {
 
   const { data: users, isLoading, isError, error } = useAdminUsers(filters);
   const updateBanMutation = useUpdateUserBanStatus();
+  const updateVerifyMutation = useUpdateUserVerifyStatus();
   const hardDeleteMutation = useHardDeleteUser();
 
   const handleToggleBan = async (target) => {
@@ -37,6 +38,21 @@ export default function AdminUsers() {
       success(target.is_banned ? 'User unbanned' : 'User banned');
     } catch (err) {
       showError(err.message || 'Failed to update user ban status');
+    }
+  };
+
+  const handleToggleVerify = async (target) => {
+    try {
+      await updateVerifyMutation.mutateAsync({
+        userId: target.id,
+        data: {
+          verified_seller: !target.verified_seller,
+        },
+      });
+
+      success(target.verified_seller ? 'Seller verification removed' : 'Seller verified');
+    } catch (err) {
+      showError(err.message || 'Failed to update user verification status');
     }
   };
 
@@ -120,7 +136,19 @@ export default function AdminUsers() {
 
                 return (
                   <tr key={entry.id} className="border-b border-border-light last:border-b-0">
-                    <td className="p-3 font-medium text-text">{entry.display_name || 'User'}</td>
+                    <td className="p-3 font-medium text-text">
+                      <div className="flex items-center gap-2">
+                        {entry.display_name || 'User'}
+                        {entry.verified_seller && (
+                          <span className="inline-flex items-center text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-xs font-medium" title="Verified Seller">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-3 text-text-secondary">{entry.email || 'Unknown'}</td>
                     <td className="p-3">
                       <span className="badge-secondary uppercase tracking-wide">{entry.role}</span>
@@ -133,7 +161,15 @@ export default function AdminUsers() {
                       )}
                     </td>
                     <td className="p-3">
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-2 justify-end items-center">
+                        <button
+                          onClick={() => handleToggleVerify(entry)}
+                          disabled={updateVerifyMutation.isPending}
+                          className={entry.verified_seller ? 'btn-secondary py-1.5 px-3 text-xs' : 'btn-primary py-1.5 px-3 text-xs'}
+                        >
+                          {entry.verified_seller ? 'Unverify' : 'Verify'}
+                        </button>
+
                         <button
                           onClick={() => handleToggleBan(entry)}
                           disabled={disableBan || updateBanMutation.isPending}

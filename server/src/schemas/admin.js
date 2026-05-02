@@ -10,6 +10,10 @@ export const updateBanStatusSchema = z.object({
     .nullable(),
 });
 
+export const updateVerifyStatusSchema = z.object({
+  verified_seller: z.boolean(),
+});
+
 export const moderateListingSchema = z.object({
   moderation_status: z.enum(['approved', 'rejected']),
   moderation_note: z

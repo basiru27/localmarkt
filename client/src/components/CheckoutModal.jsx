@@ -53,6 +53,7 @@ export default function CheckoutModal({ isOpen, onClose, listing }) {
 
   const sellerName = listing.seller?.display_name || 'the seller';
   const sellerPhone = listing.seller?.phone_number || '';
+  const isVerified = listing.seller?.verified_seller;
   const instructions = sellerPhone 
     ? `Please send the payment to ${sellerName} via mobile money at ${sellerPhone}.` 
     : `Please coordinate with ${sellerName} to arrange mobile money payment.`;
@@ -67,7 +68,17 @@ export default function CheckoutModal({ isOpen, onClose, listing }) {
           </div>
           
           <div className="bg-gray-50 p-4 rounded-lg border border-border-light">
-            <h4 className="font-medium text-text mb-2">Mobile Money Instructions</h4>
+            <h4 className="font-medium text-text mb-2 flex items-center gap-2">
+              Mobile Money Instructions
+              {isVerified && (
+                <span className="inline-flex items-center text-green-600 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Verified Seller">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Verified Seller
+                </span>
+              )}
+            </h4>
             <p className="text-text-secondary text-sm">{instructions}</p>
           </div>
 

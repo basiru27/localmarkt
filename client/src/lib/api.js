@@ -216,6 +216,7 @@ export const ordersApi = {
 // Admin API
 export const adminApi = {
   getStats: (authHeader) => fetchApi('/admin/stats', { headers: authHeader }),
+  getDisputes: (authHeader) => fetchApi('/admin/disputes', { headers: authHeader }),
 
   getUsers: (params = {}, authHeader) => {
     const searchParams = new URLSearchParams();
@@ -229,6 +230,13 @@ export const adminApi = {
 
   updateBanStatus: (userId, data, authHeader) =>
     fetchApi(`/admin/users/${userId}/ban`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+
+  updateVerifyStatus: (userId, data, authHeader) =>
+    fetchApi(`/admin/users/${userId}/verify`, {
       method: 'PUT',
       headers: authHeader,
       body: JSON.stringify(data),

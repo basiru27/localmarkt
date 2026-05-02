@@ -3,7 +3,7 @@ import { supabase } from '../supabase.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireAdmin, requireSuperAdmin } from '../middleware/admin.js';
 import { updateReportStatusSchema, validateBody as validateReportBody } from '../schemas/report.js';
-import { moderateListingSchema, updateBanStatusSchema, validateBody as validateAdminBody } from '../schemas/admin.js';
+import { moderateListingSchema, updateBanStatusSchema, updateVerifyStatusSchema, validateBody as validateAdminBody } from '../schemas/admin.js';
 import { createAdminLog } from '../utils/adminLogs.js';
 
 const router = Router();
@@ -50,7 +50,7 @@ router.get('/admin/users', async (req, res, next) => {
 
     let query = supabase
       .from('profiles')
-      .select('id, display_name, email, role, is_banned, created_at, listing_count:listings(count)')
+      .select('id, display_name, email, role, is_banned, verified_seller, created_at, listing_count:listings(count)')
       .order('created_at', { ascending: false });
 
     if (role) {
@@ -150,6 +150,51 @@ router.put('/admin/users/:id/ban', validateAdminBody(updateBanStatusSchema), asy
       details: {
         reason: reason || null,
       },
+    });
+
+    return res.json(updatedProfile);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * PUT /api/admin/users/:id/verify
+ */
+router.put('/admin/users/:id/verify', validateAdminBody(updateVerifyStatusSchema), async (req, res, next) => {
+  try {
+    const targetUserId = req.params.id;
+    const { verified_seller } = req.body;
+
+    const { data: targetProfile, error: targetProfileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', targetUserId)
+      .single();
+
+    if (targetProfileError) {
+      if (targetProfileError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      throw targetProfileError;
+    }
+
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from('profiles')
+      .update({ verified_seller })
+      .eq('id', targetUserId)
+      .select('id, display_name, role, is_banned, verified_seller, created_at')
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    await createAdminLog({
+      adminId: req.user.id,
+      action: verified_seller ? 'VERIFY_SELLER' : 'UNVERIFY_SELLER',
+      targetType: 'USER',
+      targetId: targetUserId,
     });
 
     return res.json(updatedProfile);
@@ -464,6 +509,65 @@ router.get('/admin/logs', requireSuperAdmin, async (req, res, next) => {
     if (error) {
       throw error;
     }
+
+    return res.json(data);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/admin/disputes
+ * Fetch all orders with status = 'disputed'
+ */
+router.get('/admin/disputes', async (req, res, next) => {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        status,
+        price_at_purchase,
+        dispute_reason,
+        buyer_note,
+        seller_note,
+        created_at,
+        updated_at,
+        listing_id,
+        buyer_id,
+        seller_id,
+        listing:listings(id, title)
+      `)
+      .eq('status', 'disputed')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    // Fetch profiles for buyer and seller
+    const profileIds = [...new Set([
+      ...orders.map(o => o.buyer_id),
+      ...orders.map(o => o.seller_id)
+    ])];
+    
+    let profilesMap = {};
+    if (profileIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, email')
+        .in('id', profileIds);
+        
+      if (profiles) {
+        profilesMap = profiles.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
+      }
+    }
+
+    const data = orders.map(o => ({
+      ...o,
+      buyer: profilesMap[o.buyer_id] || null,
+      seller: profilesMap[o.seller_id] || null
+    }));
 
     return res.json(data);
   } catch (err) {

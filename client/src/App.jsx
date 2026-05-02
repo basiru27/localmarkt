@@ -29,6 +29,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminListings = lazy(() => import('./pages/admin/AdminListings'));
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
+const AdminDisputes = lazy(() => import('./pages/admin/AdminDisputes'));
 const AdminLogs = lazy(() => import('./pages/admin/AdminLogs'));
 
 // Loading Fallback Component
@@ -146,6 +147,7 @@ function App() {
                         <Route path="users" element={<AdminUsers />} />
                         <Route path="listings" element={<AdminListings />} />
                         <Route path="reports" element={<AdminReports />} />
+                        <Route path="disputes" element={<AdminDisputes />} />
                         <Route
                           path="logs"
                           element={

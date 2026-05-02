@@ -10,6 +10,7 @@ export const adminKeys = {
   listings: (filters) => [...adminKeys.all, 'listings', filters],
   reports: (filters) => [...adminKeys.all, 'reports', filters],
   logs: () => [...adminKeys.all, 'logs'],
+  disputes: () => [...adminKeys.all, 'disputes'],
 };
 
 function useAdminHeader() {
@@ -88,12 +89,31 @@ export function useUpdateUserBanStatus() {
       const authHeader = await getAuthHeader();
       return adminApi.updateBanStatus(userId, data, authHeader);
     },
-    onSuccess: () => {
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: adminKeys.all }),
-      
-        queryClient.invalidateQueries({ queryKey: listingKeys.all })
-      ]);
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(adminKeys.users({}), (oldData) => {
+        if (!oldData) return oldData;
+        return oldData.map((user) => (user.id === variables.userId ? { ...user, is_banned: data.is_banned } : user));
+      });
+      queryClient.invalidateQueries({ queryKey: adminKeys.all });
+    },
+  });
+}
+
+export function useUpdateUserVerifyStatus() {
+  const queryClient = useQueryClient();
+  const getAuthHeader = useAdminHeader();
+
+  return useMutation({
+    mutationFn: async ({ userId, data }) => {
+      const authHeader = await getAuthHeader();
+      return adminApi.updateVerifyStatus(userId, data, authHeader);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(adminKeys.users({}), (oldData) => {
+        if (!oldData) return oldData;
+        return oldData.map((user) => (user.id === variables.userId ? { ...user, verified_seller: data.verified_seller } : user));
+      });
+      queryClient.invalidateQueries({ queryKey: adminKeys.all });
     },
   });
 }
