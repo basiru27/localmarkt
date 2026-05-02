@@ -82,6 +82,31 @@ export default function MyListings() {
           </Link>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="border-b border-border mb-6">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <Link
+              to="/my-listings"
+              className="border-primary text-primary whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+              aria-current="page"
+            >
+              Active Listings
+            </Link>
+            <Link
+              to="/my-listings/sales"
+              className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+            >
+              Sales
+            </Link>
+            <Link
+              to="/my-listings/analytics"
+              className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+            >
+              Analytics
+            </Link>
+          </nav>
+        </div>
+
         <SearchFilters filters={filters} onFiltersChange={setFilters} />
 
         {isError ? (

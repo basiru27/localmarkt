@@ -16,6 +16,9 @@ const ListingDetail = lazy(() => import('./pages/ListingDetail'));
 const CreateListing = lazy(() => import('./pages/CreateListing'));
 const EditListing = lazy(() => import('./pages/EditListing'));
 const MyListings = lazy(() => import('./pages/MyListings'));
+const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
+const MySales = lazy(() => import('./pages/MySales'));
+const MyPurchases = lazy(() => import('./pages/MyPurchases'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -94,6 +97,30 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <MyListings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-listings/analytics"
+                        element={
+                          <ProtectedRoute>
+                            <AnalyticsDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-listings/sales"
+                        element={
+                          <ProtectedRoute>
+                            <MySales />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-purchases"
+                        element={
+                          <ProtectedRoute>
+                            <MyPurchases />
                           </ProtectedRoute>
                         }
                       />

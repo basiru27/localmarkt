@@ -1,0 +1,172 @@
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useOffline } from '../context/OfflineContext';
+import { ordersApi } from '../lib/api';
+import { supabase } from '../lib/supabase';
+import { formatPrice, getPlaceholderImage } from '../lib/utils';
+import OrderStatusBadge from '../components/OrderStatusBadge';
+
+export default function MySales() {
+  const { user, getAuthHeader } = useAuth();
+  const { isOnline } = useOffline();
+  const { success, error: showError } = useToast();
+  const queryClient = useQueryClient();
+
+  const [submittingId, setSubmittingId] = useState(null);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['sales', user?.id],
+    queryFn: async () => {
+      const authHeader = await getAuthHeader();
+      const response = await ordersApi.getSales(authHeader);
+      return response?.data || [];
+    },
+    enabled: !!user?.id
+  });
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('public:orders:sales')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `seller_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sales', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async ({ id }) => {
+      const authHeader = await getAuthHeader();
+      return ordersApi.updateStatus(id, { status: 'completed' }, authHeader);
+    },
+    onSuccess: () => {
+      success('Payment confirmed successfully! Order is completed.');
+      queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
+    },
+    onError: (err) => {
+      showError(err.message || 'Failed to update order status');
+    },
+    onSettled: () => {
+      setSubmittingId(null);
+    }
+  });
+
+  const handleConfirmPayment = (orderId) => {
+    if (!isOnline) {
+      showError('You must be online to confirm payment.');
+      return;
+    }
+
+    setSubmittingId(orderId);
+    confirmPaymentMutation.mutate({ id: orderId });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Navigation Tabs (matches MyListings) */}
+      <div className="border-b border-border mb-6">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <Link
+            to="/my-listings"
+            className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+          >
+            Active Listings
+          </Link>
+          <Link
+            to="/my-listings/sales"
+            className="border-primary text-primary whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+            aria-current="page"
+          >
+            Sales
+          </Link>
+          <Link
+            to="/my-listings/analytics"
+            className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+          >
+            Analytics
+          </Link>
+        </nav>
+      </div>
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">My Sales</h1>
+
+      {isLoading ? (
+        <div className="space-y-4 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-gray-100 rounded-lg"></div>
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          Failed to load sales. Please try again later.
+        </div>
+      ) : data?.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No sales yet</h3>
+          <p className="text-gray-500 mb-4">You haven't sold any items yet.</p>
+          <Link to="/my-listings" className="btn-primary inline-flex">View Active Listings</Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {data.map((order) => (
+            <div key={order.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col md:flex-row">
+              <div className="h-32 w-full md:w-32 flex-shrink-0 bg-gray-100">
+                {order.listing?.image_url ? (
+                  <img src={order.listing.image_url} alt={`Image of ${order.listing.title}`} className="h-full w-full object-cover" />
+                ) : (
+                  <img src={getPlaceholderImage('Listing')} alt="Placeholder for missing image" className="h-full w-full object-cover opacity-50" />
+                )}
+              </div>
+              
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <Link to={`/listings/${order.listing_id}`} className="font-semibold text-lg text-gray-900 hover:text-primary transition-colors">
+                      {order.listing?.title || 'Unknown Listing'}
+                    </Link>
+                    <OrderStatusBadge status={order.status} />
+                  </div>
+                  <p className="text-primary font-bold">{formatPrice(order.price_at_purchase)}</p>
+                  <p className="text-sm text-gray-500 mt-1">Buyer: {order.buyer?.display_name || 'Unknown'}</p>
+                  {order.buyer?.phone_number && (
+                    <p className="text-sm text-gray-500">Contact: {order.buyer.phone_number}</p>
+                  )}
+                  {order.payment_reference && (
+                    <p className="text-xs text-gray-400 mt-1 font-mono">Ref: {order.payment_reference}</p>
+                  )}
+                </div>
+
+                {order.status === 'buyer_paid' && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleConfirmPayment(order.id)}
+                        disabled={submittingId === order.id || !isOnline}
+                        className="btn-primary whitespace-nowrap w-full sm:w-auto"
+                      >
+                        {submittingId === order.id ? 'Confirming...' : 'Confirm Payment Received'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
