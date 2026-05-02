@@ -195,6 +195,24 @@ export const reportsApi = {
     }),
 };
 
+// Orders API
+export const ordersApi = {
+  getPurchases: (authHeader) => fetchApi('/orders/purchases', { headers: authHeader }),
+  getSales: (authHeader) => fetchApi('/orders/sales', { headers: authHeader }),
+  create: (data, authHeader) =>
+    fetchApi('/orders', {
+      method: 'POST',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+  updateStatus: (id, data, authHeader) =>
+    fetchApi(`/orders/${id}/status`, {
+      method: 'PUT',
+      headers: authHeader,
+      body: JSON.stringify(data),
+    }),
+};
+
 // Admin API
 export const adminApi = {
   getStats: (authHeader) => fetchApi('/admin/stats', { headers: authHeader }),
