@@ -6,8 +6,15 @@ import {
   updateReviewSchema,
   validateBody,
 } from '../schemas/review.js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+const reviewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 reviews per 15 minutes
+  message: { error: 'Too many reviews submitted, please try again later.' }
+});
 
 function isListingVisible(listing) {
   return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
@@ -64,7 +71,7 @@ router.get('/listings/:listingId/reviews', optionalAuth, async (req, res, next) 
  * POST /api/listings/:listingId/reviews
  * Create a review for a listing (authenticated, cannot review own listing)
  */
-router.post('/listings/:listingId/reviews', authenticate, validateBody(createReviewSchema), async (req, res, next) => {
+router.post('/listings/:listingId/reviews', authenticate, reviewLimiter, validateBody(createReviewSchema), async (req, res, next) => {
   try {
     const { listingId } = req.params;
     const { rating, comment } = req.body;

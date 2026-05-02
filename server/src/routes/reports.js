@@ -2,14 +2,21 @@ import { Router } from 'express';
 import { supabase } from '../supabase.js';
 import { authenticate } from '../middleware/auth.js';
 import { createReportSchema, validateBody } from '../schemas/report.js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+const reportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 reports per 15 minutes
+  message: { error: 'Too many reports submitted, please try again later.' }
+});
 
 /**
  * POST /api/reports
  * Submit a report for a listing or user
  */
-router.post('/reports', authenticate, validateBody(createReportSchema), async (req, res, next) => {
+router.post('/reports', authenticate, reportLimiter, validateBody(createReportSchema), async (req, res, next) => {
   try {
     const { listing_id, reported_user_id, reason, details } = req.body;
 
