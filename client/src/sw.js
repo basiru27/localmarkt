@@ -67,16 +67,11 @@ async function syncPendingListings() {
     if (!listing) continue;
 
     try {
-      // Need a way to fetch without the proxy if we are fully isolated,
-      // but assuming the origin handles /api for now. We can fetch to /api/listings
       const response = await fetch('/api/listings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${listing.token || ''}` // we need the token, not stored? 
-          // Actually, typically requests would fail here if no token, 
-          // let's grab the token from somewhere if stored, or just send to api.
-          // Wait, offlineStorage doesn't store token. Let's just do fetch and delete on success.
+          'Authorization': `Bearer ${listing.token || ''}`
         },
         body: JSON.stringify(listing)
       });
@@ -86,7 +81,6 @@ async function syncPendingListings() {
       }
     } catch (err) {
       console.error('Failed to sync listing', listing, err);
-      // Let it remain in idb for the next sync
     }
   }
 }

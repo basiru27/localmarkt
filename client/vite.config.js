@@ -9,9 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
+      strategies: 'generateSW',
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
@@ -52,3 +50,6 @@ export default defineConfig({
     },
   },
 });
+
+
+

@@ -127,6 +127,16 @@ export default function Header() {
                   </svg>
                   My Listings
                 </Link>
+                <Link
+                  to="/my-listings/sales"
+                  className={`nav-link ${location.pathname.startsWith('/my-listings/sales') ? 'active' : ''}`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  My Sales
+                </Link>
               </>
             )}
 
@@ -294,6 +304,19 @@ export default function Header() {
                           My Listings
                         </Link>
 
+                        <Link
+                          to="/my-listings/sales"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-text-secondary hover:bg-gray-50 hover:text-text transition-colors min-h-[44px]"
+                          role="menuitem"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                          </svg>
+                          My Sales
+                        </Link>
+
                         {isAdmin && (
                           <Link
                             to="/admin"
@@ -401,6 +424,29 @@ export default function Header() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                     My Listings
+                  </Link>
+                  <Link
+                    to="/my-listings/sales"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl ${isActive('/my-listings/sales') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    My Sales
+                  </Link>
+                  <Link
+                    to="/my-purchases"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl ${isActive('/my-purchases') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                      <line x1="3" y1="6" x2="21" y2="6"></line>
+                      <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    My Purchases
                   </Link>
                 </>
               )}
