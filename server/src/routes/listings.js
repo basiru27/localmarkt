@@ -76,6 +76,7 @@ function sanitizeListingForResponse(listing) {
       avatar_url: seller.avatar_url,
       bio: seller.bio,
       phone_number: seller.phone_number,
+      verified_seller: seller.verified_seller,
     }
     : null;
 
@@ -145,7 +146,7 @@ router.get('/', async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number)
+        seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
       `, { count: 'estimated' });
 
     query = query
@@ -241,7 +242,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
         *,
         region:regions(id, name),
         category:categories(id, name),
-        seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number)
+        seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number, verified_seller)
       `, { count: 'estimated' })
       .eq('user_id', req.user.id);
 

@@ -26,7 +26,7 @@ const CONDITION_CONFIG = {
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { isOnline } = useOffline();
   const { success, error: showError } = useToast();
   const { data: listing, isLoading, isError, error } = useListing(id);
@@ -45,7 +45,7 @@ export default function ListingDetail() {
   
   // Analytics: Track listing views
   useEffect(() => {
-    if (!listing || isOwner) return;
+    if (authLoading || !listing || isOwner) return;
 
     // Use sessionStorage for a session-level flag to prevent repeat counts
     const viewedKey = `viewed_listing_${id}`;
@@ -57,22 +57,35 @@ export default function ListingDetail() {
         p_listing_id: id,
         p_event: 'view',
         p_viewer_id: user?.id || null
-      }).catch(err => console.error('Failed to record view:', err));
-      
-      sessionStorage.setItem(viewedKey, 'true');
+      })
+      .then(({ error }) => {
+        if (!error) sessionStorage.setItem(viewedKey, 'true');
+        else console.error('Failed to record view:', error);
+      })
+      .catch(err => console.error('Failed to record view:', err));
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [id, listing, isOwner, user?.id]);
+  }, [id, listing, isOwner, user?.id, authLoading]);
 
   // Analytics: Track contact clicks
   const handleContactClick = () => {
     if (isOwner) return;
     
-    supabase.rpc('record_listing_event', {
-      p_listing_id: id,
-      p_event: 'contact_click',
-      p_viewer_id: user?.id || null
+    // Use fetch with keepalive so the request isn't cancelled when navigating to WhatsApp/email
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/record_listing_event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        p_listing_id: id,
+        p_event: 'contact_click',
+        p_viewer_id: user?.id || null
+      }),
+      keepalive: true
     }).catch(err => console.error('Failed to record contact click:', err));
   };
   
