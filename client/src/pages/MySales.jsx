@@ -8,6 +8,7 @@ import { ordersApi } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { formatPrice, getPlaceholderImage } from '../lib/utils';
 import OrderStatusBadge from '../components/OrderStatusBadge';
+import DisputeModal from '../components/DisputeModal';
 
 export default function MySales() {
   const { user, getAuthHeader } = useAuth();
@@ -16,6 +17,8 @@ export default function MySales() {
   const queryClient = useQueryClient();
 
   const [submittingId, setSubmittingId] = useState(null);
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['sales', user?.id],
@@ -47,13 +50,20 @@ export default function MySales() {
     };
   }, [user?.id, queryClient]);
 
-  const confirmPaymentMutation = useMutation({
-    mutationFn: async ({ id }) => {
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, dispute_reason }) => {
       const authHeader = await getAuthHeader();
-      return ordersApi.updateStatus(id, { status: 'completed' }, authHeader);
+      const payload = { status };
+      if (dispute_reason) payload.dispute_reason = dispute_reason;
+      return ordersApi.updateStatus(id, payload, authHeader);
     },
-    onSuccess: () => {
-      success('Payment confirmed successfully! Order is completed.');
+    onSuccess: (_, variables) => {
+      if (variables.status === 'completed') {
+        success('Payment confirmed successfully! Order is completed.');
+      } else if (variables.status === 'disputed') {
+        success('Dispute raised successfully. An admin will review it.');
+        setDisputeModalOpen(false);
+      }
       queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
     },
     onError: (err) => {
@@ -71,7 +81,21 @@ export default function MySales() {
     }
 
     setSubmittingId(orderId);
-    confirmPaymentMutation.mutate({ id: orderId });
+    updateStatusMutation.mutate({ id: orderId, status: 'completed' });
+  };
+
+  const handleRaiseDispute = (reason) => {
+    if (!isOnline) {
+      showError('You must be online to raise a dispute.');
+      return;
+    }
+    setSubmittingId(selectedOrderId);
+    updateStatusMutation.mutate({ id: selectedOrderId, status: 'disputed', dispute_reason: reason });
+  };
+
+  const openDisputeModal = (orderId) => {
+    setSelectedOrderId(orderId);
+    setDisputeModalOpen(true);
   };
 
   return (
@@ -151,7 +175,14 @@ export default function MySales() {
 
                 {order.status === 'buyer_paid' && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex justify-end">
+                    <div className="flex flex-col sm:flex-row gap-2 justify-end">
+                      <button
+                        onClick={() => openDisputeModal(order.id)}
+                        disabled={submittingId === order.id || !isOnline}
+                        className="btn-secondary whitespace-nowrap w-full sm:w-auto text-red-600 hover:bg-red-50 hover:border-red-200"
+                      >
+                        Raise Dispute
+                      </button>
                       <button
                         onClick={() => handleConfirmPayment(order.id)}
                         disabled={submittingId === order.id || !isOnline}
@@ -167,6 +198,12 @@ export default function MySales() {
           ))}
         </div>
       )}
+      <DisputeModal 
+        isOpen={disputeModalOpen} 
+        onClose={() => setDisputeModalOpen(false)}
+        onSubmit={handleRaiseDispute}
+        isSubmitting={submittingId === selectedOrderId}
+      />
     </div>
   );
 }

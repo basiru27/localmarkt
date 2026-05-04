@@ -8,6 +8,7 @@ import { ordersApi } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { formatPrice, getPlaceholderImage } from '../lib/utils';
 import OrderStatusBadge from '../components/OrderStatusBadge';
+import DisputeModal from '../components/DisputeModal';
 
 export default function MyPurchases() {
   const { user, getAuthHeader } = useAuth();
@@ -17,6 +18,8 @@ export default function MyPurchases() {
 
   const [paymentReferences, setPaymentReferences] = useState({});
   const [submittingId, setSubmittingId] = useState(null);
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['purchases', user?.id],
@@ -48,13 +51,23 @@ export default function MyPurchases() {
     };
   }, [user?.id, queryClient]);
 
-  const markPaidMutation = useMutation({
-    mutationFn: async ({ id, reference }) => {
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, reference, dispute_reason }) => {
       const authHeader = await getAuthHeader();
-      return ordersApi.updateStatus(id, { status: 'buyer_paid', payment_reference: reference }, authHeader);
+      const payload = { status };
+      if (reference) payload.payment_reference = reference;
+      if (dispute_reason) payload.dispute_reason = dispute_reason;
+      return ordersApi.updateStatus(id, payload, authHeader);
     },
-    onSuccess: () => {
-      success('Payment marked as sent! Waiting for seller to verify.');
+    onSuccess: (_, variables) => {
+      if (variables.status === 'buyer_paid') {
+        success('Payment marked as sent! Waiting for seller to verify.');
+      } else if (variables.status === 'disputed') {
+        success('Dispute raised successfully. An admin will review it.');
+        setDisputeModalOpen(false);
+      } else if (variables.status === 'cancelled') {
+        success('Order cancelled successfully.');
+      }
       queryClient.invalidateQueries({ queryKey: ['purchases', user?.id] });
     },
     onError: (err) => {
@@ -78,7 +91,32 @@ export default function MyPurchases() {
     }
 
     setSubmittingId(orderId);
-    markPaidMutation.mutate({ id: orderId, reference: reference.trim() });
+    updateStatusMutation.mutate({ id: orderId, status: 'buyer_paid', reference: reference.trim() });
+  };
+
+  const handleCancelOrder = (orderId) => {
+    if (!isOnline) {
+      showError('You must be online to cancel an order.');
+      return;
+    }
+    if (window.confirm('Are you sure you want to cancel this order?')) {
+      setSubmittingId(orderId);
+      updateStatusMutation.mutate({ id: orderId, status: 'cancelled' });
+    }
+  };
+
+  const handleRaiseDispute = (reason) => {
+    if (!isOnline) {
+      showError('You must be online to raise a dispute.');
+      return;
+    }
+    setSubmittingId(selectedOrderId);
+    updateStatusMutation.mutate({ id: selectedOrderId, status: 'disputed', dispute_reason: reason });
+  };
+
+  const openDisputeModal = (orderId) => {
+    setSelectedOrderId(orderId);
+    setDisputeModalOpen(true);
   };
 
   const handleReferenceChange = (orderId, value) => {
@@ -135,8 +173,8 @@ export default function MyPurchases() {
                   )}
                 </div>
 
-                {order.status === 'pending' && (
-                  <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  {order.status === 'pending' && (
                     <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
                       <div className="flex-1 w-full">
                         <label htmlFor={`ref-${order.id}`} className="sr-only">Payment Reference</label>
@@ -150,21 +188,47 @@ export default function MyPurchases() {
                           disabled={submittingId === order.id || !isOnline}
                         />
                       </div>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={submittingId === order.id || !isOnline}
+                          className="btn-secondary whitespace-nowrap flex-1 sm:flex-none text-red-600 hover:bg-red-50 hover:border-red-200"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleMarkPaid(order.id)}
+                          disabled={submittingId === order.id || !isOnline || !paymentReferences[order.id]?.trim()}
+                          className="btn-primary whitespace-nowrap flex-1 sm:flex-none"
+                        >
+                          {submittingId === order.id ? 'Submitting...' : 'Mark as Paid'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {order.status === 'buyer_paid' && (
+                    <div className="flex justify-end">
                       <button
-                        onClick={() => handleMarkPaid(order.id)}
-                        disabled={submittingId === order.id || !isOnline || !paymentReferences[order.id]?.trim()}
-                        className="btn-primary whitespace-nowrap w-full sm:w-auto"
+                        onClick={() => openDisputeModal(order.id)}
+                        disabled={submittingId === order.id || !isOnline}
+                        className="text-sm text-red-600 hover:text-red-800 font-medium px-3 py-1.5 rounded hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
                       >
-                        {submittingId === order.id ? 'Submitting...' : 'Mark as Paid'}
+                        Raise Dispute
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
+      <DisputeModal 
+        isOpen={disputeModalOpen} 
+        onClose={() => setDisputeModalOpen(false)}
+        onSubmit={handleRaiseDispute}
+        isSubmitting={submittingId === selectedOrderId}
+      />
     </div>
   );
 }
