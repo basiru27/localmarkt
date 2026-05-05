@@ -26,13 +26,16 @@ export default function AdminDisputes() {
 
   useEffect(() => {
     const channel = supabase
-      .channel('admin:disputes')
+      .channel('admin-disputes-queue')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders', filter: 'status=eq.disputed' },
+        { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           console.log('Realtime event received in AdminDisputes:', payload);
-          queryClient.invalidateQueries({ queryKey: adminKeys.disputes(), exact: false });
+          const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
+          if (record?.status === 'disputed' || payload.old?.status === 'disputed') {
+            queryClient.invalidateQueries({ queryKey: adminKeys.disputes(), exact: false });
+          }
         }
       )
       .subscribe();

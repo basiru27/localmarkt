@@ -38,13 +38,16 @@ export default function ListingDetail() {
     if (!id) return;
 
     const channel = supabase
-      .channel(`public:listings:${id}`)
+      .channel(`listing-detail-${id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'listings', filter: `id=eq.${id}` },
+        { event: '*', schema: 'public', table: 'listings' },
         (payload) => {
           console.log('Realtime event received in ListingDetail (listing):', payload);
-          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
+          const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
+          if (record && String(record.id) === String(id)) {
+            queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
+          }
         }
       )
       .subscribe();
@@ -55,17 +58,19 @@ export default function ListingDetail() {
   }, [id, queryClient]);
 
   useEffect(() => {
-    if (!listing?.seller?.id) return;
-    const sellerId = listing.seller.id;
+    if (!listing?.seller?.id && !listing?.user_id) return;
+    const sellerId = listing?.seller?.id || listing?.user_id;
 
     const profileChannel = supabase
-      .channel(`public:profiles:${sellerId}`)
+      .channel(`profile-detail-${sellerId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${sellerId}` },
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
         (payload) => {
           console.log('Realtime event received in ListingDetail (profile):', payload);
-          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
+          if (payload.new && String(payload.new.id) === String(sellerId)) {
+            queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
+          }
         }
       )
       .subscribe();
@@ -73,7 +78,7 @@ export default function ListingDetail() {
     return () => {
       supabase.removeChannel(profileChannel);
     };
-  }, [listing?.seller?.id, id, queryClient]);
+  }, [listing?.seller?.id, listing?.user_id, id, queryClient]);
 
   const deleteMutation = useDeleteListing();
   const createReportMutation = useCreateReport();

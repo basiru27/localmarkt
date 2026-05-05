@@ -36,13 +36,16 @@ export default function MySales() {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('public:orders:sales')
+      .channel('sales-' + user.id)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders', filter: `seller_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           console.log('Realtime event received in MySales:', payload);
-          queryClient.invalidateQueries({ queryKey: ['sales', user.id], exact: false });
+          const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
+          if (record && record.seller_id === user.id) {
+            queryClient.invalidateQueries({ queryKey: ['sales', user.id], exact: false });
+          }
         }
       )
       .subscribe();

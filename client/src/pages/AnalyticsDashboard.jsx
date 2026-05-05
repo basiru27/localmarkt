@@ -72,14 +72,16 @@ export default function AnalyticsDashboard() {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('public:listings:analytics')
+      .channel('analytics-listings-' + user.id)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'listings', filter: `seller_id=eq.${user.id}` },
+        { event: 'UPDATE', schema: 'public', table: 'listings' },
         (payload) => {
           console.log('Realtime event received in AnalyticsDashboard:', payload);
-          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }), exact: false });
-          queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id], exact: false });
+          if (payload.new && (payload.new.seller_id === user.id || payload.new.user_id === user.id)) {
+            queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }), exact: false });
+            queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id], exact: false });
+          }
         }
       )
       .subscribe();
