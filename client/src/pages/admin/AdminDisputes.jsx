@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -6,6 +6,7 @@ import { adminApi, ordersApi } from '../../lib/api';
 import { adminKeys } from '../../hooks/useAdmin';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
+import { supabase } from '../../lib/supabase';
 
 export default function AdminDisputes() {
   const { getAuthHeader } = useAuth();
@@ -22,6 +23,23 @@ export default function AdminDisputes() {
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin:disputes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: 'status=eq.disputed' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: adminKeys.disputes() });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }) => {
       const authHeader = await getAuthHeader();
@@ -30,7 +48,7 @@ export default function AdminDisputes() {
     onMutate: ({ orderId }) => setSubmittingId(orderId),
     onSuccess: () => {
       success('Order status updated successfully');
-      queryClient.invalidateQueries(adminKeys.disputes());
+      queryClient.invalidateQueries({ queryKey: adminKeys.disputes() });
     },
     onError: (err) => {
       showError(err.message || 'Failed to update order status');

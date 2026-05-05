@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
-import { useAdminDeleteListing, useAdminListings, useModerateListing } from '../../hooks/useAdmin';
+import { useMemo, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAdminDeleteListing, useAdminListings, useModerateListing, adminKeys } from '../../hooks/useAdmin';
 import { useToast } from '../../context/ToastContext';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 export default function AdminListings() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const { success, error: showError } = useToast();
+  const queryClient = useQueryClient();
 
   const filters = useMemo(() => {
     const next = {};
@@ -18,6 +21,23 @@ export default function AdminListings() {
   const { data: listings, isLoading, isError, error } = useAdminListings(filters);
   const moderateMutation = useModerateListing();
   const deleteMutation = useAdminDeleteListing();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin:listings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'listings' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: adminKeys.listings(filters) });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, filters]);
 
   const handleModeration = async (listingId, moderation_status) => {
     let moderation_note = '';

@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react';
-import { useAdminReports, useUpdateReportStatus } from '../../hooks/useAdmin';
+import { useMemo, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAdminReports, useUpdateReportStatus, adminKeys } from '../../hooks/useAdmin';
 import { useToast } from '../../context/ToastContext';
 import { formatRelativeDate } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 export default function AdminReports() {
   const [statusFilter, setStatusFilter] = useState('pending');
   const { success, error: showError } = useToast();
+  const queryClient = useQueryClient();
 
   const filters = useMemo(() => {
     const next = {};
@@ -15,6 +18,23 @@ export default function AdminReports() {
 
   const { data: reports, isLoading, isError, error } = useAdminReports(filters);
   const updateReportMutation = useUpdateReportStatus();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin:reports')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reports' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: adminKeys.reports(filters) });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, filters]);
 
   const handleUpdateStatus = async (reportId, status) => {
     try {
