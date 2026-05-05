@@ -22,6 +22,7 @@ export default function ListingCard({ listing, index = 0 }) {
     created_at,
     rating_avg,
     review_count,
+    is_sold,
   } = listing;
 
   const imageUrl = image_url || getPlaceholderImage(category?.name);
@@ -44,7 +45,7 @@ export default function ListingCard({ listing, index = 0 }) {
   return (
     <Link 
       to={`/listings/${id}`} 
-      className="card group block animate-fade-in-up"
+      className={`card group block animate-fade-in-up ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       {/* Image Container */}
@@ -71,10 +72,19 @@ export default function ListingCard({ listing, index = 0 }) {
           </div>
         )}
 
+        {/* Sold badge - top right */}
+        {is_sold && (
+          <div className="absolute top-3 right-3 z-10">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-extrabold text-white bg-red-600 shadow-lg uppercase tracking-wider">
+              Sold
+            </span>
+          </div>
+        )}
+
         {/* Price tag - always visible, enhanced on hover */}
         <div className="absolute bottom-3 right-3 transition-all duration-300 transform group-hover:scale-105">
-          <span className="price-tag">
-            {formatPrice(price)}
+          <span className={`price-tag ${is_sold ? 'bg-gray-800 border-gray-700' : ''}`}>
+            {is_sold ? 'Sold' : formatPrice(price)}
           </span>
         </div>
       </div>
@@ -87,8 +97,15 @@ export default function ListingCard({ listing, index = 0 }) {
         </h3>
 
         {/* Price - always visible for accessibility */}
-        <p className="price text-xl font-extrabold mb-3">
-          {formatPrice(price)}
+        <p className="price text-xl font-extrabold mb-3 flex items-center gap-2">
+          {is_sold ? (
+            <>
+              <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
+              <span className="text-red-600">Sold</span>
+            </>
+          ) : (
+            formatPrice(price)
+          )}
         </p>
 
         {/* Condition */}
