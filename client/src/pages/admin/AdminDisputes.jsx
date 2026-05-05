@@ -21,6 +21,7 @@ export default function AdminDisputes() {
       const response = await adminApi.getDisputes(authHeader);
       return response || [];
     },
+    staleTime: 0
   });
 
   useEffect(() => {
@@ -29,8 +30,9 @@ export default function AdminDisputes() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: 'status=eq.disputed' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: adminKeys.disputes() });
+        (payload) => {
+          console.log('Realtime event received in AdminDisputes:', payload);
+          queryClient.invalidateQueries({ queryKey: adminKeys.disputes(), exact: false });
         }
       )
       .subscribe();

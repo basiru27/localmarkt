@@ -42,8 +42,9 @@ export default function ListingDetail() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings', filter: `id=eq.${id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) });
+        (payload) => {
+          console.log('Realtime event received in ListingDetail (listing):', payload);
+          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
         }
       )
       .subscribe();
@@ -62,8 +63,9 @@ export default function ListingDetail() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${sellerId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) });
+        (payload) => {
+          console.log('Realtime event received in ListingDetail (profile):', payload);
+          queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
         }
       )
       .subscribe();

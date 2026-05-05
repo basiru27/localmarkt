@@ -28,7 +28,8 @@ export default function MyPurchases() {
       const response = await ordersApi.getPurchases(authHeader);
       return response?.data || [];
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 0
   });
 
   // Realtime subscription
@@ -40,8 +41,9 @@ export default function MyPurchases() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `buyer_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['purchases', user.id] });
+        (payload) => {
+          console.log('Realtime event received in MyPurchases:', payload);
+          queryClient.invalidateQueries({ queryKey: ['purchases', user.id], exact: false });
         }
       )
       .subscribe();

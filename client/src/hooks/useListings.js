@@ -41,7 +41,7 @@ export function useListings(filters = {}) {
 
       return listingsApi.getAll(filters);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: filters.mine ? 0 : 1000 * 60 * 5, // 0 for realtime backed, 5 min for public feed
     placeholderData: keepPreviousData,
   });
 }
@@ -61,7 +61,7 @@ export function useListing(id) {
       return listingsApi.getById(id, authHeader);
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Realtime backed
   });
 }
 

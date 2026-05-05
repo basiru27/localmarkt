@@ -25,8 +25,9 @@ export default function AdminReports() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reports' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: adminKeys.reports(filters) });
+        (payload) => {
+          console.log('Realtime event received in AdminReports:', payload);
+          queryClient.invalidateQueries({ queryKey: adminKeys.reports(filters), exact: false });
         }
       )
       .subscribe();

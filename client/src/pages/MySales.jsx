@@ -27,7 +27,8 @@ export default function MySales() {
       const response = await ordersApi.getSales(authHeader);
       return response?.data || [];
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 0
   });
 
   // Realtime subscription
@@ -39,8 +40,9 @@ export default function MySales() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `seller_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['sales', user.id] });
+        (payload) => {
+          console.log('Realtime event received in MySales:', payload);
+          queryClient.invalidateQueries({ queryKey: ['sales', user.id], exact: false });
         }
       )
       .subscribe();

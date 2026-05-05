@@ -52,6 +52,7 @@ export function useAdminListings(filters = {}) {
       const authHeader = await getAuthHeader();
       return adminApi.getListings(filters, authHeader);
     },
+    staleTime: 0
   });
 }
 
@@ -64,6 +65,7 @@ export function useAdminReports(filters = {}) {
       const authHeader = await getAuthHeader();
       return adminApi.getReports(filters, authHeader);
     },
+    staleTime: 0
   });
 }
 

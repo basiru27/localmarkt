@@ -33,8 +33,9 @@ export default function MyListings() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings', filter: `seller_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100, ...filters }) });
+        (payload) => {
+          console.log('Realtime event received in MyListings:', payload);
+          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100, ...filters }), exact: false });
         }
       )
       .subscribe();

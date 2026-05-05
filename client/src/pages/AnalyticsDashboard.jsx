@@ -30,7 +30,8 @@ export default function AnalyticsDashboard() {
       const authHeader = await getAuthHeader();
       return ordersApi.getSales(authHeader);
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 0
   });
   const sales = useMemo(() => salesResponse?.data || [], [salesResponse?.data]);
 
@@ -63,7 +64,8 @@ export default function AnalyticsDashboard() {
         view_count: dataMap[day] || 0
       }));
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 0
   });
 
   useEffect(() => {
@@ -74,9 +76,10 @@ export default function AnalyticsDashboard() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'listings', filter: `seller_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }) });
-          queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id] });
+        (payload) => {
+          console.log('Realtime event received in AnalyticsDashboard:', payload);
+          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }), exact: false });
+          queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id], exact: false });
         }
       )
       .subscribe();

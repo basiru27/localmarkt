@@ -28,8 +28,9 @@ export default function AdminListings() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: adminKeys.listings(filters) });
+        (payload) => {
+          console.log('Realtime event received in AdminListings:', payload);
+          queryClient.invalidateQueries({ queryKey: adminKeys.listings(filters), exact: false });
         }
       )
       .subscribe();
