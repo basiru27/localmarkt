@@ -43,7 +43,6 @@ export default function ListingDetail() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings' },
         (payload) => {
-          console.log('Realtime event received in ListingDetail (listing):', payload);
           const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
           if (record && String(record.id) === String(id)) {
             queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
@@ -67,7 +66,6 @@ export default function ListingDetail() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles' },
         (payload) => {
-          console.log('Realtime event received in ListingDetail (profile):', payload);
           if (payload.new && String(payload.new.id) === String(sellerId)) {
             queryClient.invalidateQueries({ queryKey: listingKeys.detail(id), exact: false });
           }

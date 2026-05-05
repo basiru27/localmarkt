@@ -42,7 +42,6 @@ export default function MyPurchases() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('Realtime event received in MyPurchases:', payload);
           const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
           if (record && record.buyer_id === user.id) {
             queryClient.invalidateQueries({ queryKey: ['purchases', user.id], exact: false });

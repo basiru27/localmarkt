@@ -41,7 +41,6 @@ export default function MySales() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('Realtime event received in MySales:', payload);
           const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
           if (record && record.seller_id === user.id) {
             queryClient.invalidateQueries({ queryKey: ['sales', user.id], exact: false });

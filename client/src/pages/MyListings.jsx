@@ -34,7 +34,6 @@ export default function MyListings() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings' },
         (payload) => {
-          console.log('Realtime event received in MyListings:', payload);
           const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
           if (record && (record.seller_id === user.id || record.user_id === user.id)) {
             queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100, ...filters }), exact: false });

@@ -31,7 +31,6 @@ export default function AdminDisputes() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('Realtime event received in AdminDisputes:', payload);
           const record = payload.eventType === 'DELETE' ? payload.old : payload.new;
           if (record?.status === 'disputed' || payload.old?.status === 'disputed') {
             queryClient.invalidateQueries({ queryKey: adminKeys.disputes(), exact: false });

@@ -77,7 +77,6 @@ export default function AnalyticsDashboard() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'listings' },
         (payload) => {
-          console.log('Realtime event received in AnalyticsDashboard:', payload);
           if (payload.new && (payload.new.seller_id === user.id || payload.new.user_id === user.id)) {
             queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }), exact: false });
             queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id], exact: false });
