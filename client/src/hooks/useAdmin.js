@@ -89,11 +89,26 @@ export function useUpdateUserBanStatus() {
       const authHeader = await getAuthHeader();
       return adminApi.updateBanStatus(userId, data, authHeader);
     },
-    onSuccess: (data, variables) => {
-      queryClient.setQueryData(adminKeys.users({}), (oldData) => {
+    onMutate: async ({ userId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'users'] });
+      
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['admin', 'users'] });
+      
+      queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (oldData) => {
         if (!oldData) return oldData;
-        return oldData.map((user) => (user.id === variables.userId ? { ...user, is_banned: data.is_banned } : user));
+        return oldData.map((user) => (user.id === userId ? { ...user, is_banned: data.is_banned } : user));
       });
+      
+      return { previousQueries };
+    },
+    onError: (err, newTodo, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, previousData]) => {
+           queryClient.setQueryData(queryKey, previousData);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.all });
     },
   });
@@ -108,11 +123,26 @@ export function useUpdateUserVerifyStatus() {
       const authHeader = await getAuthHeader();
       return adminApi.updateVerifyStatus(userId, data, authHeader);
     },
-    onSuccess: (data, variables) => {
-      queryClient.setQueryData(adminKeys.users({}), (oldData) => {
+    onMutate: async ({ userId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'users'] });
+      
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['admin', 'users'] });
+      
+      queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (oldData) => {
         if (!oldData) return oldData;
-        return oldData.map((user) => (user.id === variables.userId ? { ...user, verified_seller: data.verified_seller } : user));
+        return oldData.map((user) => (user.id === userId ? { ...user, verified_seller: data.verified_seller } : user));
       });
+      
+      return { previousQueries };
+    },
+    onError: (err, newTodo, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, previousData]) => {
+           queryClient.setQueryData(queryKey, previousData);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.all });
     },
   });
@@ -146,10 +176,31 @@ export function useModerateListing() {
       const authHeader = await getAuthHeader();
       return adminApi.moderateListing(listingId, data, authHeader);
     },
-    onSuccess: () => {
+    onMutate: async ({ listingId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'listings'] });
+      
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['admin', 'listings'] });
+      
+      queryClient.setQueriesData({ queryKey: ['admin', 'listings'] }, (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData)) {
+           return oldData.map(l => l.id === listingId ? { ...l, moderation_status: data.moderation_status } : l);
+        }
+        return oldData;
+      });
+
+      return { previousQueries };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, previousData]) => {
+           queryClient.setQueryData(queryKey, previousData);
+        });
+      }
+    },
+    onSettled: () => {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: adminKeys.all }),
-      
         queryClient.invalidateQueries({ queryKey: listingKeys.all })
       ]);
     },
