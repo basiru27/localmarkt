@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { useListings } from '../hooks/useListings';
+import { useListings, listingKeys } from '../hooks/useListings';
 import { supabase } from '../lib/supabase';
 import { formatPrice } from '../lib/utils';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { ordersApi } from '../lib/api';
 
 export default function AnalyticsDashboard() {
   const { user, getAuthHeader } = useAuth();
+  const queryClient = useQueryClient();
   
   // 1. Fetch user listings
   const { 
@@ -65,6 +66,26 @@ export default function AnalyticsDashboard() {
     enabled: !!user?.id
   });
 
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('public:listings:analytics')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'listings', filter: `seller_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100 }) });
+          queryClient.invalidateQueries({ queryKey: ['seller-daily-views', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
   // 3. Calculate statistics
   const stats = useMemo(() => {
     let totalViews = 0;
@@ -74,7 +95,7 @@ export default function AnalyticsDashboard() {
     listings.forEach(listing => {
       totalViews += listing.view_count || 0;
       totalContacts += listing.contact_count || 0;
-      if (listing.moderation_status === 'approved') {
+      if (listing.moderation_status === 'approved' && !listing.is_sold) {
         activeListings += 1;
       }
     });
@@ -283,13 +304,15 @@ export default function AnalyticsDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        listing.moderation_status === 'approved' 
+                        listing.is_sold
+                          ? 'bg-gray-100 text-gray-800'
+                          : listing.moderation_status === 'approved' 
                           ? 'bg-green-100 text-green-800' 
                           : listing.moderation_status === 'rejected'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {listing.moderation_status || 'pending'}
+                        {listing.is_sold ? 'sold' : listing.moderation_status || 'pending'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 font-medium">

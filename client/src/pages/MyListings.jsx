@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useListings, useDeleteListing } from '../hooks/useListings';
+import { useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 import SearchFilters from '../components/SearchFilters';
+import { supabase } from '../lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function MyListings() {
   const { success, error: showError } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState({});
   
   // Filter by user_id on server-side for better performance
@@ -19,6 +24,25 @@ export default function MyListings() {
   const myListings = listingsData?.data || [];
   const deleteMutation = useDeleteListing();
   const [deleteModal, setDeleteModal] = useState({ open: false, listing: null });
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('public:listings:my-listings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'listings', filter: `seller_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: listingKeys.list({ mine: true, limit: 100, ...filters }) });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient, filters]);
 
   const handleDelete = async () => {
     if (!deleteModal.listing) return;
@@ -207,6 +231,11 @@ export default function MyListings() {
                             {listing.moderation_status}
                           </span>
                         )}
+                        {listing.is_sold && (
+                          <span className="text-[10px] uppercase tracking-wide px-2 py-1 rounded-full inline-flex mb-2 ml-2 bg-red-100 text-red-800 border border-red-200 font-bold">
+                            Sold
+                          </span>
+                        )}
 
                         {listing.category && (
                           <span className="badge-secondary text-xs mb-1.5">
@@ -254,15 +283,17 @@ export default function MyListings() {
                         </svg>
                         View
                       </Link>
-                      <Link
-                        to={`/listings/${listing.id}/edit`}
-                        className="btn-secondary text-xs py-1.5 px-3"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </Link>
+                      {!listing.is_sold && (
+                        <Link
+                          to={`/listings/${listing.id}/edit`}
+                          className="btn-secondary text-xs py-1.5 px-3"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </Link>
+                      )}
                       <button
                         onClick={() => setDeleteModal({ open: true, listing })}
                         className="btn-ghost text-xs py-1.5 px-3 text-error hover:bg-red-50"
