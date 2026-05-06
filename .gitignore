@@ -12,3 +12,6 @@ coverage
 localmarkt.postman_collection.json
 FEATURE_PLAN.md
 .opencode
+.gitnexus
+.claude/
+CLAUDE.md
