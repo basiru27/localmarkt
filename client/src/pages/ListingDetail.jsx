@@ -413,7 +413,14 @@ export default function ListingDetail() {
                     <span className="text-red-600 font-bold">Sold</span>
                   </>
                 ) : (
-                  formatPrice(listing.price)
+                  <>
+                    {formatPrice(listing.price)}
+                    {listing.negotiable && (
+                      <span className="ml-2 px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-200">
+                        Negotiable
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>

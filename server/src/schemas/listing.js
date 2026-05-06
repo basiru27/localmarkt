@@ -43,6 +43,10 @@ export const createListingSchema = z.object({
     .max(5, 'Maximum 5 images allowed')
     .optional()
     .nullable(),
+  negotiable: z
+    .boolean()
+    .optional()
+    .default(false),
 });
 
 // Schema for updating a listing
@@ -89,6 +93,9 @@ export const updateListingSchema = z.object({
     .max(5, 'Maximum 5 images allowed')
     .optional()
     .nullable(),
+  negotiable: z
+    .boolean()
+    .optional(),
 });
 
 /**

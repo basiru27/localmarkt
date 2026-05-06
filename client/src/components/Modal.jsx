@@ -42,6 +42,7 @@ export default function Modal({
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    preview: 'max-w-[680px]',
   };
 
   // Get all focusable elements within the modal

@@ -97,16 +97,23 @@ export default function ListingCard({ listing, index = 0 }) {
         </h3>
 
         {/* Price - always visible for accessibility */}
-        <p className="price text-xl font-extrabold mb-3 flex items-center gap-2">
-          {is_sold ? (
-            <>
-              <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
-              <span className="text-red-600">Sold</span>
-            </>
-          ) : (
-            formatPrice(price)
+        <div className="mb-3">
+          <p className="price text-xl font-extrabold flex items-center gap-2">
+            {is_sold ? (
+              <>
+                <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
+                <span className="text-red-600">Sold</span>
+              </>
+            ) : (
+              formatPrice(price)
+            )}
+          </p>
+          {listing.negotiable && !is_sold && (
+            <span className="inline-block mt-1 px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-semibold rounded-full border border-green-100">
+              Negotiable
+            </span>
           )}
-        </p>
+        </div>
 
         {/* Condition */}
         {conditionConfig && (

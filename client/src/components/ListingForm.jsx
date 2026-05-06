@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRegions, useCategories } from '../hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,8 @@ const CONDITION_OPTIONS = [
 ];
 
 import { useOffline } from '../context/OfflineContext';
+import Modal, { ModalFooter } from './Modal';
+import { formatPrice } from '../lib/utils';
 
 export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     category_id: initialData?.category_id || '',
     contact: initialData?.contact || '+220 ',
     image_url: initialData?.image_url || '',
+    negotiable: initialData?.negotiable || false,
   });
 
   const [imageFiles, setImageFiles] = useState([]);
@@ -45,6 +48,45 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState({});
   const [dragActive, setDragActive] = useState(false);
+  const [draftExists, setDraftExists] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Check for draft on mount
+  useEffect(() => {
+    if (!initialData) {
+      const saved = localStorage.getItem('localmarkt_listing_draft');
+      if (saved) {
+        setDraftExists(true);
+      }
+    }
+  }, [initialData]);
+
+  // Autosave draft
+  useEffect(() => {
+    if (initialData) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem('localmarkt_listing_draft', JSON.stringify(formData));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [formData, initialData]);
+
+  const handleContinueDraft = () => {
+    try {
+      const saved = localStorage.getItem('localmarkt_listing_draft');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFormData(parsed);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setDraftExists(false);
+  };
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem('localmarkt_listing_draft');
+    setDraftExists(false);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -253,6 +295,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     const submitData = {
       ...formData,
       price: parseFloat(formData.price),
+      negotiable: formData.negotiable,
       region_id: parseInt(formData.region_id),
       category_id: parseInt(formData.category_id),
       image_url: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
@@ -260,13 +303,47 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       ...(offlineImagesData.length > 0 && { offlineImagesData }),
     };
 
+    if (!initialData) {
+      localStorage.removeItem('localmarkt_listing_draft');
+    }
+
     onSubmit(submitData);
+  };
+
+  const handlePreviewPost = () => {
+    setShowPreview(false);
+    handleSubmit({ preventDefault: () => {} });
   };
 
   const isLoading = regionsLoading || categoriesLoading || isSubmitting || uploading;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      {draftExists && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2 text-amber-800">
+            <span className="text-lg">📝</span>
+            <p className="text-sm font-semibold">You have an unsaved draft.</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleContinueDraft}
+              className="px-3 py-1.5 text-xs font-bold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              Continue draft
+            </button>
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="px-3 py-1.5 text-xs font-bold bg-white text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div className="form-group">
         <label htmlFor="title" className="label">
@@ -312,7 +389,14 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           placeholder="Describe your item or service in detail..."
           rows={4}
         />
-        <p className="text-xs text-text-muted mt-1">A good description helps buyers understand what you're offering</p>
+        <div className="mt-1 flex flex-col gap-1">
+          <p className="text-xs text-text-muted">A good description helps buyers understand what you're offering</p>
+          {(!formData.description || formData.description.length < 20) && (
+            <p className="text-[12px] text-[#22c55e] italic flex items-center gap-1 opacity-90">
+              💡 Listings with descriptions get 3× more contacts.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Price */}
@@ -348,6 +432,19 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             {errors.price}
           </p>
         )}
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="negotiable"
+            name="negotiable"
+            checked={formData.negotiable}
+            onChange={(e) => setFormData(prev => ({ ...prev, negotiable: e.target.checked }))}
+            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+          />
+          <label htmlFor="negotiable" className="text-sm text-text-secondary cursor-pointer select-none">
+            Price is negotiable
+          </label>
+        </div>
       </div>
 
       {/* Category & Region - side by side on larger screens */}
@@ -511,7 +608,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
                 <img
                   src={preview}
                   alt={`Preview ${idx + 1}`}
-                  className="w-24 h-24 rounded-xl object-cover shadow-lg"
+                  className="w-[72px] h-[72px] rounded-xl object-cover shadow-lg"
                 />
                 {idx === 0 && (
                   <span className="absolute bottom-1 left-1 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded">Cover</span>
@@ -548,17 +645,17 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
             onDrop={handleDrop}
             aria-labelledby="image-upload-label"
             aria-describedby="image-upload-hint"
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+            className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               dragActive 
                 ? 'border-primary bg-primary-50 scale-[1.02]' 
                 : 'border-border hover:border-primary hover:bg-gray-50'
-            }`}
+            } ${imagePreviews.length === 0 ? 'h-[120px]' : 'py-6'}`}
           >
-            <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-colors ${
+            <div className={`w-10 h-10 mb-2 rounded-xl flex items-center justify-center transition-colors ${
               dragActive ? 'bg-primary text-white' : 'bg-gray-100 text-text-muted'
             }`} aria-hidden="true">
               <svg
-                className="w-8 h-8"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -571,10 +668,12 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
                 />
               </svg>
             </div>
-            <p className="text-base font-medium text-text mb-1">
-              {dragActive ? 'Drop your image here' : 'Click to upload or drag and drop'}
-            </p>
-            <p id="image-upload-hint" className="text-sm text-text-muted">JPEG, PNG, or WebP (max 5MB)</p>
+            <div className="text-center">
+              <p className="text-sm font-medium text-text mb-0.5">
+                {dragActive ? 'Drop your image here' : 'Click to upload or drag and drop'}
+              </p>
+              <p id="image-upload-hint" className="text-xs text-text-muted">JPEG, PNG, or WebP (max 5MB)</p>
+            </div>
           </div>
         )}
 
@@ -643,13 +742,115 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
         </button>
         <button
           type="button"
+          onClick={() => {
+            if (validate()) setShowPreview(true);
+          }}
+          className="btn-secondary py-3.5 flex-1"
+          disabled={isLoading}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Preview
+        </button>
+        <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="btn-secondary py-3.5"
+          className="btn-ghost py-3.5 px-4"
           disabled={isLoading}
         >
           Cancel
         </button>
       </div>
-    </form>
+      </form>
+      {/* Preview Modal */}
+      <Modal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        title="Listing Preview"
+        size="preview"
+      >
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-1/2">
+              <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-sm">
+                {imagePreviews.length > 0 ? (
+                  <img src={imagePreviews[0]} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm font-medium">No Image Provided</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="w-full md:w-1/2 space-y-5">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-text leading-tight mb-2 break-words">
+                  {formData.title || 'Untitled Listing'}
+                </h2>
+                <div className="price-tag text-xl inline-flex items-center gap-2">
+                  {formData.price ? formatPrice(formData.price) : 'GMD 0.00'}
+                  {formData.negotiable && (
+                    <span className="ml-2 px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-200">
+                      Negotiable
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {formData.condition && (
+                  <span className="badge-secondary border border-gray-200">
+                    {CONDITION_OPTIONS.find(c => c.value === formData.condition)?.label || formData.condition}
+                  </span>
+                )}
+                {formData.region_id && (
+                  <span className="badge-secondary border border-gray-200">
+                    {regions?.find(r => r.id === parseInt(formData.region_id))?.name || 'Region'}
+                  </span>
+                )}
+                {formData.category_id && (
+                  <span className="badge-secondary border border-gray-200">
+                    {categories?.find(c => c.id === parseInt(formData.category_id))?.name || 'Category'}
+                  </span>
+                )}
+              </div>
+
+              <div className="card-static p-4">
+                <h3 className="font-semibold text-text mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                  Description
+                </h3>
+                <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
+                  {formData.description || <span className="italic text-gray-400">No description provided.</span>}
+                </p>
+              </div>
+
+              <div className="card-static p-4">
+                <h3 className="font-semibold text-text mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  Contact Preview
+                </h3>
+                <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-3 border border-primary/10">
+                  <p className="text-text font-semibold text-center">{formData.contact || '+220 XXXXXXX'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ModalFooter>
+          <button type="button" onClick={() => setShowPreview(false)} className="btn-secondary">
+            Edit Form
+          </button>
+          <button type="button" onClick={handlePreviewPost} className="btn-primary" disabled={isLoading}>
+            {uploading || isSubmitting ? 'Posting...' : 'Looks good — Post Listing'}
+          </button>
+        </ModalFooter>
+      </Modal>
+    </>
   );
 }
