@@ -160,18 +160,24 @@ export function debounce(func, wait) {
 }
 
 // Generate placeholder image URL
-export function getPlaceholderImage(category = 'general') {
-  const colors = {
-    Electronics: '3b82f6',
-    Clothing: 'ec4899',
-    'Food & Produce': '22c55e',
-    Furniture: 'f59e0b',
-    Vehicles: '6366f1',
-    Services: '8b5cf6',
-    Agriculture: '84cc16',
-    Other: '6b7280',
+export function getPlaceholderImage(category = 'Other') {
+  const icons = {
+    Clothing: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 10a4 4 0 0 1-8 0"/>',
+    Electronics: '<polygon stroke-linecap="round" stroke-linejoin="round" stroke-width="2" points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    'Food & Produce': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 2c1 .5 2 2 2 5"/>',
+    Vehicles: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle stroke-linecap="round" stroke-linejoin="round" stroke-width="2" cx="7" cy="17" r="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6"/><circle stroke-linecap="round" stroke-linejoin="round" stroke-width="2" cx="17" cy="17" r="2"/>',
+    Services: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    Agriculture: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 22l10-10"/>',
+    Other: '<circle stroke-linecap="round" stroke-linejoin="round" stroke-width="2" cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 17h.01"/>',
   };
   
-  const color = colors[category] || colors.Other;
-  return `https://placehold.co/400x300/${color}/ffffff?text=${encodeURIComponent(category)}`;
+  const svgIcon = icons[category] || icons.Other;
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+    <rect width="100%" height="100%" fill="#f0f7f0" />
+    <svg x="180" y="130" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#65a30d">
+      ${svgIcon}
+    </svg>
+  </svg>`;
+  
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
 }

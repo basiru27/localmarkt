@@ -83,7 +83,7 @@ export async function uploadImage(file, userId) {
     } else if (errorMessage.includes('policy') || errorMessage.includes('permission') || 
                errorMessage.includes('row-level security') || statusCode === 403) {
       throw new ImageUploadError(
-        'Permission denied. Please ensure you are logged in and storage policies are configured.',
+        `Permission denied (Status ${statusCode}). Ensure you are logged in and policies are set. Details: ${error.message || JSON.stringify(error)}`,
         'PERMISSION_DENIED'
       );
     } else if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {

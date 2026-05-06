@@ -35,8 +35,12 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     image_url: initialData?.image_url || '',
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(initialData?.image_url || null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState(
+    Array.isArray(initialData?.images) && initialData.images.length > 0
+      ? initialData.images
+      : (initialData?.image_url ? [initialData.image_url] : [])
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState({});
@@ -66,22 +70,27 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   };
 
   const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    
+    if (imagePreviews.length + files.length > 5) {
+      setErrors((prev) => ({ ...prev, image: 'Maximum 5 images allowed' }));
+      return;
+    }
 
     try {
-      await validateImage(file);
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      for (const file of files) {
+        await validateImage(file);
+      }
+      setImageFiles(prev => [...prev, ...files]);
+      setImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (error) {
       if (error instanceof ImageUploadError) {
         setErrors((prev) => ({ ...prev, image: error.message }));
       }
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -100,13 +109,20 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     e.stopPropagation();
     setDragActive(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.dataTransfer.files || []);
+    if (!files.length) return;
+
+    if (imagePreviews.length + files.length > 5) {
+      setErrors((prev) => ({ ...prev, image: 'Maximum 5 images allowed' }));
+      return;
+    }
 
     try {
-      await validateImage(file);
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      for (const file of files) {
+        await validateImage(file);
+      }
+      setImageFiles(prev => [...prev, ...files]);
+      setImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (error) {
       if (error instanceof ImageUploadError) {
@@ -115,13 +131,28 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setFormData((prev) => ({ ...prev, image_url: '' }));
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const removeImage = (index) => {
+    const isNewFile = typeof imagePreviews[index] === 'string' && imagePreviews[index].startsWith('blob:');
+    if (isNewFile) {
+      // It's a new file, remove from imageFiles based on how many exist
+      // This is slightly tricky, we'll just rebuild the arrays
+      const objUrl = imagePreviews[index];
+      const fileIndex = imageFiles.findIndex(f => URL.createObjectURL(f) === objUrl || f.name); // approximation
+      setImageFiles(prev => {
+        const newFiles = [...prev];
+        if (fileIndex !== -1) newFiles.splice(fileIndex, 1);
+        else newFiles.splice(index - (imagePreviews.length - prev.length), 1);
+        return newFiles;
+      });
     }
+    
+    setImagePreviews(prev => {
+      const newPreviews = [...prev];
+      newPreviews.splice(index, 1);
+      return newPreviews;
+    });
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const validate = () => {
@@ -164,21 +195,26 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
 
     if (!validate()) return;
 
-    let finalImageUrl = formData.image_url;
-    let offlineImageData = null;
+    let uploadedUrls = [];
+    let offlineImagesData = [];
 
-    // Upload new image if selected
-    if (imageFile) {
+    // Filter out existing URLs that were kept
+    const existingUrls = imagePreviews.filter(p => typeof p === 'string' && !p.startsWith('blob:'));
+    uploadedUrls = [...existingUrls];
+
+    if (imageFiles.length > 0) {
       if (!isOnline) {
         try {
-          const compressed = await compressImage(imageFile);
-          const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(compressed);
-          });
-          offlineImageData = { dataUrl: base64, type: compressed.type, name: compressed.name };
+          for (const file of imageFiles) {
+            const compressed = await compressImage(file);
+            const base64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(compressed);
+            });
+            offlineImagesData.push({ dataUrl: base64, type: compressed.type, name: compressed.name });
+          }
         } catch (err) {
           console.error(err);
           setErrors((prev) => ({ ...prev, image: 'Failed to process image for offline saving' }));
@@ -186,14 +222,20 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
         }
       } else {
         try {
+          if (!user || !user.id) {
+            throw new Error("User session is missing or invalid. Please log out and log back in.");
+          }
+          
           setUploading(true);
           setUploadProgress(0);
-          // Simulate progress for better UX
           const progressInterval = setInterval(() => {
             setUploadProgress(prev => Math.min(prev + 10, 90));
           }, 200);
           
-          finalImageUrl = await uploadImage(imageFile, user.id);
+          for (const file of imageFiles) {
+            const url = await uploadImage(file, user.id);
+            uploadedUrls.push(url);
+          }
           
           clearInterval(progressInterval);
           setUploadProgress(100);
@@ -213,8 +255,9 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       price: parseFloat(formData.price),
       region_id: parseInt(formData.region_id),
       category_id: parseInt(formData.category_id),
-      image_url: finalImageUrl || null,
-      ...(offlineImageData && { offlineImageData }),
+      image_url: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
+      images: uploadedUrls,
+      ...(offlineImagesData.length > 0 && { offlineImagesData }),
     };
 
     onSubmit(submitData);
@@ -461,33 +504,34 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           <span className="text-text-muted font-normal ml-1">(optional)</span>
         </label>
         
-        {imagePreview ? (
-          <div className="relative inline-block animate-scale-in">
-            <img
-              src={imagePreview}
-              alt="Preview of selected product image"
-              className="w-full max-w-sm h-auto rounded-xl object-cover shadow-lg"
-            />
-            <button
-              type="button"
-              onClick={removeImage}
-              aria-label="Remove selected image"
-              className="absolute top-3 right-3 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            {imageFile && (
-              <div className="mt-2 text-sm text-text-secondary flex items-center gap-2" aria-live="polite">
-                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Selected: {imageFile.name}</span>
+        {imagePreviews.length > 0 && (
+          <div className="flex flex-wrap gap-4 mb-4">
+            {imagePreviews.map((preview, idx) => (
+              <div key={idx} className="relative inline-block animate-scale-in">
+                <img
+                  src={preview}
+                  alt={`Preview ${idx + 1}`}
+                  className="w-24 h-24 rounded-xl object-cover shadow-lg"
+                />
+                {idx === 0 && (
+                  <span className="absolute bottom-1 left-1 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded">Cover</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeImage(idx)}
+                  aria-label="Remove image"
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 focus:outline-none transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-            )}
+            ))}
           </div>
-        ) : (
+        )}
+        
+        {imagePreviews.length < 5 && (
           <div
             role="button"
             tabIndex={0}
@@ -538,6 +582,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          multiple
           onChange={handleImageSelect}
           className="sr-only"
           aria-labelledby="image-upload-label"

@@ -38,6 +38,11 @@ export const createListingSchema = z.object({
     .url('Invalid image URL')
     .optional()
     .nullable(),
+  images: z
+    .array(z.string().url('Invalid image URL'))
+    .max(5, 'Maximum 5 images allowed')
+    .optional()
+    .nullable(),
 });
 
 // Schema for updating a listing
@@ -77,6 +82,11 @@ export const updateListingSchema = z.object({
   image_url: z
     .string()
     .url('Invalid image URL')
+    .optional()
+    .nullable(),
+  images: z
+    .array(z.string().url('Invalid image URL'))
+    .max(5, 'Maximum 5 images allowed')
     .optional()
     .nullable(),
 });

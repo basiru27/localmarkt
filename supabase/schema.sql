@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS listings (
   category_id INTEGER REFERENCES categories(id),
   contact TEXT NOT NULL,
   image_url TEXT,
+  images TEXT[] DEFAULT ARRAY[]::TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -210,6 +211,16 @@ ON CONFLICT (id) DO UPDATE SET
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp']::text[];
 
 -- Storage policies for listing-images bucket
+
+-- Policy 1: Allow users to view their own images (Required for upload API to return success)
+DROP POLICY IF EXISTS "Users can view their own listing images" ON storage.objects;
+CREATE POLICY "Users can view their own listing images"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'listing-images' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 
 -- Policy 2: Allow authenticated users to upload images
 DROP POLICY IF EXISTS "Authenticated users can upload listing images" ON storage.objects;

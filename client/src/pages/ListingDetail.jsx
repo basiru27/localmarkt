@@ -87,6 +87,7 @@ export default function ListingDetail() {
   const [reportDetails, setReportDetails] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const isOwner = user && listing && user.id === listing.user_id;
   
@@ -238,7 +239,13 @@ export default function ListingDetail() {
     return null;
   }
 
-  const imageUrl = listing.image_url || getPlaceholderImage(listing.category?.name);
+  const allImages = Array.isArray(listing.images) && listing.images.length > 0 
+    ? listing.images 
+    : (listing.image_url ? [listing.image_url] : []);
+  
+  const currentImageUrl = allImages.length > 0 
+    ? allImages[activeImageIndex] || allImages[0] 
+    : getPlaceholderImage(listing.category?.name);
 
   // Category color mapping
   const categoryColors = {
@@ -285,7 +292,8 @@ export default function ListingDetail() {
                 <div className="absolute inset-0 skeleton" aria-hidden="true" />
               )}
               <img
-                src={imageUrl}
+                key={currentImageUrl}
+                src={currentImageUrl}
                 alt={listing.title}
                 loading="lazy"
                 decoding="async"
@@ -315,6 +323,30 @@ export default function ListingDetail() {
                 </div>
               )}
             </div>
+
+            {/* Thumbnail Row */}
+            {allImages.length > 1 && (
+              <div className="flex flex-row gap-3 mt-4 overflow-x-auto pb-2 snap-x">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setImageLoaded(false);
+                      setActiveImageIndex(idx);
+                    }}
+                    className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden snap-center transition-all ${activeImageIndex === idx ? 'ring-2 ring-primary ring-offset-2 opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${listing.title} thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details Section */}
@@ -487,7 +519,7 @@ export default function ListingDetail() {
             )}
 
             {/* Owner actions */}
-            {isOwner && (
+            {isOwner && !listing.is_sold && (
               <div className="card-static p-4 sm:p-5 border-2 border-dashed border-border">
                 <h2 className="font-semibold text-text mb-3 flex items-center gap-2">
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -497,17 +529,15 @@ export default function ListingDetail() {
                   Manage Listing
                 </h2>
                 <div className="flex gap-3">
-                  {!listing.is_sold && (
-                    <Link
-                      to={`/listings/${id}/edit`}
-                      className="btn-secondary flex-1"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </Link>
-                  )}
+                  <Link
+                    to={`/listings/${id}/edit`}
+                    className="btn-secondary flex-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </Link>
                   <button
                     onClick={() => setShowDeleteModal(true)}
                     className="btn-danger flex-1"
