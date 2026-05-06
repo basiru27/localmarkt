@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useListing, useDeleteListing, listingKeys } from '../hooks/useListings';
+import { useListing, useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
 import { useReviews } from '../hooks/useReviews';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -15,6 +15,7 @@ import StarRating from '../components/StarRating';
 import SellerInfo from '../components/SellerInfo';
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
+import ListingCard from '../components/ListingCard';
 
 // Condition display configuration
 const CONDITION_CONFIG = {
@@ -33,6 +34,28 @@ export default function ListingDetail() {
   const queryClient = useQueryClient();
   const { data: listing, isLoading, isError, error } = useListing(id);
   const { data: reviews, isLoading: reviewsLoading } = useReviews(id);
+
+  // Fetch more from seller
+  const { data: sellerListingsData } = useListings({
+    user_id: listing?.user_id || 'none',
+    limit: 4,
+    sort: 'newest'
+  });
+
+  // Fetch similar items
+  const { data: similarListingsData } = useListings({
+    category: listing?.category?.id || 'none',
+    limit: 4,
+    sort: 'newest'
+  });
+
+  const sellerListings = sellerListingsData?.data
+    ?.filter(item => String(item.id) !== String(id))
+    ?.slice(0, 3) || [];
+
+  const similarListings = similarListingsData?.data
+    ?.filter(item => String(item.id) !== String(id) && item.user_id !== listing?.user_id)
+    ?.slice(0, 3) || [];
 
   useEffect(() => {
     if (!id) return;
@@ -264,6 +287,23 @@ export default function ListingDetail() {
   return (
     <div className="container-app py-4 sm:py-6">
       <div className="max-w-4xl mx-auto animate-fade-in">
+        {/* Breadcrumb */}
+        <nav className="text-[13px] text-gray-500 mb-4 flex items-center space-x-2">
+          <Link to="/" className="hover:text-primary transition-colors">Browse</Link>
+          <span>/</span>
+          {listing.category?.name && (
+            <>
+              <Link to={`/?category=${encodeURIComponent(listing.category.name)}`} className="hover:text-primary transition-colors">
+                {listing.category.name}
+              </Link>
+              <span>/</span>
+            </>
+          )}
+          <span className="truncate max-w-[200px] sm:max-w-xs">
+            {listing.title.length > 40 ? listing.title.substring(0, 40) + '...' : listing.title}
+          </span>
+        </nav>
+
         {/* Back link */}
         <Link
           to="/"
@@ -403,6 +443,13 @@ export default function ListingDetail() {
                 </svg>
                 {formatRelativeDate(listing.created_at)}
               </span>
+              <span className="inline-flex items-center gap-1.5 text-[13px] text-gray-500">
+                <svg className="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>{listing.view_count || 0} views</span>
+              </span>
             </div>
 
             {/* Description */}
@@ -430,14 +477,19 @@ export default function ListingDetail() {
                   Purchase
                 </h2>
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => setShowCheckoutModal(true)}
-                    className="btn-primary w-full shadow-lg"
-                    disabled={!isOnline}
-                    title={!isOnline ? "Checkout is not available offline" : ""}
-                  >
-                    Buy Now
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowCheckoutModal(true)}
+                      className="btn-primary w-full shadow-lg"
+                      disabled={!isOnline}
+                      title={!isOnline ? "Checkout is not available offline" : ""}
+                    >
+                      Express Interest
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      The seller will contact you to arrange payment and delivery.
+                    </p>
+                  </>
                 ) : (
                   <div className="text-center py-4">
                     <p className="text-text-secondary mb-4">
@@ -477,7 +529,7 @@ export default function ListingDetail() {
                         href={getWhatsAppLink(listing.contact, listing.title)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-whatsapp w-full"
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none focus:ring-[#25D366] bg-[#25D366] hover:bg-[#1ebe5d] text-white"
                         onClick={handleContactClick}
                       >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -619,6 +671,29 @@ export default function ListingDetail() {
             onEditReview={handleEditReview}
           />
         </div>
+
+        {/* Related Listings */}
+        {sellerListings.length > 0 && (
+          <div className="mt-12 space-y-4">
+            <h2 className="text-xl font-bold text-text">More from {listing.seller?.display_name || 'this seller'}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sellerListings.map(item => (
+                <ListingCard key={item.id} listing={item} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {similarListings.length > 0 && (
+          <div className="mt-12 space-y-4">
+            <h2 className="text-xl font-bold text-text">Similar items</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {similarListings.map(item => (
+                <ListingCard key={item.id} listing={item} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
