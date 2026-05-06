@@ -7,11 +7,25 @@ import { savePendingListing, registerBackgroundSync } from '../lib/offlineStorag
 // Query keys
 export const listingKeys = {
   all: ['listings'],
+  stats: () => [...listingKeys.all, 'stats'],
   lists: () => [...listingKeys.all, 'list'],
   list: (filters) => [...listingKeys.lists(), filters],
   details: () => [...listingKeys.all, 'detail'],
   detail: (id) => [...listingKeys.details(), id],
 };
+
+export function useListingStats() {
+  return useQuery({
+    queryKey: listingKeys.stats(),
+    queryFn: async () => {
+      // Direct fetch to our new endpoint
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/listings/stats`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 mins
+  });
+}
 
 // Get all listings with optional filters
 export function useListings(filters = {}) {

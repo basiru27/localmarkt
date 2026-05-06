@@ -126,6 +126,40 @@ function isPubliclyVisibleListing(listing) {
   return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
 }
 
+
+/**
+ * GET /api/listings/stats
+ * Get high-level marketplace statistics
+ */
+router.get('/stats', async (req, res, next) => {
+  try {
+    const { count: listingsCount, error: listingsError } = await supabase
+      .from('listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('moderation_status', 'approved');
+
+    if (listingsError) throw listingsError;
+
+    const { data: listingsData, error: listingsDataError } = await supabase
+      .from('listings')
+      .select('region_id, user_id')
+      .eq('moderation_status', 'approved');
+      
+    if (listingsDataError) throw listingsDataError;
+    
+    const uniqueRegions = new Set(listingsData.map(l => l.region_id).filter(Boolean)).size;
+    const uniqueSellers = new Set(listingsData.map(l => l.user_id).filter(Boolean)).size;
+
+    res.json({
+      totalListings: listingsCount || 0,
+      activeRegions: uniqueRegions || 0,
+      activeSellers: uniqueSellers || 0
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 /**
  * GET /api/listings
  * List all listings with optional filters
@@ -158,6 +192,8 @@ router.get('/', async (req, res, next) => {
       query = query.order('price', { ascending: true });
     } else if (sort === 'price_desc') {
       query = query.order('price', { ascending: false });
+    } else if (sort === 'views') {
+      query = query.order('view_count', { ascending: false, nullsFirst: false });
     } else if (sort === 'oldest') {
       query = query.order('created_at', { ascending: true });
     } else {
@@ -267,6 +303,8 @@ router.get('/mine', authenticate, async (req, res, next) => {
       query = query.order('price', { ascending: true });
     } else if (sort === 'price_desc') {
       query = query.order('price', { ascending: false });
+    } else if (sort === 'views') {
+      query = query.order('view_count', { ascending: false, nullsFirst: false });
     } else if (sort === 'oldest') {
       query = query.order('created_at', { ascending: true });
     } else {

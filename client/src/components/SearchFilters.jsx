@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRegions, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 
-export default function SearchFilters({ filters, onFiltersChange }) {
+export default function SearchFilters({ filters, onFiltersChange, hideSearch = false }) {
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: regions, isLoading: regionsLoading } = useRegions();
@@ -59,11 +59,50 @@ export default function SearchFilters({ filters, onFiltersChange }) {
   const hasActiveFilters = filters.search || filters.category || filters.region;
   const activeFilterCount = [filters.search, filters.category, filters.region].filter(Boolean).length;
 
+  const CATEGORY_NAMES = ["All", "Electronics", "Clothing", "Food & Produce", "Agriculture", "Vehicles", "Services", "Other"];
+
+  const handleChipClick = (catName) => {
+    if (catName === "All") {
+      onFiltersChange({ ...filters, category: undefined });
+    } else {
+      const cat = categories?.find(c => c.name === catName);
+      if (cat) {
+        onFiltersChange({ ...filters, category: cat.id.toString() });
+      }
+    }
+  };
+
+  // Determine active chip. If filters.category is set, find its name. Else "All".
+  const activeCategoryName = filters.category && categories
+    ? categories.find(c => c.id.toString() === filters.category.toString())?.name
+    : "All";
+
   return (
     <div className="card-static p-4 sm:p-5 mb-6">
+      {/* Category Chips (Task 2A) */}
+      <div className="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {CATEGORY_NAMES.map(name => {
+          const isActive = activeCategoryName === name;
+          return (
+            <button
+              key={name}
+              onClick={() => handleChipClick(name)}
+              className={`flex-shrink-0 h-[24px] px-[12px] text-[13px] rounded-full whitespace-nowrap transition-colors ${
+                isActive 
+                  ? 'bg-[#1a5c38] text-white border border-[#1a5c38]' 
+                  : 'bg-white text-[#1a5c38] border border-[#1a5c38] hover:bg-gray-50'
+              }`}
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Search Bar */}
-      <div className="flex gap-3">
-        <div className="flex-1 relative">
+      {!hideSearch && (
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
             <svg
               className="w-5 h-5 text-text-muted"
@@ -123,31 +162,6 @@ export default function SearchFilters({ filters, onFiltersChange }) {
 
         {/* Desktop Filters */}
         <div className="hidden sm:flex gap-3">
-          {/* Category filter */}
-          <div className="w-44 relative">
-            <label htmlFor="category-filter" className="sr-only">Filter by category</label>
-            <select
-              id="category-filter"
-              value={filters.category || ''}
-              onChange={handleCategoryChange}
-              className="input py-3"
-              disabled={categoriesLoading}
-              aria-busy={categoriesLoading}
-            >
-              <option value="">{categoriesLoading ? 'Loading...' : 'All Categories'}</option>
-              {categories?.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            {categoriesLoading && (
-              <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-              </div>
-            )}
-          </div>
-
           {/* Region filter */}
           <div className="w-44 relative">
             <label htmlFor="region-filter" className="sr-only">Filter by region</label>
@@ -187,38 +201,12 @@ export default function SearchFilters({ filters, onFiltersChange }) {
           )}
         </div>
       </div>
+      )}
 
       {/* Mobile Expanded Filters */}
       {isExpanded && (
         <div id="mobile-filters" className="sm:hidden mt-4 pt-4 border-t border-border animate-fade-in-down">
           <div className="space-y-3">
-            {/* Category filter */}
-            <div>
-              <label htmlFor="mobile-category-filter" className="label">Category</label>
-              <div className="relative">
-                <select
-                  id="mobile-category-filter"
-                  value={filters.category || ''}
-                  onChange={handleCategoryChange}
-                  className="input"
-                  disabled={categoriesLoading}
-                  aria-busy={categoriesLoading}
-                >
-                  <option value="">{categoriesLoading ? 'Loading categories...' : 'All Categories'}</option>
-                  {categories?.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {categoriesLoading && (
-                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Region filter */}
             <div>
               <label htmlFor="mobile-region-filter" className="label">Region</label>

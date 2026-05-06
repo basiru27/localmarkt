@@ -1,6 +1,6 @@
-import { useMemo, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useListings } from '../hooks/useListings';
+import { useMemo, useCallback, useState } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useListings, useListingStats } from '../hooks/useListings';
 import { useOffline } from '../context/OfflineContext';
 import { useAuth } from '../context/AuthContext';
 import ListingCard from '../components/ListingCard';
@@ -11,6 +11,8 @@ import Pagination from '../components/Pagination';
 
 export default function ListingFeed() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [heroSearch, setHeroSearch] = useState('');
   
   // Derive filters directly from URL params (single source of truth)
   const filters = useMemo(() => {
@@ -50,6 +52,13 @@ export default function ListingFeed() {
     setSearchParams(params, { replace: true });
   }, [setSearchParams]);
 
+  const handleHeroSearch = (e) => {
+    e.preventDefault();
+    if (heroSearch.trim()) {
+      handleFiltersChange({ search: heroSearch });
+    }
+  };
+
   const handlePageChange = useCallback((page) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', page);
@@ -61,6 +70,7 @@ export default function ListingFeed() {
   const { data: listingsData, isLoading, isError, error } = useListings(filters);
   const listings = listingsData?.data;
   const pagination = listingsData?.pagination;
+  const { data: statsData, isLoading: isStatsLoading } = useListingStats();
 
   const { isOnline } = useOffline();
   const { isAuthenticated } = useAuth();
@@ -82,6 +92,28 @@ export default function ListingFeed() {
               <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
                 Your trusted marketplace for products and services. Connect with your community today.
               </p>
+              
+              <form onSubmit={handleHeroSearch} className="max-w-[600px] mx-auto mb-8 relative flex items-center">
+                <div className="absolute left-4 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={heroSearch}
+                  onChange={(e) => setHeroSearch(e.target.value)}
+                  placeholder="Search products in The Gambia..."
+                  className="w-full bg-white text-gray-900 rounded-full py-4 pl-12 pr-32 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-full transition-colors"
+                >
+                  Search
+                </button>
+              </form>
+
               {!isAuthenticated && (
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link
@@ -115,21 +147,33 @@ export default function ListingFeed() {
             <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-10 text-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
                 <div className="text-2xl font-bold">
-                  {isLoading ? (
-                    <span className="inline-block w-8 h-6 bg-white/20 rounded animate-pulse" />
+                  {isStatsLoading ? (
+                    <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
-                    `${pagination?.totalItems || listings?.length || 0}+`
+                    `${statsData?.totalListings || 0}+`
                   )}
                 </div>
                 <div className="text-sm text-white/80">Listings</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                <div className="text-2xl font-bold">8</div>
+                <div className="text-2xl font-bold">
+                  {isStatsLoading ? (
+                    <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
+                  ) : (
+                    `${statsData?.activeRegions || 0}`
+                  )}
+                </div>
                 <div className="text-sm text-white/80">Regions</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                <div className="text-2xl font-bold">24/7</div>
-                <div className="text-sm text-white/80">Available</div>
+                <div className="text-2xl font-bold">
+                  {isStatsLoading ? (
+                    <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
+                  ) : (
+                    `${statsData?.activeSellers || 0}`
+                  )}
+                </div>
+                <div className="text-sm text-white/80">Active Sellers</div>
               </div>
             </div>
           </div>
@@ -170,7 +214,8 @@ export default function ListingFeed() {
         {/* Search and filters */}
         <SearchFilters 
           filters={filters} 
-          onFiltersChange={handleFiltersChange} 
+          onFiltersChange={handleFiltersChange}
+          hideSearch={!hasActiveFilters}
         />
 
         {/* Offline notice */}
@@ -271,10 +316,24 @@ export default function ListingFeed() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                   <p className="text-sm font-medium text-text-secondary">
                     <span className="text-text font-semibold">{listings.length}</span> listing{listings.length !== 1 ? 's' : ''} found
                   </p>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="sort-select" className="text-sm text-text-secondary font-medium whitespace-nowrap">Sort by:</label>
+                    <select
+                      id="sort-select"
+                      className="input py-2 py-1.5 text-sm"
+                      value={filters.sort || 'newest'}
+                      onChange={(e) => handleFiltersChange({ ...filters, sort: e.target.value })}
+                    >
+                      <option value="newest">Newest first</option>
+                      <option value="price_asc">Price: low to high</option>
+                      <option value="price_desc">Price: high to low</option>
+                      <option value="views">Most viewed</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {listings.map((listing, index) => (
