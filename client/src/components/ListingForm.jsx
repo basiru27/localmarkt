@@ -48,27 +48,22 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState({});
   const [dragActive, setDragActive] = useState(false);
-  const [draftExists, setDraftExists] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-
-  // Check for draft on mount
-  useEffect(() => {
+  const [draftExists, setDraftExists] = useState(() => {
     if (!initialData) {
-      const saved = localStorage.getItem('localmarkt_listing_draft');
-      if (saved) {
-        setDraftExists(true);
-      }
+      return !!localStorage.getItem('localmarkt_listing_draft');
     }
-  }, [initialData]);
+    return false;
+  });
+  const [showPreview, setShowPreview] = useState(false);
 
   // Autosave draft
   useEffect(() => {
-    if (initialData) return;
+    if (initialData || draftExists) return;
     const timer = setTimeout(() => {
       localStorage.setItem('localmarkt_listing_draft', JSON.stringify(formData));
     }, 800);
     return () => clearTimeout(timer);
-  }, [formData, initialData]);
+  }, [formData, initialData, draftExists]);
 
   const handleContinueDraft = () => {
     try {
