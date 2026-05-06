@@ -293,7 +293,7 @@ export default function ListingDetail() {
           <span>/</span>
           {listing.category?.name && (
             <>
-              <Link to={`/?category=${encodeURIComponent(listing.category.name)}`} className="hover:text-primary transition-colors">
+              <Link to={`/?category=${listing.category.id}`} className="hover:text-primary transition-colors">
                 {listing.category.name}
               </Link>
               <span>/</span>
