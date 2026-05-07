@@ -88,6 +88,15 @@ export default function MySales() {
     updateStatusMutation.mutate({ id: orderId, status: 'completed' });
   };
 
+  const handleMarkDelivered = (orderId) => {
+    if (!isOnline) {
+      showError('You must be online to mark as delivered.');
+      return;
+    }
+    setSubmittingId(orderId);
+    updateStatusMutation.mutate({ id: orderId, status: 'delivered' });
+  };
+
   const handleRaiseDispute = (reason) => {
     if (!isOnline) {
       showError('You must be online to raise a dispute.');
@@ -100,6 +109,34 @@ export default function MySales() {
   const openDisputeModal = (orderId) => {
     setSelectedOrderId(orderId);
     setDisputeModalOpen(true);
+  };
+
+  const getTimelineSteps = (status) => {
+    const steps = ['pending', 'buyer_paid', 'delivered', 'completed'];
+    const currentIndex = steps.indexOf(status);
+    
+    // Handle edge cases
+    if (status === 'cancelled') return [{ label: 'Cancelled', state: 'error' }];
+    if (status === 'disputed') return [{ label: 'Disputed', state: 'error' }];
+    if (status === 'accepted') return steps.map((s, i) => ({ step: s, state: i === 0 ? 'completed' : 'pending' }));
+    if (status === 'rejected') return [{ label: 'Rejected', state: 'error' }];
+    
+    // Normal flow
+    if (currentIndex === -1) return steps.map(s => ({ step: s, state: 'pending' }));
+    
+    return steps.map((s, i) => {
+      if (i < currentIndex) return { step: s, state: 'completed' };
+      if (i === currentIndex) return { step: s, state: 'current' };
+      return { step: s, state: 'pending' };
+    });
+  };
+
+  const formatStepLabel = (step) => {
+    switch(step) {
+      case 'buyer_paid': return 'Paid';
+      case 'completed': return 'Done';
+      default: return step.charAt(0).toUpperCase() + step.slice(1);
+    }
   };
 
   return (
@@ -175,9 +212,51 @@ export default function MySales() {
                   {order.payment_reference && (
                     <p className="text-xs text-gray-400 mt-1 font-mono">Ref: {order.payment_reference}</p>
                   )}
+                  
+                  {/* Delivery Status Timeline (Task 5E) */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      {getTimelineSteps(order.status).map((stepInfo, idx, arr) => {
+                        if (stepInfo.state === 'error') {
+                          return (
+                            <div key="error" className="flex items-center text-red-500 text-sm font-medium">
+                              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              {stepInfo.label}
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div key={stepInfo.step} className="flex-1 flex items-center relative">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs z-10 ${
+                                stepInfo.state === 'completed' ? 'bg-primary text-white' :
+                                stepInfo.state === 'current' ? 'bg-primary-light text-primary border-2 border-primary' :
+                                'bg-gray-100 text-gray-400 border border-gray-200'
+                              }`}>
+                                {stepInfo.state === 'completed' ? (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                ) : (
+                                  idx + 1
+                                )}
+                              </div>
+                              <span className={`text-[10px] mt-1 hidden sm:block ${stepInfo.state === 'pending' ? 'text-gray-400' : 'text-gray-700 font-medium'}`}>
+                                {formatStepLabel(stepInfo.step)}
+                              </span>
+                            </div>
+                            {idx < arr.length - 1 && (
+                              <div className={`absolute top-3 left-6 right-0 h-0.5 -mt-px ${
+                                stepInfo.state === 'completed' ? 'bg-primary' : 'bg-gray-200'
+                              }`} style={{ width: 'calc(100% - 24px)' }}></div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
-                {order.status === 'buyer_paid' && (
+                {(order.status === 'buyer_paid' || order.status === 'delivered') && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <div className="flex flex-col sm:flex-row gap-2 justify-end">
                       <button
@@ -187,13 +266,26 @@ export default function MySales() {
                       >
                         Raise Dispute
                       </button>
-                      <button
-                        onClick={() => handleConfirmPayment(order.id)}
-                        disabled={submittingId === order.id || !isOnline}
-                        className="btn-primary whitespace-nowrap w-full sm:w-auto"
-                      >
-                        {submittingId === order.id ? 'Confirming...' : 'Confirm Payment Received'}
-                      </button>
+                      
+                      {order.status === 'buyer_paid' && (
+                        <button
+                          onClick={() => handleMarkDelivered(order.id)}
+                          disabled={submittingId === order.id || !isOnline}
+                          className="btn-primary whitespace-nowrap w-full sm:w-auto"
+                        >
+                          {submittingId === order.id ? 'Updating...' : 'Mark as Delivered'}
+                        </button>
+                      )}
+                      
+                      {order.status === 'delivered' && (
+                        <button
+                          onClick={() => handleConfirmPayment(order.id)}
+                          disabled={submittingId === order.id || !isOnline}
+                          className="btn-primary whitespace-nowrap w-full sm:w-auto"
+                        >
+                          {submittingId === order.id ? 'Confirming...' : 'Confirm Completed'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

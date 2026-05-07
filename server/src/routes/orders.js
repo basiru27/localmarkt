@@ -210,6 +210,14 @@ router.put('/:id/status', validateBody(updateOrderStatusSchema), async (req, res
       if (newStatus === 'completed') {
         if (isSeller) isValidTransition = true;
         else errorMessage = 'Only the seller can mark an order as completed';
+      } else if (newStatus === 'delivered') {
+        if (isSeller) isValidTransition = true;
+        else errorMessage = 'Only the seller can mark an order as delivered';
+      }
+    } else if (currentStatus === 'delivered') {
+      if (newStatus === 'completed') {
+        if (isSeller || isBuyer) isValidTransition = true;
+        else errorMessage = 'Only the buyer or seller can complete a delivered order';
       }
     } else if (currentStatus === 'disputed') {
       if (newStatus === 'completed' || newStatus === 'cancelled') {

@@ -9,11 +9,24 @@ import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 export default function Profile() {
   const queryClient = useQueryClient();
   const { session, user, refreshProfile } = useAuth();
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState('profile');
+  
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [uploading, setUploading] = useState(false);
   const [phoneValue, setPhoneValue] = useState('+220 ');
   const [phoneError, setPhoneError] = useState('');
+  
+  // Security Tab State
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [securitySuccess, setSecuritySuccess] = useState('');
+  const [securityError, setSecurityError] = useState('');
+
+  // Notifications Tab State
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [notificationsSuccess, setNotificationsSuccess] = useState('');
 
   const getAuthHeader = () => {
     if (!session?.access_token) return {};
@@ -33,6 +46,12 @@ export default function Profile() {
       setPhoneValue(profile.phone_number);
     }
   }, [profile]);
+  
+  useEffect(() => {
+    if ('Notification' in window) {
+      setPushEnabled(Notification.permission === 'granted');
+    }
+  }, []);
 
   const mutation = useMutation({
     mutationFn: async (updatedData) => {
@@ -132,7 +151,7 @@ export default function Profile() {
     if (phoneError) setPhoneError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleProfileSubmit = (e) => {
     e.preventDefault();
 
     if (phoneValue && phoneValue.trim() !== '+220' && phoneValue.trim() !== '') {
@@ -141,7 +160,6 @@ export default function Profile() {
         return;
       }
     } else {
-       // Clear if it's just the prefix or empty
        if (phoneValue.trim() === '+220') {
            setPhoneValue('');
        }
@@ -154,6 +172,60 @@ export default function Profile() {
       bio: formData.get('bio'),
       avatar_url: profile?.avatar_url
     });
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setSecurityError('');
+    setSecuritySuccess('');
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setSecurityError("New passwords do not match.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setSecurityError("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
+      // Supabase enforces confirming previous logic or sending a recovery email if not signed in,
+      // but since they are signed in, updateUser updates the password directly.
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword
+      });
+
+      if (error) throw error;
+      
+      setSecuritySuccess('Password updated successfully.');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setSecuritySuccess(''), 3000);
+    } catch (err) {
+      setSecurityError(err.message || 'Failed to update password.');
+    }
+  };
+
+  const togglePushNotifications = async () => {
+    if (!('Notification' in window)) {
+      alert("This browser does not support desktop notification");
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      // Cannot programmatically revoke permission. Provide instruction.
+      alert("Please revoke notification permissions in your browser settings.");
+      return;
+    }
+
+    if (Notification.permission !== "denied" || Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      setPushEnabled(permission === "granted");
+      if (permission === "granted") {
+        setNotificationsSuccess("Push notifications enabled!");
+        setTimeout(() => setNotificationsSuccess(''), 3000);
+      }
+    }
   };
 
   if (isLoading) {
@@ -172,157 +244,284 @@ export default function Profile() {
 
   return (
     <div className="container-app py-8 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6 text-text">My Profile</h1>
-      
-      {successMessage && (
-        <div className="alert alert-success mb-6">
-          {successMessage}
-        </div>
-      )}
+      <h1 className="text-2xl font-bold mb-6 text-text">Account Settings</h1>
 
-      {errorMsg && (
-        <div className="alert alert-error mb-6">
-          {errorMsg}
-        </div>
-      )}
+      {/* Tabs Navigation */}
+      <div className="border-b border-border mb-6">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+              activeTab === 'profile'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-secondary hover:border-border hover:text-text'
+            }`}
+          >
+            Profile Info
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+              activeTab === 'security'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-secondary hover:border-border hover:text-text'
+            }`}
+          >
+            Security & Auth
+          </button>
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+              activeTab === 'notifications'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-secondary hover:border-border hover:text-text'
+            }`}
+          >
+            Notifications
+          </button>
+        </nav>
+      </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden">
-        
-        {/* Avatar Section */}
-        <div className="p-6 border-b border-border-light flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative group inline-block">
-            {profile?.avatar_url ? (
-              <>
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Profile" 
-                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleAvatarRemove();
-                  }}
-                  disabled={uploading}
-                  className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  title="Remove avatar"
-                  aria-label="Remove avatar"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </>
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                {initial}
-              </div>
-            )}
-            
-            <label className={`absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}>
-              {uploading ? (
-                <div className="spinner w-6 h-6 border-white border-t-transparent" />
-              ) : (
+      {activeTab === 'profile' && (
+        <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden">
+          {successMessage && (
+            <div className="alert alert-success m-6 mb-0">
+              {successMessage}
+            </div>
+          )}
+          {errorMsg && (
+            <div className="alert alert-error m-6 mb-0">
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Avatar Section */}
+          <div className="p-6 border-b border-border-light flex flex-col sm:flex-row items-center gap-6">
+            <div className="relative group inline-block">
+              {profile?.avatar_url ? (
                 <>
-                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="text-[10px] font-medium">Upload</span>
+                  <img 
+                    src={profile.avatar_url} 
+                    alt="Profile" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAvatarRemove();
+                    }}
+                    disabled={uploading}
+                    className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    title="Remove avatar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </>
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                  {initial}
+                </div>
               )}
-              <input 
-                type="file" 
-                accept="image/jpeg, image/png, image/webp" 
-                className="hidden" 
-                onChange={handleAvatarUpload}
-                disabled={uploading}
-              />
-            </label>
-          </div>
-          <div className="text-center sm:text-left">
-            <h2 className="text-lg font-bold text-text">{displayName || 'Anonymous User'}</h2>
-            <p className="text-sm text-text-muted">{email}</p>
-            <p className="text-xs text-text-muted mt-1 bg-gray-100 px-2 py-1 rounded inline-block">
-              Role: <span className="capitalize font-semibold text-primary">{profile?.role || 'user'}</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Form Section */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="form-group">
-            <label htmlFor="display_name" className="label">
-              Display Name
-            </label>
-            <input
-              type="text"
-              id="display_name"
-              name="display_name"
-              defaultValue={displayName}
-              className="input"
-              placeholder="e.g., Momodou Jallow"
-            />
+              
+              <label className={`absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}>
+                {uploading ? (
+                  <div className="spinner w-6 h-6 border-white border-t-transparent" />
+                ) : (
+                  <>
+                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-[10px] font-medium">Upload</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/jpeg, image/png, image/webp" 
+                  className="hidden" 
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+            <div className="text-center sm:text-left">
+              <h2 className="text-lg font-bold text-text">{displayName || 'Anonymous User'}</h2>
+              <p className="text-sm text-text-muted">{email}</p>
+              <p className="text-xs text-text-muted mt-1 bg-gray-100 px-2 py-1 rounded inline-block">
+                Role: <span className="capitalize font-semibold text-primary">{profile?.role || 'user'}</span>
+              </p>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="phone_number" className="label">
-              Phone Number <span className="text-text-muted font-normal ml-1">(Buyers will see this to contact you)</span>
-            </label>
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true">
-                <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
+          {/* Form Section */}
+          <form onSubmit={handleProfileSubmit} className="p-6 space-y-6">
+            <div className="form-group">
+              <label htmlFor="display_name" className="label">Display Name</label>
               <input
-                type="tel"
-                id="phone_number"
-                name="phone_number"
-                value={phoneValue}
-                onChange={handlePhoneChange}
-                className={`input pl-12 ${phoneError ? 'input-error' : ''}`}
-                placeholder="+220 XXXXXXX"
-                aria-invalid={phoneError ? 'true' : 'false'}
+                type="text"
+                id="display_name"
+                name="display_name"
+                defaultValue={displayName}
+                className="input"
+                placeholder="e.g., Momodou Jallow"
               />
             </div>
-            {phoneError && (
-              <p className="error-message" role="alert">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {phoneError}
-              </p>
-            )}
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="bio" className="label">
-              Bio
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              rows={4}
-              defaultValue={profile?.bio || ''}
-              className="input min-h-[120px]"
-              placeholder="Tell buyers a bit about yourself or your shop..."
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="phone_number" className="label">
+                Phone Number <span className="text-text-muted font-normal ml-1">(Buyers will see this to contact you)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                  <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <input
+                  type="tel"
+                  id="phone_number"
+                  name="phone_number"
+                  value={phoneValue}
+                  onChange={handlePhoneChange}
+                  className={`input pl-12 ${phoneError ? 'input-error' : ''}`}
+                  placeholder="+220 XXXXXXX"
+                />
+              </div>
+              {phoneError && <p className="error-message text-red-500 mt-1 text-sm">{phoneError}</p>}
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
-            <button 
-              type="submit" 
-              disabled={mutation.isPending || uploading}
-              className="btn-primary flex-1 py-3.5 text-base"
-            >
-              {mutation.isPending ? 'Saving...' : 'Save Profile'}
+            <div className="form-group">
+              <label htmlFor="bio" className="label">Bio</label>
+              <textarea
+                id="bio"
+                name="bio"
+                rows={4}
+                defaultValue={profile?.bio || ''}
+                className="input min-h-[120px]"
+                placeholder="Tell buyers a bit about yourself or your shop..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
+              <button 
+                type="submit" 
+                disabled={mutation.isPending || uploading}
+                className="btn-primary flex-1 py-3.5 text-base"
+              >
+                {mutation.isPending ? 'Saving...' : 'Save Profile'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden p-6">
+          <h2 className="text-lg font-bold text-text mb-4">Change Password</h2>
+          
+          {securitySuccess && (
+            <div className="alert alert-success mb-6">
+              {securitySuccess}
+            </div>
+          )}
+          {securityError && (
+            <div className="alert alert-error mb-6">
+              {securityError}
+            </div>
+          )}
+
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <div className="form-group">
+              <label className="label">Email Address</label>
+              <input type="email" value={email} disabled className="input bg-gray-50 text-gray-500 cursor-not-allowed" />
+              <p className="text-xs text-gray-400 mt-1">Your email address is managed through your authentication provider.</p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="newPassword" className="label">New Password</label>
+              <input
+                type="password"
+                id="newPassword"
+                className="input"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword" className="label">Confirm New Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                className="input"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn-primary w-full sm:w-auto px-6">
+              Update Password
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
+      )}
 
-      </div>
+      {activeTab === 'notifications' && (
+        <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden p-6">
+          <h2 className="text-lg font-bold text-text mb-4">Notification Preferences</h2>
+          
+          {notificationsSuccess && (
+            <div className="alert alert-success mb-6">
+              {notificationsSuccess}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between py-4 border-b border-border-light">
+            <div>
+              <h3 className="font-medium text-text">Push Notifications</h3>
+              <p className="text-sm text-text-muted">Receive alerts for new orders and messages on this device.</p>
+            </div>
+            <div>
+              <button
+                onClick={togglePushNotifications}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  pushEnabled ? 'bg-primary' : 'bg-gray-300'
+                }`}
+                aria-pressed={pushEnabled}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    pushEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between py-4">
+            <div>
+              <h3 className="font-medium text-text">Email Notifications</h3>
+              <p className="text-sm text-text-muted">Receive account and security alerts via email.</p>
+            </div>
+            <div>
+              {/* Dummy toggle for email notifications since it usually requires backend syncing */}
+              <button
+                disabled
+                className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary opacity-50 cursor-not-allowed"
+                aria-pressed="true"
+                title="Email notifications are required for security purposes"
+              >
+                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
