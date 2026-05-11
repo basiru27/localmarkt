@@ -1,7 +1,19 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  if (!isHome) {
+    return (
+      <footer className="bg-gray-100 border-t border-border-light mt-auto h-[48px] flex items-center justify-center">
+        <p className="text-[13px] text-text-secondary text-center px-4">
+          © {currentYear} LocalMarkt · The Gambia · hello@localmarkt.gm · Made with <span className="text-red-500 mx-0.5">♥</span> for The Gambia
+        </p>
+      </footer>
+    );
+  }
 
   return (
     <footer className="bg-gradient-to-b from-gray-50 to-gray-100 border-t border-border-light mt-auto">

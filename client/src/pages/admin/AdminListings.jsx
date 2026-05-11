@@ -68,8 +68,8 @@ export default function AdminListings() {
     }
   };
 
-  const handleDelete = async (listingId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this listing?")) return;
+  const handleDelete = async (listingId, title) => {
+    if (!window.confirm(`Delete '${title}'? This cannot be undone.`)) return;
     try {
       await deleteMutation.mutateAsync(listingId);
       success('Listing removed');
@@ -126,7 +126,7 @@ export default function AdminListings() {
 
   const handleBulkDelete = async () => {
     if (selectedListings.size === 0) return;
-    if (!window.confirm(`Are you sure you want to permanently delete ${selectedListings.size} listings?`)) return;
+    if (!window.confirm(`Delete ${selectedListings.size} listings? This cannot be undone.`)) return;
     
     setIsBulkLoading(true);
     try {
@@ -277,7 +277,7 @@ export default function AdminListings() {
                   )}
 
                   <button
-                    onClick={() => handleDelete(listing.id)}
+                    onClick={() => handleDelete(listing.id, listing.title)}
                     disabled={deleteMutation.isPending}
                     className="btn-danger py-1.5 px-3 text-xs"
                   >

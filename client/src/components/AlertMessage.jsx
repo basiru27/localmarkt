@@ -62,7 +62,7 @@ export default function AlertMessage({
   return (
     <div
       role="alert"
-      aria-live="assertive"
+      aria-live="polite"
       className={`alert ${containerClass} ${className}`}
     >
       {icon}

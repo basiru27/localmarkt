@@ -109,7 +109,7 @@ export default function ListingCard({ listing, index = 0 }) {
             )}
           </p>
           {listing.negotiable && !is_sold && (
-            <span className="inline-block mt-1 px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-semibold rounded-full border border-green-100">
+            <span className="inline-block mt-1 px-2 py-0.5 bg-green-50 text-green-700 text-[11px] font-semibold rounded-full border border-green-100">
               Negotiable
             </span>
           )}

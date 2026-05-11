@@ -27,6 +27,9 @@ export default function AdminUsers() {
   const hardDeleteMutation = useHardDeleteUser();
 
   const handleToggleBan = async (target) => {
+    if (!target.is_banned) {
+      if (!window.confirm(`Ban ${target.display_name || 'this user'}? They will lose access to their account.`)) return;
+    }
     try {
       await updateBanMutation.mutateAsync({
         userId: target.id,
