@@ -98,15 +98,32 @@ export default function MyPurchases() {
     updateStatusMutation.mutate({ id: orderId, status: 'buyer_paid', reference: reference.trim() });
   };
 
-  const handleCancelOrder = (orderId) => {
+const handleCancelOrder = (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
     if (!isOnline) {
       showError('You must be online to cancel an order.');
       return;
     }
-    if (window.confirm('Are you sure you want to cancel this order?')) {
-      setSubmittingId(orderId);
-      updateStatusMutation.mutate({ id: orderId, status: 'cancelled' });
+    setSubmittingId(orderId);
+    updateStatusMutation.mutate({ id: orderId, status: 'cancelled' });
+  };
+
+  const handleConfirmDelivered = (orderId) => {
+    if (!isOnline) {
+      showError('You must be online to confirm delivery.');
+      return;
     }
+    setSubmittingId(orderId);
+    updateStatusMutation.mutate({ id: orderId, status: 'delivered' });
+  };
+
+  const handleConfirmCompleted = (orderId) => {
+    if (!isOnline) {
+      showError('You must be online to complete order.');
+      return;
+    }
+    setSubmittingId(orderId);
+    updateStatusMutation.mutate({ id: orderId, status: 'completed' });
   };
 
   const handleRaiseDispute = (reason) => {
@@ -123,8 +140,30 @@ export default function MyPurchases() {
     setDisputeModalOpen(true);
   };
 
-  const handleReferenceChange = (orderId, value) => {
-    setPaymentReferences(prev => ({ ...prev, [orderId]: value }));
+  const getTimelineSteps = (status) => {
+    const steps = ['pending', 'buyer_paid', 'delivered', 'completed'];
+    const currentIndex = steps.indexOf(status);
+    
+    if (status === 'cancelled') return [{ label: 'Cancelled', state: 'error' }];
+    if (status === 'disputed') return [{ label: 'Disputed', state: 'error' }];
+    if (status === 'accepted') return steps.map((s, i) => ({ step: s, state: i === 0 ? 'completed' : 'pending' }));
+    if (status === 'rejected') return [{ label: 'Rejected', state: 'error' }];
+    
+    if (currentIndex === -1) return steps.map(s => ({ step: s, state: 'pending' }));
+    
+    return steps.map((s, i) => {
+      if (i < currentIndex) return { step: s, state: 'completed' };
+      if (i === currentIndex) return { step: s, state: 'current' };
+      return { step: s, state: 'pending' };
+    });
+  };
+
+  const formatStepLabel = (step) => {
+    switch(step) {
+      case 'buyer_paid': return 'Paid';
+      case 'completed': return 'Done';
+      default: return step.charAt(0).toUpperCase() + step.slice(1);
+    }
   };
 
   return (
@@ -175,6 +214,48 @@ export default function MyPurchases() {
                   {order.payment_reference && (
                     <p className="text-xs text-gray-400 mt-1 font-mono">Ref: {order.payment_reference}</p>
                   )}
+                  
+                  {/* Delivery Status Timeline - Buyer View */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      {getTimelineSteps(order.status).map((stepInfo, idx, arr) => {
+                        if (stepInfo.state === 'error') {
+                          return (
+                            <div key="error" className="flex items-center text-red-500 text-sm font-medium">
+                              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              {stepInfo.label}
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div key={stepInfo.step} className="flex-1 flex items-center relative">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs z-10 ${
+                                stepInfo.state === 'completed' ? 'bg-primary text-white' :
+                                stepInfo.state === 'current' ? 'bg-primary-light text-primary border-2 border-primary' :
+                                'bg-gray-100 text-gray-400 border border-gray-200'
+                              }`}>
+                                {stepInfo.state === 'completed' ? (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                ) : (
+                                  idx + 1
+                                )}
+                              </div>
+                              <span className={`text-[10px] mt-1 hidden sm:block ${stepInfo.state === 'pending' ? 'text-gray-400' : 'text-gray-700 font-medium'}`}>
+                                {formatStepLabel(stepInfo.step)}
+                              </span>
+                            </div>
+                            {idx < arr.length - 1 && (
+                              <div className={`absolute top-3 left-6 right-0 h-0.5 -mt-px ${
+                                stepInfo.state === 'completed' ? 'bg-primary' : 'bg-gray-200'
+                              }`} style={{ width: 'calc(100% - 24px)' }}></div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100">
@@ -210,15 +291,25 @@ export default function MyPurchases() {
                       </div>
                     </div>
                   )}
-                  {order.status === 'buyer_paid' && (
-                    <div className="flex justify-end">
+                  {(order.status === 'buyer_paid' || order.status === 'delivered') && (
+                    <div className="flex flex-col sm:flex-row gap-2 justify-end">
                       <button
                         onClick={() => openDisputeModal(order.id)}
                         disabled={submittingId === order.id || !isOnline}
-                        className="text-sm text-red-600 hover:text-red-800 font-medium px-3 py-1.5 rounded hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
+                        className="btn-secondary whitespace-nowrap w-full sm:w-auto text-red-600 hover:bg-red-50 hover:border-red-200"
                       >
                         Raise Dispute
                       </button>
+                      
+                      {order.status === 'delivered' && (
+                        <button
+                          onClick={() => handleConfirmCompleted(order.id)}
+                          disabled={submittingId === order.id || !isOnline}
+                          className="btn-primary whitespace-nowrap w-full sm:w-auto"
+                        >
+                          {submittingId === order.id ? 'Confirming...' : 'Confirm Received'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

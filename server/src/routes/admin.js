@@ -15,19 +15,54 @@ router.use('/admin', authenticate, requireAdmin);
  */
 router.get('/admin/stats', async (req, res, next) => {
   try {
-    const [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes] = await Promise.all([
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      usersCountRes,
+      bannedUsersCountRes,
+      listingsCountRes,
+      pendingListingsCountRes,
+      pendingReportsCountRes,
+      recentLogsRes,
+      listings14dRes
+    ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_banned', true),
       supabase.from('listings').select('*', { count: 'exact', head: true }),
       supabase.from('listings').select('*', { count: 'exact', head: true }).eq('moderation_status', 'pending'),
       supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('admin_logs').select(`
+        id, action, target_type, created_at,
+        admin:profiles!admin_id(display_name)
+      `).order('created_at', { ascending: false }).limit(5),
+      supabase.from('listings').select('created_at').gte('created_at', fourteenDaysAgo).order('created_at', { ascending: true })
     ]);
 
-    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes]
+    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes, recentLogsRes, listings14dRes]
       .find((result) => result.error)?.error;
     if (firstError) {
       throw firstError;
     }
+
+    // Group listings by day for the chart
+    const dailyCounts = {};
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      dailyCounts[dateStr] = 0;
+    }
+
+    listings14dRes.data.forEach(item => {
+      const dateStr = item.created_at.split('T')[0];
+      if (dailyCounts[dateStr] !== undefined) {
+        dailyCounts[dateStr]++;
+      }
+    });
+
+    const listings_chart = Object.entries(dailyCounts)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return res.json({
       users_total: usersCountRes.count || 0,
@@ -35,6 +70,8 @@ router.get('/admin/stats', async (req, res, next) => {
       listings_total: listingsCountRes.count || 0,
       listings_pending: pendingListingsCountRes.count || 0,
       reports_pending: pendingReportsCountRes.count || 0,
+      recent_logs: recentLogsRes.data || [],
+      listings_chart,
     });
   } catch (err) {
     return next(err);
@@ -491,7 +528,9 @@ router.put('/admin/reports/:id', validateReportBody(updateReportStatusSchema), a
  */
 router.get('/admin/logs', requireSuperAdmin, async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    const { admin_id, action, date_from, date_to } = req.query;
+
+    let query = supabase
       .from('admin_logs')
       .select(`
         id,
@@ -504,7 +543,22 @@ router.get('/admin/logs', requireSuperAdmin, async (req, res, next) => {
         admin:profiles!admin_id(id, display_name)
       `)
       .order('created_at', { ascending: false })
-      .limit(500);
+      .limit(1000);
+
+    if (admin_id) {
+      query = query.eq('admin_id', admin_id);
+    }
+    if (action) {
+      query = query.eq('action', action);
+    }
+    if (date_from) {
+      query = query.gte('created_at', date_from);
+    }
+    if (date_to) {
+      query = query.lte('created_at', date_to + 'T23:59:59.999Z');
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw error;

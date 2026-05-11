@@ -124,6 +124,8 @@ export default function AdminUsers() {
                 <th className="text-left p-3 font-semibold text-text">Name</th>
                 <th className="text-left p-3 font-semibold text-text">Email</th>
                 <th className="text-left p-3 font-semibold text-text">Role</th>
+                <th className="text-left p-3 font-semibold text-text">Joined</th>
+                <th className="text-left p-3 font-semibold text-text">Listings</th>
                 <th className="text-left p-3 font-semibold text-text">Status</th>
                 <th className="text-right p-3 font-semibold text-text">Actions</th>
               </tr>
@@ -153,6 +155,10 @@ export default function AdminUsers() {
                     <td className="p-3">
                       <span className="badge-secondary uppercase tracking-wide">{entry.role}</span>
                     </td>
+                    <td className="p-3 text-text-secondary">
+                      {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="p-3 text-text-secondary">{entry.listing_count}</td>
                     <td className="p-3">
                       {entry.is_banned ? (
                         <span className="badge-error">Banned</span>

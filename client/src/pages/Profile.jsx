@@ -26,7 +26,13 @@ export default function Profile() {
 
   // Notifications Tab State
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [emailPrefs, setEmailPrefs] = useState({
+    email_contact: true,
+    email_moderation: true,
+    email_sales: true
+  });
   const [notificationsSuccess, setNotificationsSuccess] = useState('');
+  const [notificationError, setNotificationError] = useState('');
 
   const getAuthHeader = () => {
     if (!session?.access_token) return {};
@@ -52,6 +58,15 @@ export default function Profile() {
       setPushEnabled(Notification.permission === 'granted');
     }
   }, []);
+  
+  useEffect(() => {
+    if (profile?.notifications) {
+      setEmailPrefs(profile.notifications);
+    } else if (profile) {
+      // Fallback for existing rows without notifications backfilled yet
+      setEmailPrefs({ email_contact: true, email_moderation: true, email_sales: true });
+    }
+  }, [profile]);
 
   const mutation = useMutation({
     mutationFn: async (updatedData) => {
@@ -225,6 +240,30 @@ export default function Profile() {
         setNotificationsSuccess("Push notifications enabled!");
         setTimeout(() => setNotificationsSuccess(''), 3000);
       }
+    }
+  };
+
+  const handleEmailToggle = async (key) => {
+    const newPrefs = { ...emailPrefs, [key]: !emailPrefs[key] };
+    setEmailPrefs(newPrefs);
+    setNotificationError('');
+    
+    try {
+      await profileApi.update({ notifications: newPrefs }, getAuthHeader());
+      setNotificationsSuccess(`${key === 'email_contact' ? 'Contact requests' : key === 'email_moderation' ? 'Moderation alerts' : 'New sales alerts'} notification preference updated.`);
+      setTimeout(() => setNotificationsSuccess(''), 3000);
+    } catch (err) {
+      setEmailPrefs({ ...emailPrefs }); // revert
+      setNotificationError(err.message || 'Failed to update notification preference.');
+    }
+  };
+
+  const getEmailLabel = (key) => {
+    switch(key) {
+      case 'email_contact': return 'Contact request alerts';
+      case 'email_moderation': return 'Moderation & policy alerts';
+      case 'email_sales': return 'New sales notifications';
+      default: return key;
     }
   };
 
@@ -503,23 +542,37 @@ export default function Profile() {
             </div>
           </div>
           
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <h3 className="font-medium text-text">Email Notifications</h3>
-              <p className="text-sm text-text-muted">Receive account and security alerts via email.</p>
+          <p className="text-sm font-medium text-text mt-6 mb-3">Email Notifications</p>
+          {notificationError && (
+            <div className="alert alert-error mb-4 text-sm py-2 px-3">
+              {notificationError}
             </div>
-            <div>
-              {/* Dummy toggle for email notifications since it usually requires backend syncing */}
+          )}
+          {Object.entries(emailPrefs).map(([key, enabled]) => (
+            <div key={key} className="flex items-center justify-between py-3 border-b border-border-light last:border-0">
+              <div>
+                <h3 className="font-medium text-text text-sm">{getEmailLabel(key)}</h3>
+                <p className="text-xs text-text-muted">
+                  {key === 'email_contact' ? 'Get notified when someone contacts you' :
+                   key === 'email_moderation' ? 'Updates on your listings and reports' :
+                   'Receive order confirmations and sales updates'}
+                </p>
+              </div>
               <button
-                disabled
-                className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary opacity-50 cursor-not-allowed"
-                aria-pressed="true"
-                title="Email notifications are required for security purposes"
+                onClick={() => handleEmailToggle(key)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  enabled ? 'bg-primary' : 'bg-gray-300'
+                }`}
+                aria-pressed={enabled}
               >
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
               </button>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>

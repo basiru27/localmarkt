@@ -5,7 +5,7 @@ export const createOrderSchema = z.object({
 });
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum(['pending', 'buyer_paid', 'completed', 'cancelled', 'disputed'], {
+  status: z.enum(['pending', 'buyer_paid', 'delivered', 'completed', 'cancelled', 'disputed'], {
     errorMap: () => ({ message: 'Invalid status transition requested' }),
   }),
   dispute_reason: z.string().max(1000, 'Dispute reason is too long').optional(),

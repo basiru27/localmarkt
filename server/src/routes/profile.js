@@ -15,7 +15,7 @@ router.get('/profile', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, display_name, email, role, created_at, phone_number, avatar_url, bio')
+      .select('id, display_name, email, role, created_at, phone_number, avatar_url, bio, notifications')
       .eq('id', req.user.id)
       .single();
 
@@ -38,7 +38,7 @@ router.get('/profile', async (req, res, next) => {
  */
 router.put('/profile', validateBody(updateProfileSchema), async (req, res, next) => {
   try {
-    const { display_name, phone_number, bio, avatar_url } = req.body;
+    const { display_name, phone_number, bio, avatar_url, notifications } = req.body;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -47,9 +47,10 @@ router.put('/profile', validateBody(updateProfileSchema), async (req, res, next)
         phone_number,
         bio,
         avatar_url,
+        notifications,
       })
       .eq('id', req.user.id)
-      .select('id, display_name, email, role, created_at, phone_number, avatar_url, bio')
+      .select('id, display_name, email, role, created_at, phone_number, avatar_url, bio, notifications')
       .single();
 
     if (error) {

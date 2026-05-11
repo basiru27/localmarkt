@@ -285,7 +285,10 @@ export const adminApi = {
       body: JSON.stringify(data),
     }),
 
-  getLogs: (authHeader) => fetchApi('/admin/logs', { headers: authHeader }),
+  getLogs: (params = {}, authHeader) => {
+    const query = new URLSearchParams(params).toString();
+    return fetchApi(`/admin/logs${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
 };
 
 export const profileApi = {

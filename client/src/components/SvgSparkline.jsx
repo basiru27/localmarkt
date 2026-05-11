@@ -5,7 +5,9 @@ export default function SvgSparkline({
   height = 192, 
   color = '#0B6E4F', // LocalMarkt's primary green
   strokeWidth = 2,
-  className = ''
+  className = '',
+  dataKey = 'view_count',
+  labelKey = 'views'
 }) {
   const [hoverIndex, setHoverIndex] = useState(null);
 
@@ -21,7 +23,7 @@ export default function SvgSparkline({
     );
   }
 
-  const values = data.map(d => Number(d.view_count) || 0);
+  const values = data.map(d => Number(d[dataKey]) || 0);
   
   // Calculate dynamic scaling ranges
   const maxVal = Math.max(...values, 1); // Avoid division by zero if all values are 0
@@ -163,7 +165,7 @@ export default function SvgSparkline({
                     fontWeight="bold" 
                     textAnchor="middle"
                   >
-                    {val} views
+                    {val} {labelKey}
                   </text>
                 </g>
               )}

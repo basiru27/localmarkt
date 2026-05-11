@@ -9,7 +9,7 @@ export const adminKeys = {
   users: (filters) => [...adminKeys.all, 'users', filters],
   listings: (filters) => [...adminKeys.all, 'listings', filters],
   reports: (filters) => [...adminKeys.all, 'reports', filters],
-  logs: () => [...adminKeys.all, 'logs'],
+  logs: (filters) => [...adminKeys.all, 'logs', filters],
   disputes: () => [...adminKeys.all, 'disputes'],
 };
 
@@ -69,15 +69,15 @@ export function useAdminReports(filters = {}) {
   });
 }
 
-export function useAdminLogs(enabled = true) {
+export function useAdminLogs(filters = {}, enabled = true) {
   const getAuthHeader = useAdminHeader();
 
   return useQuery({
-    queryKey: adminKeys.logs(),
+    queryKey: adminKeys.logs(filters),
     enabled,
     queryFn: async () => {
       const authHeader = await getAuthHeader();
-      return adminApi.getLogs(authHeader);
+      return adminApi.getLogs(filters, authHeader);
     },
   });
 }

@@ -5,7 +5,7 @@ export const updateProfileSchema = z.object({
   phone_number: z.string().max(20).optional().nullable(),
   bio: z.string().max(500).optional().nullable(),
   avatar_url: z.string().url().optional().nullable(),
-  notifications: z.any().optional(),
+  notifications: z.record(z.boolean()).optional(),
 });
 
 export const validateBody = (schema) => (req, res, next) => {
