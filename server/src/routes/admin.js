@@ -203,7 +203,7 @@ router.put('/admin/users/:id/verify', validateAdminBody(updateVerifyStatusSchema
     const targetUserId = req.params.id;
     const { verified_seller } = req.body;
 
-    const { data: targetProfile, error: targetProfileError } = await supabase
+    const { error: targetProfileError } = await supabase
       .from('profiles')
       .select('id')
       .eq('id', targetUserId)
