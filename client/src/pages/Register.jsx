@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
+import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 
 export default function Register() {
   const { signUp } = useAuth();
@@ -10,6 +11,7 @@ export default function Register() {
 
   const [formData, setFormData] = useState({
     email: '',
+    phoneNumber: '+220 ',
     password: '',
     confirmPassword: '',
     displayName: '',
@@ -33,6 +35,15 @@ export default function Register() {
       setFieldErrors(prev => ({ ...prev, [name]: undefined }));
     }
     // Clear global error when user types
+    if (error) setError('');
+  };
+
+  const handlePhoneChange = (e) => {
+    const formattedValue = formatGambianPhone(e.target.value);
+    setFormData((prev) => ({ ...prev, phoneNumber: formattedValue }));
+    if (fieldErrors.phoneNumber) {
+      setFieldErrors(prev => ({ ...prev, phoneNumber: undefined }));
+    }
     if (error) setError('');
   };
 
@@ -63,6 +74,16 @@ export default function Register() {
         errors.email = 'Please enter a valid email address';
       } else {
         delete errors.email;
+      }
+    }
+    
+    if (field === 'phoneNumber') {
+      if (!formData.phoneNumber || formData.phoneNumber.trim() === '+220') {
+        errors.phoneNumber = 'Phone number is required';
+      } else if (!isValidGambianPhone(formData.phoneNumber)) {
+        errors.phoneNumber = 'Please enter a valid Gambian phone number';
+      } else {
+        delete errors.phoneNumber;
       }
     }
     
@@ -122,6 +143,11 @@ export default function Register() {
     } else if (!validateEmail(formData.email)) {
       errors.email = 'Please enter a valid email address';
     }
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '+220') {
+      errors.phoneNumber = 'Phone number is required';
+    } else if (!isValidGambianPhone(formData.phoneNumber)) {
+      errors.phoneNumber = 'Please enter a valid Gambian phone number';
+    }
     if (!formData.password) {
       errors.password = 'Password is required';
     } else if (formData.password.length < 8) {
@@ -141,7 +167,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, formData.displayName);
+      await signUp(formData.email, formData.password, formData.displayName, formData.phoneNumber);
       setSuccess(true);
     } catch (err) {
       if (err.message?.includes('already registered')) {
@@ -280,6 +306,37 @@ export default function Register() {
                     {...ariaProps}
                   />
                 </div>
+              )}
+            </FormField>
+
+            {/* Phone Number */}
+            <FormField
+              id="phoneNumber"
+              label="Phone Number"
+              error={fieldErrors.phoneNumber}
+              required
+            >
+              {({ errorClass, ...ariaProps }) => (
+                <>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handlePhoneChange}
+                      onBlur={() => handleBlur('phoneNumber')}
+                      className={`input pl-12 ${errorClass}`}
+                      placeholder="+220 XXXXXXX"
+                      {...ariaProps}
+                    />
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">Buyers will use this to contact you</p>
+                </>
               )}
             </FormField>
 

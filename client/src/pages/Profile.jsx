@@ -18,6 +18,7 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [phoneValue, setPhoneValue] = useState('+220 ');
   const [phoneError, setPhoneError] = useState('');
+  const [nameError, setNameError] = useState('');
   
   // Security Tab State
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -160,22 +161,29 @@ export default function Profile() {
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
+    const displayNameVal = formData.get('display_name');
 
-    if (phoneValue && phoneValue.trim() !== '+220' && phoneValue.trim() !== '') {
-      if (!isValidGambianPhone(phoneValue)) {
-        setPhoneError('Please enter a valid Gambian phone number (e.g. +220 3XXXXXX)');
-        return;
-      }
+    if (!displayNameVal || displayNameVal.trim().length < 2) {
+      setNameError('Display name must be at least 2 characters');
+      return;
     } else {
-       if (phoneValue.trim() === '+220') {
-           setPhoneValue('');
-       }
+      setNameError('');
     }
 
-    const formData = new FormData(e.target);
+    if (!phoneValue || phoneValue.trim() === '' || phoneValue.trim() === '+220') {
+      setPhoneError('Phone number is required');
+      return;
+    } else if (!isValidGambianPhone(phoneValue)) {
+      setPhoneError('Please enter a valid Gambian phone number (e.g. +220 3XXXXXX)');
+      return;
+    } else {
+      setPhoneError('');
+    }
+
     mutation.mutate({
-      display_name: formData.get('display_name'),
-      phone_number: phoneValue.trim() === '+220' ? '' : phoneValue,
+      display_name: displayNameVal,
+      phone_number: phoneValue,
       bio: formData.get('bio'),
       avatar_url: profile?.avatar_url
     });
@@ -373,20 +381,24 @@ export default function Profile() {
           {/* Form Section */}
           <form onSubmit={handleProfileSubmit} className="p-6 space-y-6">
             <div className="form-group">
-              <label htmlFor="display_name" className="label">Display Name</label>
+              <label htmlFor="display_name" className="label">
+                Display Name <span className="text-error" aria-hidden="true">*</span>
+              </label>
               <input
                 type="text"
                 id="display_name"
                 name="display_name"
                 defaultValue={displayName}
-                className="input"
+                onChange={() => { if (nameError) setNameError('') }}
+                className={`input ${nameError ? 'input-error' : ''}`}
                 placeholder="e.g., Momodou Jallow"
               />
+              {nameError && <p className="error-message text-red-500 mt-1 text-sm">{nameError}</p>}
             </div>
 
             <div className="form-group">
               <label htmlFor="phone_number" className="label">
-                Phone Number <span className="text-text-muted font-normal ml-1">(Buyers will see this to contact you)</span>
+                Phone Number <span className="text-error" aria-hidden="true">*</span> <span className="text-text-muted font-normal ml-1">(Buyers will see this to contact you)</span>
               </label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2">

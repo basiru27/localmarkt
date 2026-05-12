@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, display_name, role, is_banned, created_at, avatar_url')
+      .select('id, display_name, role, is_banned, created_at, avatar_url, phone_number')
       .eq('id', userId)
       .maybeSingle();
 
@@ -81,13 +81,14 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email, password, displayName) => {
+  const signUp = async (email, password, displayName, phoneNumber) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           display_name: displayName,
+          phone_number: phoneNumber,
         },
       },
     });
