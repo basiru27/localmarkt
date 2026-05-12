@@ -24,6 +24,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const SellerProfile = lazy(() => import('./pages/SellerProfile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
@@ -71,6 +72,7 @@ function App() {
                       {/* Public routes */}
                       <Route index element={<ListingFeed />} />
                       <Route path="listings/:id" element={<ListingDetail />} />
+                      <Route path="sellers/:id" element={<SellerProfile />} />
                       <Route path="login" element={<Login />} />
                       <Route path="register" element={<Register />} />
                       <Route path="forgot-password" element={<ForgotPassword />} />

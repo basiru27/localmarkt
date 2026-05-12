@@ -682,7 +682,11 @@ export default function ListingDetail() {
         {/* Related Listings */}
         {sellerListings.length > 0 && (
           <div className="mt-12 space-y-4">
-            <h2 className="text-xl font-bold text-text">More from {listing.seller?.display_name || 'this seller'}</h2>
+            <h2 className="text-xl font-bold text-text">
+              <Link to={`/sellers/${listing.user_id}`} className="hover:text-primary transition-colors">
+                More from {listing.seller?.display_name || 'this seller'}
+              </Link>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {sellerListings.map(item => (
                 <ListingCard key={item.id} listing={item} />

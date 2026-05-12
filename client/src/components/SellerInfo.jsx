@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 /**
  * Get initials from a display name
  */
-function getInitials(name) {
+export function getInitials(name) {
   if (!name) return '?';
   const words = name.trim().split(/\s+/);
   if (words.length === 1) {
@@ -15,7 +15,7 @@ function getInitials(name) {
 /**
  * Generate a consistent color based on user ID
  */
-function getAvatarColor(userId) {
+export function getAvatarColor(userId) {
   const colors = [
     'from-blue-500 to-indigo-600',
     'from-primary to-primary-dark',
@@ -91,9 +91,9 @@ export default function SellerInfo({ seller, sellerId }) {
         {/* Seller details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-text text-lg truncate">
+            <Link to={`/sellers/${sellerId || seller?.id}`} className="font-semibold text-text text-lg truncate hover:text-primary transition-colors">
               {displayName}
-            </p>
+            </Link>
             {seller?.verified_seller && (
               <span className="inline-flex items-center text-green-600 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Verified Seller">
                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -120,7 +120,7 @@ export default function SellerInfo({ seller, sellerId }) {
       
       {/* View all listings link */}
       <Link
-        to={`/?user_id=${sellerId || seller?.id}`}
+        to={`/sellers/${sellerId || seller?.id}`}
         className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
