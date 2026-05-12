@@ -114,22 +114,6 @@ export default function ListingFeed() {
                 </button>
               </form>
 
-              {!isAuthenticated && (
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link
-                    to="/register"
-                    className="btn bg-white text-primary font-semibold px-8 py-3 hover:bg-gray-100 shadow-lg"
-                  >
-                    Get Started Free
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="btn border-2 border-white/30 text-white px-8 py-3 hover:bg-white/10"
-                  >
-                    Log In
-                  </Link>
-                </div>
-              )}
               {isAuthenticated && (
                 <Link
                   to="/listings/new"
