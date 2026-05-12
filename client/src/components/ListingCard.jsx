@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice, truncateText, getPlaceholderImage, formatRelativeDate } from '../lib/utils';
 import { StarRatingCompact } from './StarRating';
@@ -11,6 +12,8 @@ const CONDITION_CONFIG = {
 };
 
 export default function ListingCard({ listing, index = 0 }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   const {
     id,
     title,
@@ -50,13 +53,18 @@ export default function ListingCard({ listing, index = 0 }) {
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+        )}
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          onLoad={() => setImageLoaded(true)}
+          className={`relative z-1 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
           onError={(e) => {
             e.target.src = getPlaceholderImage(category?.name);
+            setImageLoaded(true);
           }}
         />
         
