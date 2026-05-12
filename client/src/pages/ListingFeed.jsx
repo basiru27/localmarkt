@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useListings, useListingStats } from '../hooks/useListings';
 import { useOffline } from '../context/OfflineContext';
 import { useAuth } from '../context/AuthContext';
+import { SearchX } from 'lucide-react';
 import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
@@ -253,50 +254,26 @@ export default function ListingFeed() {
         {!isLoading && !isError && listings && (
           <>
             {listings.length === 0 ? (
-              <div className="empty-state py-16 animate-fade-in">
-                <div className="empty-state-icon">
-                  <svg
-                    className="w-10 h-10"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-text mb-2">No listings found</h3>
-                <p className="text-text-secondary mb-6 max-w-sm">
-                  {hasActiveFilters
-                    ? "We couldn't find any listings matching your search. Try adjusting your filters."
-                    : "Be the first to post a listing and start selling to your community!"}
-                </p>
-                {hasActiveFilters ? (
-                  <button 
-                    onClick={() => handleFiltersChange({ user_id: filters.user_id })} 
-                    className="btn-secondary"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Clear Filters
-                  </button>
-                ) : isAuthenticated ? (
-                  <Link to="/listings/new" className="btn-primary">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Post a Listing
-                  </Link>
-                ) : (
-                  <Link to="/register" className="btn-primary">
-                    Get Started
-                  </Link>
+              <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+                <SearchX size={48} className="text-gray-400 mb-4" />
+                <h3 className="text-2xl font-bold text-text mb-1">No listings found</h3>
+                
+                {filters.search && (
+                  <p className="text-lg text-text-secondary mb-2">
+                    for "<span className="font-medium text-text">{filters.search}</span>"
+                  </p>
                 )}
+                
+                <p className="text-text-secondary mb-8">
+                  Try a different search or browse all categories
+                </p>
+                
+                <button 
+                  onClick={() => setSearchParams({})} 
+                  className="btn-secondary"
+                >
+                  Clear filters
+                </button>
               </div>
             ) : (
               <>
