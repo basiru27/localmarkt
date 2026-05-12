@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import imageCompression from 'browser-image-compression';
 import { supabase } from '../lib/supabase';
 import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
@@ -9,20 +10,17 @@ import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 export default function Profile() {
   const queryClient = useQueryClient();
   const { session, user, refreshProfile } = useAuth();
+  const { success, error: showError } = useToast();
   
   // Tab State
   const [activeTab, setActiveTab] = useState('profile');
   
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
   const [uploading, setUploading] = useState(false);
   const [phoneValue, setPhoneValue] = useState('+220 ');
   const [phoneError, setPhoneError] = useState('');
   
   // Security Tab State
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [securitySuccess, setSecuritySuccess] = useState('');
-  const [securityError, setSecurityError] = useState('');
 
   // Notifications Tab State
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -31,8 +29,6 @@ export default function Profile() {
     email_moderation: true,
     email_sales: true
   });
-  const [notificationsSuccess, setNotificationsSuccess] = useState('');
-  const [notificationError, setNotificationError] = useState('');
 
   const getAuthHeader = () => {
     if (!session?.access_token) return {};
@@ -76,13 +72,11 @@ export default function Profile() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       refreshProfile(user.id);
-      setSuccessMessage('Profile updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      success('Profile updated successfully!');
       setErrorMsg('');
     },
     onError: (err) => {
-      setErrorMsg(err.response?.data?.error || err.message || 'Failed to update profile');
-      setSuccessMessage('');
+      showError(err.response?.data?.error || err.message || 'Failed to update profile');
     }
   });
 
@@ -91,8 +85,6 @@ export default function Profile() {
     if (!file) return;
 
     setUploading(true);
-    setErrorMsg('');
-    setSuccessMessage('');
 
     try {
       // Compress
@@ -123,10 +115,11 @@ export default function Profile() {
         ...profile, 
         avatar_url: publicUrl 
       });
+      success('Avatar updated successfully!');
 
     } catch (err) {
       console.error('Avatar upload error:', err);
-      setErrorMsg('Failed to upload avatar.');
+      showError('Failed to upload avatar.');
     } finally {
       setUploading(false);
     }
@@ -136,8 +129,6 @@ export default function Profile() {
     if (!window.confirm('Are you sure you want to remove your profile picture?')) return;
 
     setUploading(true);
-    setErrorMsg('');
-    setSuccessMessage('');
 
     try {
       if (profile?.avatar_url) {
@@ -154,9 +145,10 @@ export default function Profile() {
       }, {
         onSettled: () => setUploading(false)
       });
+      success('Avatar removed successfully!');
     } catch (err) {
       console.error('Avatar remove error:', err);
-      setErrorMsg('Failed to remove avatar.');
+      showError('Failed to remove avatar.');
       setUploading(false);
     }
   };
@@ -191,16 +183,14 @@ export default function Profile() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    setSecurityError('');
-    setSecuritySuccess('');
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setSecurityError("New passwords do not match.");
+      showError("New passwords do not match.");
       return;
     }
 
     if (passwordForm.newPassword.length < 6) {
-      setSecurityError("Password must be at least 6 characters.");
+      showError("Password must be at least 6 characters.");
       return;
     }
 
@@ -213,11 +203,10 @@ export default function Profile() {
 
       if (error) throw error;
       
-      setSecuritySuccess('Password updated successfully.');
+      success('Password updated successfully.');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setTimeout(() => setSecuritySuccess(''), 3000);
     } catch (err) {
-      setSecurityError(err.message || 'Failed to update password.');
+      showError(err.message || 'Failed to update password.');
     }
   };
 
@@ -237,8 +226,7 @@ export default function Profile() {
       const permission = await Notification.requestPermission();
       setPushEnabled(permission === "granted");
       if (permission === "granted") {
-        setNotificationsSuccess("Push notifications enabled!");
-        setTimeout(() => setNotificationsSuccess(''), 3000);
+        success("Push notifications enabled!");
       }
     }
   };
@@ -246,15 +234,13 @@ export default function Profile() {
   const handleEmailToggle = async (key) => {
     const newPrefs = { ...emailPrefs, [key]: !emailPrefs[key] };
     setEmailPrefs(newPrefs);
-    setNotificationError('');
     
     try {
       await profileApi.update({ notifications: newPrefs }, getAuthHeader());
-      setNotificationsSuccess(`${key === 'email_contact' ? 'Contact requests' : key === 'email_moderation' ? 'Moderation alerts' : 'New sales alerts'} notification preference updated.`);
-      setTimeout(() => setNotificationsSuccess(''), 3000);
+      success(`${key === 'email_contact' ? 'Contact requests' : key === 'email_moderation' ? 'Moderation alerts' : 'New sales alerts'} notification preference updated.`);
     } catch (err) {
       setEmailPrefs({ ...emailPrefs }); // revert
-      setNotificationError(err.message || 'Failed to update notification preference.');
+      showError(err.message || 'Failed to update notification preference.');
     }
   };
 
@@ -323,17 +309,6 @@ export default function Profile() {
 
       {activeTab === 'profile' && (
         <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden">
-          {successMessage && (
-            <div className="alert alert-success m-6 mb-0">
-              {successMessage}
-            </div>
-          )}
-          {errorMsg && (
-            <div className="alert alert-error m-6 mb-0">
-              {errorMsg}
-            </div>
-          )}
-
           {/* Avatar Section */}
           <div className="p-6 border-b border-border-light flex flex-col sm:flex-row items-center gap-6">
             <div className="relative group inline-block">
@@ -460,17 +435,6 @@ export default function Profile() {
       {activeTab === 'security' && (
         <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden p-6">
           <h2 className="text-lg font-bold text-text mb-4">Change Password</h2>
-          
-          {securitySuccess && (
-            <div className="alert alert-success mb-6">
-              {securitySuccess}
-            </div>
-          )}
-          {securityError && (
-            <div className="alert alert-error mb-6">
-              {securityError}
-            </div>
-          )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
             <div className="form-group">
@@ -513,12 +477,6 @@ export default function Profile() {
       {activeTab === 'notifications' && (
         <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden p-6">
           <h2 className="text-lg font-bold text-text mb-4">Notification Preferences</h2>
-          
-          {notificationsSuccess && (
-            <div className="alert alert-success mb-6">
-              {notificationsSuccess}
-            </div>
-          )}
 
           <div className="flex items-center justify-between py-4 border-b border-border-light">
             <div>
@@ -543,11 +501,6 @@ export default function Profile() {
           </div>
           
           <p className="text-sm font-medium text-text mt-6 mb-3">Email Notifications</p>
-          {notificationError && (
-            <div className="alert alert-error mb-4 text-sm py-2 px-3">
-              {notificationError}
-            </div>
-          )}
           {Object.entries(emailPrefs).map(([key, enabled]) => (
             <div key={key} className="flex items-center justify-between py-3 border-b border-border-light last:border-0">
               <div>
