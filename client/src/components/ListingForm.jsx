@@ -19,10 +19,9 @@ import { formatPrice } from '../lib/utils';
 
 export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isOnline } = useOffline();
+  const { user, profile } = useAuth();
   const fileInputRef = useRef(null);
-  
+
   const { data: regions, isLoading: regionsLoading } = useRegions();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
@@ -33,7 +32,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     condition: initialData?.condition || '',
     region_id: initialData?.region_id || '',
     category_id: initialData?.category_id || '',
-    contact: initialData?.contact || '+220 ',
+    contact: initialData?.contact || profile?.phone_number || '+220 ',
     image_url: initialData?.image_url || '',
     negotiable: initialData?.negotiable || false,
   });
