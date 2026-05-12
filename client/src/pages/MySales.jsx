@@ -125,7 +125,7 @@ export default function MySales() {
     if (currentIndex === -1) return steps.map(s => ({ step: s, state: 'pending' }));
     
     return steps.map((s, i) => {
-      if (i < currentIndex) return { step: s, state: 'completed' };
+      if (i < currentIndex || (i === currentIndex && status === 'completed')) return { step: s, state: 'completed' };
       if (i === currentIndex) return { step: s, state: 'current' };
       return { step: s, state: 'pending' };
     });
