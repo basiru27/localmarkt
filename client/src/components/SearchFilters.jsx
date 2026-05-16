@@ -1,28 +1,32 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useRegions, useCategories } from '../hooks/useLookups';
+import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 
 export default function SearchFilters({ filters, onFiltersChange, hideSearch = false }) {
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [isExpanded, setIsExpanded] = useState(false);
-  const { data: regions, isLoading: regionsLoading } = useRegions();
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const [selectedZone, setSelectedZone] = useState('');
+  const { data: zones, isLoading: zonesLoading } = useZones();
+  const { data: areas, isLoading: areasLoading } = useAreas(selectedZone);
+  const { data: categories } = useCategories();
 
   // Sync searchInput with filters.search when it changes externally
-  // (e.g., back/forward navigation, clearing filters)
   useEffect(() => {
-    // Only sync if the external value differs from local input
-    // This prevents overwriting while user is typing
     if (filters.search !== searchInput && filters.search !== undefined) {
       setSearchInput(filters.search);
     } else if (filters.search === undefined && searchInput !== '') {
-      // Handle case when search is cleared externally
       setSearchInput('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.search]);
 
-  // Debounced search handler - use useMemo to create a stable debounced function
+  // When zone changes via external filter clear, reset
+  useEffect(() => {
+    if (!filters.area_id) {
+      setSelectedZone('');
+    }
+  }, [filters.area_id]);
+
   const debouncedSearch = useMemo(
     () => debounce((value, currentFilters, onChange) => {
       onChange({ ...currentFilters, search: value || undefined });
@@ -36,28 +40,31 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     debouncedSearch(value, filters, onFiltersChange);
   }, [debouncedSearch, filters, onFiltersChange]);
 
-  const handleCategoryChange = (e) => {
+  const handleZoneChange = (e) => {
     const value = e.target.value;
-    onFiltersChange({ ...filters, category: value || undefined });
+    setSelectedZone(value);
+    // Clear area when zone changes
+    onFiltersChange({ ...filters, area_id: undefined });
   };
 
-  const handleRegionChange = (e) => {
+  const handleAreaChange = (e) => {
     const value = e.target.value;
-    onFiltersChange({ ...filters, region: value || undefined });
+    onFiltersChange({ ...filters, area_id: value || undefined });
   };
 
   const handleClearFilters = () => {
     setSearchInput('');
+    setSelectedZone('');
     onFiltersChange({
       ...filters,
       search: undefined,
       category: undefined,
-      region: undefined
+      area_id: undefined,
     });
   };
 
-  const hasActiveFilters = filters.search || filters.category || filters.region;
-  const activeFilterCount = [filters.search, filters.category, filters.region].filter(Boolean).length;
+  const hasActiveFilters = filters.search || filters.category || filters.area_id;
+  const activeFilterCount = [filters.search, filters.category, filters.area_id].filter(Boolean).length;
 
   const CATEGORY_NAMES = ["All", "Electronics", "Clothing", "Food & Produce", "Agriculture", "Vehicles", "Services", "Other"];
 
@@ -72,14 +79,21 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     }
   };
 
-  // Determine active chip. If filters.category is set, find its name. Else "All".
   const activeCategoryName = filters.category && categories
     ? categories.find(c => c.id.toString() === filters.category.toString())?.name
     : "All";
 
+  const selectedAreaName = filters.area_id && areas
+    ? areas.find(a => a.id.toString() === filters.area_id.toString())?.name
+    : null;
+
+  const selectedZoneName = filters.area_id && zones
+    ? zones.find(z => z.id.toString() === selectedZone)?.name
+    : null;
+
   return (
     <div className="card-static p-4 sm:p-5 mb-6">
-      {/* Category Chips (Task 2A) */}
+      {/* Category Chips */}
       <div className="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {CATEGORY_NAMES.map(name => {
           const isActive = activeCategoryName === name;
@@ -88,8 +102,8 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
               key={name}
               onClick={() => handleChipClick(name)}
               className={`flex-shrink-0 h-[24px] px-[12px] text-[13px] rounded-full whitespace-nowrap transition-colors ${
-                isActive 
-                  ? 'bg-[#1a5c38] text-white border border-[#1a5c38]' 
+                isActive
+                  ? 'bg-[#1a5c38] text-white border border-[#1a5c38]'
                   : 'bg-white text-[#1a5c38] border border-[#1a5c38] hover:bg-gray-50'
               }`}
             >
@@ -162,25 +176,50 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
 
         {/* Desktop Filters */}
         <div className="hidden sm:flex gap-3">
-          {/* Region filter */}
+          {/* Zone filter */}
           <div className="w-44 relative">
-            <label htmlFor="region-filter" className="sr-only">Filter by region</label>
+            <label htmlFor="zone-filter" className="sr-only">Filter by zone</label>
             <select
-              id="region-filter"
-              value={filters.region || ''}
-              onChange={handleRegionChange}
+              id="zone-filter"
+              value={selectedZone}
+              onChange={handleZoneChange}
               className="input py-3"
-              disabled={regionsLoading}
-              aria-busy={regionsLoading}
+              disabled={zonesLoading}
+              aria-busy={zonesLoading}
             >
-              <option value="">{regionsLoading ? 'Loading...' : 'All Regions'}</option>
-              {regions?.map((region) => (
-                <option key={region.id} value={region.id}>
-                  {region.name}
+              <option value="">{zonesLoading ? 'Loading...' : 'All Zones'}</option>
+              {zones?.map((zone) => (
+                <option key={zone.id} value={zone.id}>
+                  {zone.name}
                 </option>
               ))}
             </select>
-            {regionsLoading && (
+            {zonesLoading && (
+              <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+              </div>
+            )}
+          </div>
+
+          {/* Area filter */}
+          <div className="w-44 relative">
+            <label htmlFor="area-filter" className="sr-only">Filter by area</label>
+            <select
+              id="area-filter"
+              value={filters.area_id || ''}
+              onChange={handleAreaChange}
+              className="input py-3"
+              disabled={!selectedZone || areasLoading}
+              aria-busy={areasLoading}
+            >
+              <option value="">{!selectedZone ? 'Select zone first' : areasLoading ? 'Loading...' : 'All Areas'}</option>
+              {areas?.map((area) => (
+                <option key={area.id} value={area.id}>
+                  {area.name}
+                </option>
+              ))}
+            </select>
+            {areasLoading && (
               <div className="absolute right-10 top-1/2 -translate-y-1/2">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
               </div>
@@ -207,26 +246,53 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       {isExpanded && (
         <div id="mobile-filters" className="sm:hidden mt-4 pt-4 border-t border-border animate-fade-in-down">
           <div className="space-y-3">
-            {/* Region filter */}
+            {/* Zone filter */}
             <div>
-              <label htmlFor="mobile-region-filter" className="label">Region</label>
+              <label htmlFor="mobile-zone-filter" className="label">Zone</label>
               <div className="relative">
                 <select
-                  id="mobile-region-filter"
-                  value={filters.region || ''}
-                  onChange={handleRegionChange}
+                  id="mobile-zone-filter"
+                  value={selectedZone}
+                  onChange={handleZoneChange}
                   className="input"
-                  disabled={regionsLoading}
-                  aria-busy={regionsLoading}
+                  disabled={zonesLoading}
+                  aria-busy={zonesLoading}
                 >
-                  <option value="">{regionsLoading ? 'Loading regions...' : 'All Regions'}</option>
-                  {regions?.map((region) => (
-                    <option key={region.id} value={region.id}>
-                      {region.name}
+                  <option value="">{zonesLoading ? 'Loading zones...' : 'All Zones'}</option>
+                  {zones?.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name}
                     </option>
                   ))}
                 </select>
-                {regionsLoading && (
+                {zonesLoading && (
+                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Area filter */}
+            <div>
+              <label htmlFor="mobile-area-filter" className="label">Area</label>
+              <div className="relative">
+                <select
+                  id="mobile-area-filter"
+                  value={filters.area_id || ''}
+                  onChange={handleAreaChange}
+                  className="input"
+                  disabled={!selectedZone || areasLoading}
+                  aria-busy={areasLoading}
+                >
+                  <option value="">{!selectedZone ? 'Select zone first' : areasLoading ? 'Loading...' : 'All Areas'}</option>
+                  {areas?.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.name}
+                    </option>
+                  ))}
+                </select>
+                {areasLoading && (
                   <div className="absolute right-10 top-1/2 -translate-y-1/2">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                   </div>
@@ -290,16 +356,19 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
               </button>
             </span>
           )}
-          {filters.region && regions && (
+          {filters.area_id && selectedAreaName && (
             <span className="badge-primary flex items-center gap-1.5" role="listitem">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
-              <span>Region: {regions.find(r => r.id === filters.region)?.name}</span>
+              <span>Area: {selectedZoneName ? `${selectedZoneName} → ` : ''}{selectedAreaName}</span>
               <button
-                onClick={() => onFiltersChange({ ...filters, region: undefined })}
+                onClick={() => {
+                  setSelectedZone('');
+                  onFiltersChange({ ...filters, area_id: undefined });
+                }}
                 className="ml-1 hover:text-primary-dark p-0.5"
-                aria-label={`Remove region filter: ${regions.find(r => r.id === filters.region)?.name}`}
+                aria-label={`Remove area filter: ${selectedAreaName}`}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

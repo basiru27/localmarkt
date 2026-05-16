@@ -23,7 +23,7 @@ registerRoute(navigationRoute);
 
 // Cache API GET requests with StaleWhileRevalidate
 registerRoute(
-  ({ request, url }) => url.pathname.match(/^\/api\/(listings|regions|categories)/) && request.method === 'GET',
+  ({ request, url }) => url.pathname.match(/^\/api\/(listings|zones|categories)/) && request.method === 'GET',
   new StaleWhileRevalidate({
     cacheName: 'api-cache',
     plugins: [

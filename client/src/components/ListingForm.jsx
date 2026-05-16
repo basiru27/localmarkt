@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRegions, useCategories } from '../hooks/useLookups';
+import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
 import { uploadImage, validateImage, compressImage, ImageUploadError } from '../lib/imageUpload';
 import { isValidGambianPhone, formatGambianPhone } from '../lib/utils';
@@ -20,17 +20,25 @@ import { formatPrice } from '../lib/utils';
 export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { isOnline } = useOffline();
   const fileInputRef = useRef(null);
 
-  const { data: regions, isLoading: regionsLoading } = useRegions();
+  const { data: zones, isLoading: zonesLoading } = useZones();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+
+  const [selectedZone, setSelectedZone] = useState(() => {
+    if (initialData?.area?.zone_id) return initialData.area.zone_id.toString();
+    return '';
+  });
+
+  const { data: areas, isLoading: areasLoading } = useAreas(selectedZone);
 
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
     price: initialData?.price || '',
     condition: initialData?.condition || '',
-    region_id: initialData?.region_id || '',
+    area_id: initialData?.area_id || '',
     category_id: initialData?.category_id || '',
     contact: initialData?.contact || profile?.phone_number || '+220 ',
     image_url: initialData?.image_url || '',
@@ -210,8 +218,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       newErrors.contact = 'Please enter a valid Gambian phone number (e.g. +220 3XXXXXX)';
     }
 
-    if (!formData.region_id) {
-      newErrors.region_id = 'Please select a region';
+    if (!formData.area_id) {
+      newErrors.area_id = 'Please select an area';
     }
 
     if (!formData.category_id) {
@@ -290,7 +298,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
       ...formData,
       price: parseFloat(formData.price),
       negotiable: formData.negotiable,
-      region_id: parseInt(formData.region_id),
+      area_id: parseInt(formData.area_id),
       category_id: parseInt(formData.category_id),
       image_url: uploadedUrls.length > 0 ? uploadedUrls[0] : null,
       images: uploadedUrls,
@@ -309,7 +317,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
     handleSubmit({ preventDefault: () => {} });
   };
 
-  const isLoading = regionsLoading || categoriesLoading || isSubmitting || uploading;
+  const isLoading = zonesLoading || categoriesLoading || isSubmitting || uploading;
 
   return (
     <>
@@ -441,8 +449,8 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
         </div>
       </div>
 
-      {/* Category & Region - side by side on larger screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Category, Zone & Area */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Category */}
         <div className="form-group">
           <label htmlFor="category_id" className="label">
@@ -478,37 +486,67 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
           )}
         </div>
 
-        {/* Region */}
+        {/* Zone */}
         <div className="form-group">
-          <label htmlFor="region_id" className="label">
-            Region <span className="text-error" aria-hidden="true">*</span>
+          <label htmlFor="zone_id" className="label">
+            Zone <span className="text-error" aria-hidden="true">*</span>
             <span className="sr-only">(required)</span>
           </label>
           <select
-            id="region_id"
-            name="region_id"
-            value={formData.region_id}
-            onChange={handleChange}
-            className={`input ${errors.region_id ? 'input-error' : ''}`}
-            disabled={regionsLoading}
+            id="zone_id"
+            value={selectedZone}
+            onChange={(e) => {
+              setSelectedZone(e.target.value);
+              setFormData((prev) => ({ ...prev, area_id: '' }));
+              if (errors.area_id) {
+                setErrors((prev) => ({ ...prev, area_id: null }));
+              }
+            }}
+            className={`input`}
+            disabled={zonesLoading}
             aria-required="true"
-            aria-invalid={errors.region_id ? 'true' : 'false'}
-            aria-describedby={errors.region_id ? 'region-error' : undefined}
-            aria-busy={regionsLoading}
+            aria-busy={zonesLoading}
           >
-            <option value="">Select region</option>
-            {regions?.map((region) => (
-              <option key={region.id} value={region.id}>
-                {region.name}
+            <option value="">Select zone</option>
+            {zones?.map((zone) => (
+              <option key={zone.id} value={zone.id}>
+                {zone.name}
               </option>
             ))}
           </select>
-          {errors.region_id && (
-            <p id="region-error" className="error-message" role="alert" aria-live="polite">
+        </div>
+
+        {/* Area */}
+        <div className="form-group">
+          <label htmlFor="area_id" className="label">
+            Area <span className="text-error" aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
+          <select
+            id="area_id"
+            name="area_id"
+            value={formData.area_id}
+            onChange={handleChange}
+            className={`input ${errors.area_id ? 'input-error' : ''}`}
+            disabled={!selectedZone || areasLoading}
+            aria-required="true"
+            aria-invalid={errors.area_id ? 'true' : 'false'}
+            aria-describedby={errors.area_id ? 'area-error' : undefined}
+            aria-busy={areasLoading}
+          >
+            <option value="">{!selectedZone ? 'Select zone first' : areasLoading ? 'Loading...' : 'Select area'}</option>
+            {areas?.map((area) => (
+              <option key={area.id} value={area.id}>
+                {area.name}
+              </option>
+            ))}
+          </select>
+          {errors.area_id && (
+            <p id="area-error" className="error-message" role="alert" aria-live="polite">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              {errors.region_id}
+              {errors.area_id}
             </p>
           )}
         </div>
@@ -802,9 +840,9 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
                     {CONDITION_OPTIONS.find(c => c.value === formData.condition)?.label || formData.condition}
                   </span>
                 )}
-                {formData.region_id && (
+                {formData.area_id && areas && (
                   <span className="badge-secondary border border-gray-200">
-                    {regions?.find(r => r.id === parseInt(formData.region_id))?.name || 'Region'}
+                    {areas.find(a => a.id === parseInt(formData.area_id))?.name || 'Area'}
                   </span>
                 )}
                 {formData.category_id && (

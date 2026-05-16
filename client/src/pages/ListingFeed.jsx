@@ -20,7 +20,7 @@ export default function ListingFeed() {
     const params = {};
     const search = searchParams.get('search');
     const category = searchParams.get('category');
-    const region = searchParams.get('region');
+    const area_id = searchParams.get('area_id');
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
     const sort = searchParams.get('sort');
@@ -28,7 +28,7 @@ export default function ListingFeed() {
 
     if (search) params.search = search;
     if (category) params.category = category;
-    if (region) params.region = region;
+    if (area_id) params.area_id = area_id;
     if (page) params.page = page;
     if (limit) params.limit = limit;
     if (sort) params.sort = sort;
@@ -42,7 +42,7 @@ export default function ListingFeed() {
     const params = new URLSearchParams();
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.category) params.set('category', newFilters.category);
-    if (newFilters.region) params.set('region', newFilters.region);
+    if (newFilters.area_id) params.set('area_id', newFilters.area_id);
     if (newFilters.limit) params.set('limit', newFilters.limit);
     if (newFilters.sort) params.set('sort', newFilters.sort);
     if (newFilters.user_id) params.set('user_id', newFilters.user_id);
@@ -76,7 +76,7 @@ export default function ListingFeed() {
   const { isOnline } = useOffline();
   const { isAuthenticated } = useAuth();
 
-  const hasActiveFilters = filters.search || filters.category || filters.region || filters.user_id;
+  const hasActiveFilters = filters.search || filters.category || filters.area_id || filters.user_id;
   const isSellerFilter = !!filters.user_id;
 
   return (
@@ -145,10 +145,10 @@ export default function ListingFeed() {
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
-                    `${statsData?.activeRegions || 0}`
+                    `${statsData?.activeAreas || 0}`
                   )}
                 </div>
-                <div className="text-sm text-white/80">Regions</div>
+                <div className="text-sm text-white/80">Areas</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
                 <div className="text-2xl font-bold">

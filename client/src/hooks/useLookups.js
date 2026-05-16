@@ -1,18 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { regionsApi, categoriesApi } from '../lib/api';
+import { zonesApi, categoriesApi } from '../lib/api';
 
 // Query keys
 export const lookupKeys = {
-  regions: ['regions'],
+  zones: ['zones'],
+  areas: (zoneId) => ['areas', zoneId],
   categories: ['categories'],
 };
 
-// Get all regions
-export function useRegions() {
+// Get all zones
+export function useZones() {
   return useQuery({
-    queryKey: lookupKeys.regions,
-    queryFn: regionsApi.getAll,
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours - rarely changes
+    queryKey: lookupKeys.zones,
+    queryFn: zonesApi.getAll,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+}
+
+// Get areas for a specific zone
+export function useAreas(zoneId) {
+  return useQuery({
+    queryKey: lookupKeys.areas(zoneId),
+    queryFn: () => zonesApi.getAreas(zoneId),
+    enabled: !!zoneId,
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -21,6 +32,6 @@ export function useCategories() {
   return useQuery({
     queryKey: lookupKeys.categories,
     queryFn: categoriesApi.getAll,
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours - rarely changes
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }

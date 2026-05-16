@@ -435,13 +435,13 @@ export default function ListingDetail() {
                   {CONDITION_CONFIG[listing.condition].label}
                 </span>
               )}
-              {listing.region && (
+              {listing.area && (
                 <span className="badge-secondary">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  {listing.region.name}
+                  {listing.area.name}{listing.area.zone ? `, ${listing.area.zone.name}` : ''}
                 </span>
               )}
               <span className="badge-secondary">

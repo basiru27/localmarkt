@@ -239,7 +239,7 @@ export default function AdminListings() {
                   </div>
                   <h3 className="font-semibold text-text text-lg truncate">{listing.title}</h3>
                   <p className="text-sm text-text-secondary mt-1">
-                    {formatPrice(listing.price)} • {listing.category?.name || 'Unknown category'} • {listing.region?.name || 'Unknown region'}
+                    {formatPrice(listing.price)} • {listing.category?.name || 'Unknown category'} • {listing.area?.name || 'Unknown area'}
                   </p>
                   <p className="text-xs text-text-muted mt-2">
                     Seller: {listing.seller?.display_name || 'Unknown'} • Posted {formatRelativeDate(listing.created_at)}

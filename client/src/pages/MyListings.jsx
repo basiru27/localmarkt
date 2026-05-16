@@ -262,12 +262,12 @@ export default function MyListings() {
                     </p>
                     
                     <div className="flex items-center gap-3 mt-2 text-xs text-text-secondary">
-                      {listing.region && (
+                      {listing.area && (
                         <span className="flex items-center gap-1">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           </svg>
-                          {listing.region.name}
+                          {listing.area.name}
                         </span>
                       )}
                       <span className="flex items-center gap-1">

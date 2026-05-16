@@ -19,7 +19,7 @@ export default function ListingCard({ listing, index = 0 }) {
     title,
     price,
     image_url,
-    region,
+    area,
     category,
     condition,
     created_at,
@@ -151,7 +151,7 @@ export default function ListingCard({ listing, index = 0 }) {
         {/* Meta info */}
         <div className="flex items-center justify-between text-xs text-text-secondary">
           {/* Region */}
-          {region && (
+          {area && (
             <span className="flex items-center gap-1.5">
               <svg
                 className="w-3.5 h-3.5 text-primary"
@@ -172,7 +172,7 @@ export default function ListingCard({ listing, index = 0 }) {
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span className="font-medium">{region.name}</span>
+              <span className="font-medium">{area.name}</span>
             </span>
           )}
 

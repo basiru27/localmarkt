@@ -95,7 +95,7 @@ export const listingsApi = {
   getAll: (params = {}) => {
     const searchParams = new URLSearchParams();
     if (params.category) searchParams.append('category', params.category);
-    if (params.region) searchParams.append('region', params.region);
+    if (params.area_id) searchParams.append('area_id', params.area_id);
     if (params.search) searchParams.append('search', params.search);
     if (params.page) searchParams.append('page', params.page);
     if (params.limit) searchParams.append('limit', params.limit);
@@ -114,7 +114,7 @@ export const listingsApi = {
   getMine: (params = {}, authHeader) => {
     const searchParams = new URLSearchParams();
     if (params.category) searchParams.append('category', params.category);
-    if (params.region) searchParams.append('region', params.region);
+    if (params.area_id) searchParams.append('area_id', params.area_id);
     if (params.search) searchParams.append('search', params.search);
     if (params.page) searchParams.append('page', params.page);
     if (params.limit) searchParams.append('limit', params.limit);
@@ -147,9 +147,10 @@ export const listingsApi = {
     }),
 };
 
-// Regions API
-export const regionsApi = {
-  getAll: () => fetchApi('/regions'),
+// Zones & Areas API
+export const zonesApi = {
+  getAll: () => fetchApi('/zones'),
+  getAreas: (zoneId) => fetchApi(`/zones/${zoneId}/areas`),
 };
 
 // Categories API
