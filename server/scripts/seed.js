@@ -90,8 +90,8 @@ const CONDITIONS = ['new', 'used_like_new', 'used_good', 'used_fair'];
 
 // Realistic Gambian marketplace listings data by category
 const listingsData = {
-  // Category ID 1: Electronics
-  Electronics: [
+  // Category ID 1: Electronics & Phones
+  'Electronics & Phones': [
     {
       title: 'Samsung Galaxy A54 - Like New',
       description: 'Samsung Galaxy A54 smartphone, 128GB storage, 6GB RAM. Used for only 3 months, comes with original charger and box. No scratches, perfect condition. Reason for selling: upgraded to new phone.',
@@ -174,8 +174,8 @@ const listingsData = {
     },
   ],
 
-  // Category ID 2: Clothing
-  Clothing: [
+  // Category ID 2: Clothing & Apparel
+  'Clothing & Apparel': [
     {
       title: 'Traditional Gambian Kaftan - Embroidered',
       description: 'Beautiful hand-embroidered kaftan in royal blue. Size XL. Perfect for ceremonies, Tobaski, and special occasions. Made by local tailors in Serrekunda.',
@@ -258,8 +258,8 @@ const listingsData = {
     },
   ],
 
-  // Category ID 3: Food & Produce
-  'Food & Produce': [
+  // Category ID 3: Food & Groceries
+  'Food & Groceries': [
     {
       title: 'Fresh Mangoes - Per Crate',
       description: 'Sweet and juicy Gambian mangoes, freshly picked. Price per crate (approximately 20kg). Perfect for juice making or eating fresh. Delivery available in Greater Banjul.',
@@ -342,8 +342,8 @@ const listingsData = {
     },
   ],
 
-  // Category ID 4: Furniture
-  Furniture: [
+  // Category ID 4: Home & Furniture
+  'Home & Furniture': [
     {
       title: 'L-Shaped Sofa Set - Modern Design',
       description: 'Beautiful L-shaped sofa set in grey fabric. Seats 6-7 people comfortably. Less than 1 year old. Reason for selling: relocating. Pick up from Kololi.',
@@ -594,89 +594,7 @@ const listingsData = {
     },
   ],
 
-  // Category ID 7: Agriculture
-  Agriculture: [
-    {
-      title: 'Groundnut Seeds - 50kg Bag',
-      description: 'High quality groundnut seeds for planting. Certified variety, good germination rate. Price per 50kg bag. Bulk orders welcome.',
-      priceRange: [2500, 4000],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1567892320421-1c657571ea4a?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1543257580-7269da773bf5?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Water Pump - 3 Inch Diesel',
-      description: 'Diesel water pump, 3 inch outlet. Perfect for irrigation and farming. Pumps 1000 liters per minute. Used one season, excellent condition.',
-      priceRange: [18000, 28000],
-      condition: 'used_like_new',
-      images: [
-        'https://images.unsplash.com/photo-1504502350688-00f5d59bbdeb?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Laying Hens - Rhode Island Red',
-      description: 'Rhode Island Red laying hens, 6 months old. Good egg production. Price per bird, minimum order 10. Can deliver within Greater Banjul area.',
-      priceRange: [250, 450],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Tractor - Massey Ferguson 290',
-      description: 'Massey Ferguson 290 tractor. Well maintained, new battery. Comes with plough attachment. Hours: 3500. Perfect for medium to large farms.',
-      priceRange: [850000, 1200000],
-      condition: 'used_fair',
-      images: [
-        'https://images.unsplash.com/photo-1530267981375-f0de937f5f13?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1605002969827-9ac26e1b25e3?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Organic Fertilizer - Cow Manure',
-      description: 'Well composted cow manure fertilizer. Excellent for vegetable gardens and crops. Price per truck load. Delivery available.',
-      priceRange: [1500, 3000],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1585314540237-13cb52f221e4?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1592722212832-fb88a5bb6bf9?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Goats for Sale - Healthy Stock',
-      description: 'Healthy goats available for sale. Various sizes and ages. Good for breeding or meat. Vaccinated and dewormed. Price varies by size.',
-      priceRange: [3000, 8000],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1524024973431-2ad916746881?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1533318087102-b3ad366ed041?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Drip Irrigation Kit - 1 Acre',
-      description: 'Complete drip irrigation system for 1 acre. Includes pipes, drippers, filters, and connectors. Water-saving technology. Installation guide included.',
-      priceRange: [15000, 25000],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=640&h=480&fit=crop',
-      ],
-    },
-    {
-      title: 'Beehives with Bee Colonies',
-      description: 'Langstroth beehives with established bee colonies. Great for honey production. Includes basic beekeeping equipment. Training available for beginners.',
-      priceRange: [4000, 7000],
-      condition: 'new',
-      images: [
-        'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=640&h=480&fit=crop',
-        'https://images.unsplash.com/photo-1587049352851-8d4e89133924?w=640&h=480&fit=crop',
-      ],
-    },
-  ],
+
 
   // Category ID 8: Other
   Other: [
@@ -763,18 +681,6 @@ const listingsData = {
   ],
 };
 
-// Map category names to IDs (based on schema.sql order)
-const categoryNameToId = {
-  'Electronics': 1,
-  'Clothing': 2,
-  'Food & Produce': 3,
-  'Furniture': 4,
-  'Vehicles': 5,
-  'Services': 6,
-  'Agriculture': 7,
-  'Other': 8,
-};
-
 async function seed() {
   console.log('Starting seed process...');
 
@@ -820,7 +726,7 @@ async function seed() {
     console.log('Existing listings cleared.');
 
     // 2. Fetch required reference data
-    console.log('Fetching users and areas...');
+    console.log('Fetching users, areas, and categories...');
     
     const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id');
     if (profilesError) throw profilesError;
@@ -831,6 +737,14 @@ async function seed() {
 
     const { data: areas, error: areasError } = await supabase.from('areas').select('id');
     if (areasError) throw areasError;
+
+    const { data: categories, error: categoriesError } = await supabase.from('categories').select('id, name');
+    if (categoriesError) throw categoriesError;
+
+    const categoryNameToId = {};
+    for (const cat of categories) {
+      categoryNameToId[cat.name] = cat.id;
+    }
 
     // 3. Generate listings from predefined data
     console.log(`Generating listings across ${profiles.length} user(s)...`);

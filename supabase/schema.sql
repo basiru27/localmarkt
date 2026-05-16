@@ -137,13 +137,14 @@ CREATE POLICY "Categories are viewable by everyone"
 
 -- Seed categories
 INSERT INTO categories (name) VALUES
-  ('Electronics'),
-  ('Clothing'),
-  ('Food & Produce'),
-  ('Furniture'),
+  ('Electronics & Phones'),
+  ('Clothing & Apparel'),
+  ('Home & Furniture'),
+  ('Beauty & Health'),
+  ('Food & Groceries'),
+  ('Baby & Kids'),
   ('Vehicles'),
   ('Services'),
-  ('Agriculture'),
   ('Other')
 ON CONFLICT (name) DO NOTHING;
 
