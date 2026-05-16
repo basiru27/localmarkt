@@ -11,8 +11,8 @@ import {
 const router = Router();
 
 const createListingLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 listing creations per window
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -20,35 +20,23 @@ const createListingLimiter = rateLimit({
   },
 });
 
-/**
- * Sanitize search input to prevent PostgREST filter injection
- * Escapes special characters used in PostgREST query syntax
- */
 function sanitizeSearchInput(input) {
   if (!input || typeof input !== 'string') return '';
-  
-  // Escape PostgREST special characters: % _ * , . ( ) 
-  // Also escape backslash which is used for escaping
+
   return input
-    .replace(/\\/g, '\\\\')  // Escape backslashes first
-    .replace(/%/g, '\\%')    // Escape wildcard %
-    .replace(/_/g, '\\_')    // Escape wildcard _
-    .replace(/\*/g, '\\*')   // Escape wildcard *
-    .slice(0, 100);          // Limit length to prevent abuse
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/\*/g, '\\*')
+    .slice(0, 100);
 }
 
-/**
- * Delete an image from Supabase Storage
- * Extracts the file path from the public URL and removes it from the bucket
- * @param {string} imageUrl - The public URL of the image
- */
 async function deleteStorageImage(imageUrl) {
   if (!imageUrl) return;
 
   try {
-    // Extract path from URL: .../listing-images/{userId}/{filename}
     const match = imageUrl.match(/\/listing-images\/(.+)$/);
-    if (!match) return; // Not a storage URL (e.g., external Unsplash URL)
+    if (!match) return;
 
     const filePath = match[1];
     const { error } = await supabase.storage
@@ -59,7 +47,6 @@ async function deleteStorageImage(imageUrl) {
       console.error('Failed to delete image from storage:', error);
     }
   } catch (error) {
-    // Log but don't throw - image cleanup is best-effort
     console.error('Error during image cleanup:', error);
   }
 }
@@ -70,14 +57,14 @@ function sanitizeListingForResponse(listing) {
   const { seller, ...rest } = listing;
   const sanitizedSeller = seller
     ? {
-      id: seller.id,
-      display_name: seller.display_name,
-      created_at: seller.created_at,
-      avatar_url: seller.avatar_url,
-      bio: seller.bio,
-      phone_number: seller.phone_number,
-      verified_seller: seller.verified_seller,
-    }
+        id: seller.id,
+        display_name: seller.display_name,
+        created_at: seller.created_at,
+        avatar_url: seller.avatar_url,
+        bio: seller.bio,
+        phone_number: seller.phone_number,
+        verified_seller: seller.verified_seller,
+      }
     : null;
 
   return {
@@ -126,7 +113,6 @@ function isPubliclyVisibleListing(listing) {
   return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
 }
 
-
 /**
  * GET /api/listings/stats
  * Get high-level marketplace statistics
@@ -142,17 +128,17 @@ router.get('/stats', async (req, res, next) => {
 
     const { data: listingsData, error: listingsDataError } = await supabase
       .from('listings')
-      .select('region_id, user_id')
+      .select('area_id, user_id')
       .eq('moderation_status', 'approved');
-      
+
     if (listingsDataError) throw listingsDataError;
-    
-    const uniqueRegions = new Set(listingsData.map(l => l.region_id).filter(Boolean)).size;
+
+    const uniqueAreas = new Set(listingsData.map(l => l.area_id).filter(Boolean)).size;
     const uniqueSellers = new Set(listingsData.map(l => l.user_id).filter(Boolean)).size;
 
     res.json({
       totalListings: listingsCount || 0,
-      activeRegions: uniqueRegions || 0,
+      activeAreas: uniqueAreas || 0,
       activeSellers: uniqueSellers || 0
     });
   } catch (err) {
@@ -163,11 +149,11 @@ router.get('/stats', async (req, res, next) => {
 /**
  * GET /api/listings
  * List all listings with optional filters
- * Query params: category, region, search, page, limit, sort, cursor, user_id
+ * Query params: category, area_id, search, page, limit, sort, cursor, user_id
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { category, region, search, page, limit, sort, cursor, user_id } = req.query;
+    const { category, area_id, search, page, limit, sort, cursor, user_id } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 24;
@@ -178,7 +164,7 @@ router.get('/', async (req, res, next) => {
       .from('listings')
       .select(`
         *,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
       `, { count: 'estimated' });
@@ -187,7 +173,6 @@ router.get('/', async (req, res, next) => {
       .eq('moderation_status', 'approved')
       .eq('seller.is_banned', false);
 
-    // Apply sorting
     if (sort === 'price_asc') {
       query = query.order('price', { ascending: true });
     } else if (sort === 'price_desc') {
@@ -200,18 +185,16 @@ router.get('/', async (req, res, next) => {
       query = query.order('created_at', { ascending: false });
     }
 
-    // Apply cursor
     if (cursor) {
       query = query.lt('created_at', cursor);
     }
 
-    // Apply filters
     if (category) {
       query = query.eq('category_id', parseInt(category));
     }
 
-    if (region) {
-      query = query.eq('region_id', parseInt(region));
+    if (area_id) {
+      query = query.eq('area_id', parseInt(area_id));
     }
 
     if (user_id) {
@@ -219,7 +202,6 @@ router.get('/', async (req, res, next) => {
     }
 
     if (search) {
-      // Search using Full Text Search
       const sanitized = sanitizeSearchInput(search);
       if (sanitized) {
         query = query.textSearch('fts', sanitized, { type: 'websearch' });
@@ -251,8 +233,8 @@ router.get('/', async (req, res, next) => {
         totalItems: count || 0,
         itemsPerPage: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
-      }
+        hasPrevPage: pageNum > 1,
+      },
     });
   } catch (err) {
     next(err);
@@ -265,7 +247,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/mine', authenticate, async (req, res, next) => {
   try {
-    const { category, region, search, sort, page, limit } = req.query;
+    const { category, area_id, search, sort, page, limit } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 50;
@@ -276,19 +258,18 @@ router.get('/mine', authenticate, async (req, res, next) => {
       .from('listings')
       .select(`
         *,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number, verified_seller)
       `, { count: 'estimated' })
       .eq('user_id', req.user.id);
 
-    // Apply filters
     if (category) {
       query = query.eq('category_id', parseInt(category));
     }
 
-    if (region) {
-      query = query.eq('region_id', parseInt(region));
+    if (area_id) {
+      query = query.eq('area_id', parseInt(area_id));
     }
 
     if (search) {
@@ -298,7 +279,6 @@ router.get('/mine', authenticate, async (req, res, next) => {
       }
     }
 
-    // Apply sorting
     if (sort === 'price_asc') {
       query = query.order('price', { ascending: true });
     } else if (sort === 'price_desc') {
@@ -350,7 +330,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       .from('listings')
       .select(`
         *,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
       `)
@@ -369,7 +349,6 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       return res.status(404).json({ error: 'Listing not found' });
     }
 
-    // Get rating stats for this listing
     const { data: reviews, error: reviewError } = await supabase
       .from('reviews')
       .select('rating')
@@ -400,6 +379,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
  */
 router.post('/', authenticate, createListingLimiter, validateBody(createListingSchema), async (req, res, next) => {
   try {
+    console.log('POST /api/listings body:', JSON.stringify(req.body));
     const listingData = {
       ...req.body,
       user_id: req.user.id,
@@ -414,7 +394,7 @@ router.post('/', authenticate, createListingLimiter, validateBody(createListingS
       .insert(listingData)
       .select(`
         *,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name)
       `)
       .single();
@@ -437,8 +417,6 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
   try {
     const { id } = req.params;
 
-    // First, check if the listing exists and belongs to the user
-    // Also fetch image_url to check if we need to clean up old image
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
       .select('id, user_id, image_url')
@@ -452,20 +430,17 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       throw fetchError;
     }
 
-    // Ownership check
     if (existing.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only edit your own listings' });
     }
 
-    // Check if image is being replaced
     const oldImageUrl = existing.image_url;
     const newImageUrl = req.body.image_url;
-    const imageIsBeingReplaced = 
-      oldImageUrl && 
-      newImageUrl !== undefined && 
+    const imageIsBeingReplaced =
+      oldImageUrl &&
+      newImageUrl !== undefined &&
       oldImageUrl !== newImageUrl;
 
-    // Update the listing
     const updateData = {
       ...req.body,
       moderation_status: 'pending',
@@ -480,7 +455,7 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       .eq('id', id)
       .select(`
         *,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name)
       `)
       .single();
@@ -489,7 +464,6 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       throw error;
     }
 
-    // Clean up old image if it was replaced (best-effort)
     if (imageIsBeingReplaced) {
       await deleteStorageImage(oldImageUrl);
     }
@@ -508,8 +482,6 @@ router.delete('/:id', authenticate, async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // First, check if the listing exists and belongs to the user
-    // Also fetch image_url for storage cleanup
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
       .select('id, user_id, image_url')
@@ -523,12 +495,10 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       throw fetchError;
     }
 
-    // Ownership check
     if (existing.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only delete your own listings' });
     }
 
-    // Delete the listing from database
     const { error } = await supabase
       .from('listings')
       .delete()
@@ -538,7 +508,6 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       throw error;
     }
 
-    // Clean up the image from storage (best-effort, don't fail if this errors)
     await deleteStorageImage(existing.image_url);
 
     res.status(204).send();

@@ -779,7 +779,37 @@ async function seed() {
   console.log('Starting seed process...');
 
   try {
-    // 1. Clear existing listings
+    // 1. Clear existing data (order matters for FK constraints)
+    console.log('Clearing existing orders...');
+    const { error: deleteOrdersError } = await supabase
+      .from('orders')
+      .delete()
+      .not('id', 'is', null);
+    if (deleteOrdersError) {
+      console.warn('Could not clear orders:', deleteOrdersError.message);
+    } else {
+      console.log('Orders cleared.');
+    }
+
+    console.log('Clearing existing reports...');
+    const { error: deleteReportsError } = await supabase
+      .from('reports')
+      .delete()
+      .not('id', 'is', null);
+    if (deleteReportsError) throw deleteReportsError;
+    console.log('Reports cleared.');
+
+    console.log('Clearing existing reviews...');
+    const { error: deleteReviewsError } = await supabase
+      .from('reviews')
+      .delete()
+      .not('id', 'is', null);
+    if (deleteReviewsError) {
+      console.warn('Could not clear reviews:', deleteReviewsError.message);
+    } else {
+      console.log('Reviews cleared.');
+    }
+
     console.log('Clearing existing listings...');
     const { error: deleteError } = await supabase
       .from('listings')
@@ -790,7 +820,7 @@ async function seed() {
     console.log('Existing listings cleared.');
 
     // 2. Fetch required reference data
-    console.log('Fetching users and regions...');
+    console.log('Fetching users and areas...');
     
     const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id');
     if (profilesError) throw profilesError;
@@ -799,8 +829,8 @@ async function seed() {
       process.exit(1);
     }
 
-    const { data: regions, error: regionsError } = await supabase.from('regions').select('id');
-    if (regionsError) throw regionsError;
+    const { data: areas, error: areasError } = await supabase.from('areas').select('id');
+    if (areasError) throw areasError;
 
     // 3. Generate listings from predefined data
     console.log(`Generating listings across ${profiles.length} user(s)...`);
@@ -816,7 +846,7 @@ async function seed() {
         
         for (let i = 0; i < copies; i++) {
           const randomUser = randomElement(profiles).id;
-          const randomRegion = randomElement(regions).id;
+          const randomArea = randomElement(areas).id;
           const price = randomPrice(listing.priceRange[0], listing.priceRange[1]);
           const image = randomElement(listing.images);
           
@@ -827,7 +857,7 @@ async function seed() {
             price: price,
             condition: listing.condition,
             category_id: categoryId,
-            region_id: randomRegion,
+            area_id: randomArea,
             contact: generateGambianPhone(),
             image_url: image,
           });
@@ -862,18 +892,6 @@ async function seed() {
 
     // 5. Generate reviews for listings
     console.log('\nGenerating reviews...');
-    
-    // Clear existing reviews first
-    const { error: deleteReviewsError } = await supabase
-      .from('reviews')
-      .delete()
-      .not('id', 'is', null);
-    
-    if (deleteReviewsError) {
-      console.warn('Could not clear existing reviews (table may not exist):', deleteReviewsError.message);
-    } else {
-      console.log('Existing reviews cleared.');
-    }
 
     // Fetch inserted listings to get their IDs
     const { data: insertedListings, error: fetchListingsError } = await supabase

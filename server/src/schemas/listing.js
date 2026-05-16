@@ -22,10 +22,10 @@ export const createListingSchema = z.object({
     .max(999999999, 'Price is too large'),
   condition: z
     .enum(LISTING_CONDITIONS, { errorMap: () => ({ message: 'Please select a valid condition' }) }),
-  region_id: z
+  area_id: z
     .number()
     .int()
-    .positive('Invalid region'),
+    .positive('Invalid area'),
   category_id: z
     .number()
     .int()
@@ -69,10 +69,10 @@ export const updateListingSchema = z.object({
   condition: z
     .enum(LISTING_CONDITIONS, { errorMap: () => ({ message: 'Please select a valid condition' }) })
     .optional(),
-  region_id: z
+  area_id: z
     .number()
     .int()
-    .positive('Invalid region')
+    .positive('Invalid area')
     .optional(),
   category_id: z
     .number()

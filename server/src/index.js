@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import listingsRouter from './routes/listings.js';
-import regionsRouter from './routes/regions.js';
+import zonesRouter from './routes/zones.js';
 import categoriesRouter from './routes/categories.js';
 import reviewsRouter from './routes/reviews.js';
 import reportsRouter from './routes/reports.js';
@@ -57,7 +57,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/listings', listingsRouter);
-app.use('/api/regions', regionsRouter);
+app.use('/api/zones', zonesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api', reviewsRouter);
 app.use('/api', reportsRouter);

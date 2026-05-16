@@ -306,7 +306,7 @@ router.get('/admin/listings', async (req, res, next) => {
         moderation_note,
         created_at,
         user_id,
-        region:regions(id, name),
+        area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, is_banned)
       `)
