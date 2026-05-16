@@ -106,17 +106,17 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li>
                 <Link to="/?category=1" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                  Electronics
+                  Electronics & Phones
                 </Link>
               </li>
               <li>
                 <Link to="/?category=2" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                  Clothing
+                  Clothing & Apparel
                 </Link>
               </li>
               <li>
                 <Link to="/?category=3" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                  Food & Produce
+                  Food & Groceries
                 </Link>
               </li>
               <li>

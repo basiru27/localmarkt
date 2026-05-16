@@ -272,13 +272,12 @@ export default function ListingDetail() {
 
   // Category color mapping
   const categoryColors = {
-    Electronics: 'from-blue-500 to-indigo-600',
-    Clothing: 'from-pink-500 to-rose-600',
-    'Food & Produce': 'from-primary to-primary-dark',
-    Furniture: 'from-amber-500 to-orange-600',
+    'Electronics & Phones': 'from-blue-500 to-indigo-600',
+    'Clothing & Apparel': 'from-pink-500 to-rose-600',
+    'Food & Groceries': 'from-primary to-primary-dark',
+    'Home & Furniture': 'from-amber-500 to-orange-600',
     Vehicles: 'from-violet-500 to-purple-600',
     Services: 'from-primary-light to-primary',
-    Agriculture: 'from-primary-dark to-primary',
     Other: 'from-gray-500 to-slate-600',
   };
 

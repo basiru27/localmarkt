@@ -66,7 +66,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   const hasActiveFilters = filters.search || filters.category || filters.area_id;
   const activeFilterCount = [filters.search, filters.category, filters.area_id].filter(Boolean).length;
 
-  const CATEGORY_NAMES = ["All", "Electronics", "Clothing", "Food & Produce", "Agriculture", "Vehicles", "Services", "Other"];
+  const categoryNames = useMemo(() => ['All', ...(categories?.map(c => c.name) || [])], [categories]);
 
   const handleChipClick = (catName) => {
     if (catName === "All") {
@@ -95,7 +95,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     <div className="card-static p-4 sm:p-5 mb-6">
       {/* Category Chips */}
       <div className="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {CATEGORY_NAMES.map(name => {
+        {categoryNames.map(name => {
           const isActive = activeCategoryName === name;
           return (
             <button
