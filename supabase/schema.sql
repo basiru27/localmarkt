@@ -35,32 +35,88 @@ CREATE POLICY "Users can update their own profile"
   USING (auth.uid() = id);
 
 -- ============================================
--- REGIONS TABLE (Lookup)
+-- ZONES TABLE (Lookup - Greater Banjul Area)
 -- ============================================
-CREATE TABLE IF NOT EXISTS regions (
+CREATE TABLE IF NOT EXISTS zones (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE
 );
 
--- Enable RLS on regions
-ALTER TABLE regions ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on zones
+ALTER TABLE zones ENABLE ROW LEVEL SECURITY;
 
--- Regions policy - public read (drop if exists to allow re-running)
-DROP POLICY IF EXISTS "Regions are viewable by everyone" ON regions;
-CREATE POLICY "Regions are viewable by everyone"
-  ON regions FOR SELECT
+-- Zones policy - public read
+DROP POLICY IF EXISTS "Zones are viewable by everyone" ON zones;
+CREATE POLICY "Zones are viewable by everyone"
+  ON zones FOR SELECT
   USING (true);
 
--- Seed regions with official Gambian regions
-INSERT INTO regions (name) VALUES
+-- ============================================
+-- AREAS TABLE (Lookup - GBA neighbourhoods)
+-- ============================================
+CREATE TABLE IF NOT EXISTS areas (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  zone_id INTEGER NOT NULL REFERENCES zones(id) ON DELETE CASCADE,
+  UNIQUE(name, zone_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_areas_zone_id ON areas(zone_id);
+
+-- Enable RLS on areas
+ALTER TABLE areas ENABLE ROW LEVEL SECURITY;
+
+-- Areas policy - public read
+DROP POLICY IF EXISTS "Areas are viewable by everyone" ON areas;
+CREATE POLICY "Areas are viewable by everyone"
+  ON areas FOR SELECT
+  USING (true);
+
+-- Seed zones with Greater Banjul Area zones
+INSERT INTO zones (name) VALUES
   ('Banjul'),
-  ('Kanifing'),
-  ('Brikama'),
-  ('Kerewan'),
-  ('Kuntaur'),
-  ('Janjanbureh'),
-  ('Basse')
+  ('Serrekunda'),
+  ('Bakau / Fajara'),
+  ('Kololi / Kotu'),
+  ('Sukuta / Brikama'),
+  ('Brufut / Tanji')
 ON CONFLICT (name) DO NOTHING;
+
+-- Seed areas
+INSERT INTO areas (name, zone_id) VALUES
+  -- Banjul
+  ('Banjul', (SELECT id FROM zones WHERE name = 'Banjul')),
+  ('Jeshwang', (SELECT id FROM zones WHERE name = 'Banjul')),
+  ('Westfield', (SELECT id FROM zones WHERE name = 'Banjul')),
+  -- Serrekunda
+  ('Serrekunda', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Kanifing', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Latrikunda German', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Dippa Kunda', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Bundung', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Latrikunda Sabiji', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Tabokoto', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  ('Sinchu', (SELECT id FROM zones WHERE name = 'Serrekunda')),
+  -- Bakau / Fajara
+  ('Bakau', (SELECT id FROM zones WHERE name = 'Bakau / Fajara')),
+  ('Fajara', (SELECT id FROM zones WHERE name = 'Bakau / Fajara')),
+  ('Pipeline', (SELECT id FROM zones WHERE name = 'Bakau / Fajara')),
+  ('Cape Point', (SELECT id FROM zones WHERE name = 'Bakau / Fajara')),
+  -- Kololi / Kotu
+  ('Kololi', (SELECT id FROM zones WHERE name = 'Kololi / Kotu')),
+  ('Kotu', (SELECT id FROM zones WHERE name = 'Kololi / Kotu')),
+  ('Bijilo', (SELECT id FROM zones WHERE name = 'Kololi / Kotu')),
+  ('Kerr Serign', (SELECT id FROM zones WHERE name = 'Kololi / Kotu')),
+  ('Senegambia', (SELECT id FROM zones WHERE name = 'Kololi / Kotu')),
+  -- Sukuta / Brikama
+  ('Sukuta', (SELECT id FROM zones WHERE name = 'Sukuta / Brikama')),
+  ('Brikama', (SELECT id FROM zones WHERE name = 'Sukuta / Brikama')),
+  ('Yundum', (SELECT id FROM zones WHERE name = 'Sukuta / Brikama')),
+  ('Busumbala', (SELECT id FROM zones WHERE name = 'Sukuta / Brikama')),
+  -- Brufut / Tanji
+  ('Brufut', (SELECT id FROM zones WHERE name = 'Brufut / Tanji')),
+  ('Tanji', (SELECT id FROM zones WHERE name = 'Brufut / Tanji'))
+ON CONFLICT (name, zone_id) DO NOTHING;
 
 -- ============================================
 -- CATEGORIES TABLE (Lookup)
@@ -101,7 +157,7 @@ CREATE TABLE IF NOT EXISTS listings (
   description TEXT,
   price NUMERIC NOT NULL CHECK (price >= 0),
   condition TEXT NOT NULL CHECK (condition IN ('new', 'used_like_new', 'used_good', 'used_fair')),
-  region_id INTEGER REFERENCES regions(id),
+  area_id INTEGER REFERENCES areas(id),
   category_id INTEGER REFERENCES categories(id),
   contact TEXT NOT NULL,
   image_url TEXT,
@@ -112,7 +168,7 @@ CREATE TABLE IF NOT EXISTS listings (
 
 -- Create index for common queries
 CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
-CREATE INDEX IF NOT EXISTS idx_listings_region_id ON listings(region_id);
+CREATE INDEX IF NOT EXISTS idx_listings_area_id ON listings(area_id);
 CREATE INDEX IF NOT EXISTS idx_listings_category_id ON listings(category_id);
 CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at DESC);
 
@@ -257,7 +313,8 @@ USING (
 -- ============================================
 -- VERIFICATION QUERIES (Run to verify setup)
 -- ============================================
--- SELECT * FROM regions;
+-- SELECT * FROM zones;
+-- SELECT * FROM areas;
 -- SELECT * FROM categories;
 -- SELECT COUNT(*) FROM listings;
 -- SELECT * FROM storage.buckets WHERE id = 'listing-images';
