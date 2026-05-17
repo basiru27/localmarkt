@@ -379,7 +379,6 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
  */
 router.post('/', authenticate, createListingLimiter, validateBody(createListingSchema), async (req, res, next) => {
   try {
-    console.log('POST /api/listings body:', JSON.stringify(req.body));
     const listingData = {
       ...req.body,
       user_id: req.user.id,
