@@ -1,3 +1,4 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminDeleteListing, useAdminListings, useModerateListing, adminKeys } from '../../hooks/useAdmin';
@@ -6,6 +7,8 @@ import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 
 export default function AdminListings() {
+  useDocumentTitle('Manage Listings');
+
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedListings, setSelectedListings] = useState(new Set());

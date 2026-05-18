@@ -1,6 +1,9 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 
 export default function NotFound() {
+  useDocumentTitle('Page Not Found');
+
   return (
     <div className="min-h-[calc(100vh-12rem)] flex items-center justify-center py-12 px-4">
       <div className="text-center animate-fade-in">

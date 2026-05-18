@@ -1,3 +1,4 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 import { useAdminStats } from '../../hooks/useAdmin';
 import SvgSparkline from '../../components/SvgSparkline';
@@ -14,6 +15,8 @@ function StatCard({ label, value, hint }) {
 }
 
 export default function AdminDashboard() {
+  useDocumentTitle('Admin Dashboard');
+
   const { data, isLoading, isError, error } = useAdminStats();
 
   if (isLoading) {

@@ -1,3 +1,4 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminReports, useUpdateReportStatus, adminKeys } from '../../hooks/useAdmin';
@@ -6,6 +7,8 @@ import { formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 
 export default function AdminReports() {
+  useDocumentTitle('Review Reports');
+
   const [statusFilter, setStatusFilter] = useState('pending');
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();

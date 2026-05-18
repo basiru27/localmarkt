@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +7,8 @@ import FormField from '../components/FormField';
 import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 
 export default function Register() {
+  useDocumentTitle('Register');
+
   const { signUp } = useAuth();
   const nameInputRef = useRef(null);
 

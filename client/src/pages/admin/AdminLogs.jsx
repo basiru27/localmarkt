@@ -1,9 +1,12 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminLogs } from '../../hooks/useAdmin';
 import { formatRelativeDate } from '../../lib/utils';
 
 export default function AdminLogs() {
+  useDocumentTitle('System Logs');
+
   const { isSuperAdmin } = useAuth();
   
   const [filterAdmin, setFilterAdmin] = useState('');

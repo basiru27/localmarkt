@@ -1,3 +1,4 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState } from 'react';
 import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers } from '../../hooks/useAdmin';
 import { useAuth } from '../../context/AuthContext';
@@ -5,6 +6,8 @@ import { useToast } from '../../context/ToastContext';
 import Modal, { ModalFooter } from '../../components/Modal';
 
 export default function AdminUsers() {
+  useDocumentTitle('Manage Users');
+
   const [search, setSearch] = useState('');
   const [banFilter, setBanFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');

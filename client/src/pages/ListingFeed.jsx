@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useMemo, useCallback, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useListings, useListingStats } from '../hooks/useListings';
@@ -11,6 +12,8 @@ import SearchFilters from '../components/SearchFilters';
 import Pagination from '../components/Pagination';
 
 export default function ListingFeed() {
+  useDocumentTitle('');
+
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [heroSearch, setHeroSearch] = useState('');

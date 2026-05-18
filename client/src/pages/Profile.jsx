@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '../lib/api';
@@ -8,6 +9,8 @@ import { supabase } from '../lib/supabase';
 import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
 
 export default function Profile() {
+  useDocumentTitle('My Profile');
+
   const queryClient = useQueryClient();
   const { session, user, refreshProfile } = useAuth();
   const { success, error: showError } = useToast();

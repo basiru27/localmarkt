@@ -1,3 +1,4 @@
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +10,8 @@ import OrderStatusBadge from '../../components/OrderStatusBadge';
 import { supabase } from '../../lib/supabase';
 
 export default function AdminDisputes() {
+  useDocumentTitle('Manage Disputes');
+
   const { getAuthHeader } = useAuth();
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();

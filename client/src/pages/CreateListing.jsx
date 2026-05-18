@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCreateListing } from '../hooks/useListings';
@@ -6,6 +7,8 @@ import { useToast } from '../context/ToastContext';
 import ListingForm from '../components/ListingForm';
 
 export default function CreateListing() {
+  useDocumentTitle('Post a Listing');
+
   const navigate = useNavigate();
   const createMutation = useCreateListing();
   const { isOnline } = useOffline();

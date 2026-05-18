@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
@@ -11,6 +12,8 @@ import { supabase } from '../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function MyListings() {
+  useDocumentTitle('My Listings');
+
   const { success, error: showError } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();

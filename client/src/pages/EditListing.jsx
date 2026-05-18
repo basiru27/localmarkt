@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useListing, useUpdateListing } from '../hooks/useListings';
 import { useAuth } from '../context/AuthContext';
@@ -5,6 +6,8 @@ import { useToast } from '../context/ToastContext';
 import ListingForm from '../components/ListingForm';
 
 export default function EditListing() {
+  useDocumentTitle('Edit Listing');
+
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();

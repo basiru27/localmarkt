@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -5,6 +6,8 @@ import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
 
 export default function ForgotPassword() {
+  useDocumentTitle('Forgot Password');
+
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

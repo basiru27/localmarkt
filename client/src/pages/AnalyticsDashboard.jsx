@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +11,8 @@ import SvgSparkline from '../components/SvgSparkline';
 import { ordersApi } from '../lib/api';
 
 export default function AnalyticsDashboard() {
+  useDocumentTitle('Analytics Dashboard');
+
   const { user, getAuthHeader } = useAuth();
   const queryClient = useQueryClient();
   

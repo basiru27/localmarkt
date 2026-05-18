@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +7,8 @@ import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
 
 export default function Login() {
+  useDocumentTitle('Login');
+
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();

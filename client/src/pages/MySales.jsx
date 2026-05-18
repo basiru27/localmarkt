@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -11,6 +12,8 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import DisputeModal from '../components/DisputeModal';
 
 export default function MySales() {
+  useDocumentTitle('My Sales');
+
   const { user, getAuthHeader } = useAuth();
   const { isOnline } = useOffline();
   const { success, error: showError } = useToast();

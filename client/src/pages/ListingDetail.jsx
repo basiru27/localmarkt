@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useListing, useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
@@ -33,6 +34,7 @@ export default function ListingDetail() {
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
   const { data: listing, isLoading, isError, error } = useListing(id);
+  useDocumentTitle(listing?.title || 'Listing Details');
   const { data: reviews, isLoading: reviewsLoading } = useReviews(id);
 
   // Fetch more from seller

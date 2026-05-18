@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useListings } from '../hooks/useListings';
@@ -36,6 +37,8 @@ export default function SellerProfile() {
     },
     enabled: !!id,
   });
+
+  useDocumentTitle(profileData?.display_name ? `${profileData.display_name}'s Profile` : 'Seller Profile');
 
   // Fetch their listings (this goes through backend and bypasses RLS)
   const { data: listingsData, isLoading: listingsLoading } = useListings({

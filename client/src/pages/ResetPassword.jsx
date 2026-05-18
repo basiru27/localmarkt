@@ -1,3 +1,4 @@
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -5,6 +6,8 @@ import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
 
 export default function ResetPassword() {
+  useDocumentTitle('Reset Password');
+
   const navigate = useNavigate();
   const passwordInputRef = useRef(null);
   const [password, setPassword] = useState('');
