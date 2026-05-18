@@ -60,11 +60,11 @@ export default function SellerProfile() {
       <div className="container-app py-8 animate-pulse">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-border-light mb-8 flex items-center gap-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-full" />
+            <div className="w-24 h-24 bg-[#F5EFE8] rounded-full" />
             <div className="space-y-3 flex-1">
-              <div className="h-6 bg-gray-200 w-1/3 rounded" />
-              <div className="h-4 bg-gray-200 w-1/4 rounded" />
-              <div className="h-10 bg-gray-200 w-2/3 rounded mt-2" />
+              <div className="h-6 bg-[#F5EFE8] w-1/3 rounded" />
+              <div className="h-4 bg-[#F5EFE8] w-1/4 rounded" />
+              <div className="h-10 bg-[#F5EFE8] w-2/3 rounded mt-2" />
             </div>
           </div>
           <ListingGridSkeleton count={8} />

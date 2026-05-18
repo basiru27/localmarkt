@@ -267,9 +267,9 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="container-app py-8 animate-pulse flex flex-col items-center gap-4">
-        <div className="w-24 h-24 bg-gray-200 rounded-full"></div>
-        <div className="w-64 h-8 bg-gray-200 rounded"></div>
-        <div className="w-96 h-32 bg-gray-200 rounded mt-4"></div>
+        <div className="w-24 h-24 bg-[#F5EFE8] animate-pulse rounded-full"></div>
+        <div className="w-64 h-8 bg-[#F5EFE8] animate-pulse rounded"></div>
+        <div className="w-96 h-32 bg-[#F5EFE8] animate-pulse rounded mt-4"></div>
       </div>
     );
   }

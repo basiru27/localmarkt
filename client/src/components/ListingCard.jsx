@@ -62,7 +62,7 @@ export default function ListingCard({ listing, index = 0 }) {
       {/* Image Container */}
       <div className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}>
         {!imageLoaded && (
-          <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+          <div className="absolute inset-0 bg-[#F5EFE8] animate-pulse z-0" />
         )}
         <img
           src={imageUrl}

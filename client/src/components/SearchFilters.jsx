@@ -196,7 +196,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             </select>
             {zonesLoading && (
               <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -221,7 +221,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             </select>
             {areasLoading && (
               <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -267,7 +267,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                 </select>
                 {zonesLoading && (
                   <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                    <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                   </div>
                 )}
               </div>
@@ -294,7 +294,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                 </select>
                 {areasLoading && (
                   <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                    <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                   </div>
                 )}
               </div>
