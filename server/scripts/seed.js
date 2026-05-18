@@ -50,7 +50,7 @@ const reviewComments = {
     'Excellent! Exactly as described. Highly recommend this seller.',
     'Perfect condition, fast response. Would buy again!',
     'Amazing quality! The seller was very professional.',
-    'Best purchase I\'ve made on LocalMarkt. Thank you!',
+    'Best purchase I\'ve made on GMarkt. Thank you!',
     'Exceeded my expectations. Great communication from seller.',
     'Top notch! Very satisfied with this transaction.',
   ],

@@ -3,26 +3,26 @@
 
 :root {
   /* Brand */
-  --color-brand-primary:     #0B6E4F;
-  --color-brand-dark:        #084d37;
-  --color-brand-light:       #edf7f3;
-  --color-brand-muted:       #7a9e8e;
-  --color-brand-ink:         #0a1f17;
+  --color-brand-primary:     #C8622A;
+  --color-brand-dark:        #B5561F;
+  --color-brand-light:       #FEF3E8;
+  --color-brand-muted:       #E8A838;
+  --color-brand-ink:         #1A1A1A;
 
   /* Text */
-  --color-text-nav:          #4a7060;
-  --color-text-nav-active:   #0B6E4F;
+  --color-text-nav:          #3D3D3D;
+  --color-text-nav-active:   #C8622A;
 
   /* Borders */
-  --color-border-page:       #e8ede9;
+  --color-border-page:       #F0EDE8;
 
   /* Typography */
   --font-brand:              'Sora', sans-serif;
 }
 
 /* ============================================
-   LOCALMARKT - Bold & Vibrant Design System
-   Gambia Marketplace PWA
+   GMARKT - Bold & Vibrant Design System
+   The Gambia's Marketplace PWA
    ============================================ */
 
 /* Custom theme colors - Vibrant Gambian palette */
@@ -35,22 +35,22 @@
   --color-primary-100: var(--color-border-page);
   
   /* Secondary: Vibrant golden yellow (Gambian flag inspired) */
-  --color-secondary: #f59e0b;
-  --color-secondary-dark: #d97706;
-  --color-secondary-light: #fbbf24;
+  --color-secondary: #E8A838;
+  --color-secondary-dark: #C98E2A;
+  --color-secondary-light: #F4C465;
   
   /* Accent: Bold red (Gambian flag inspired) */
   --color-accent: #dc2626;
   --color-accent-light: #ef4444;
   
   /* Neutrals */
-  --color-background: #f8fafc;
-  --color-surface: #ffffff;
-  --color-text: #0f172a;
-  --color-text-secondary: #64748b;
+  --color-background: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
   --color-text-muted: #94a3b8;
-  --color-border: #e2e8f0;
-  --color-border-light: #f1f5f9;
+  --color-border: #E8E3DC;
+  --color-border-light: #F0EDE8;
   
   /* Semantic */
   --color-error: #dc2626;
@@ -64,8 +64,8 @@
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-dark) 100%);
-  --gradient-secondary: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  --gradient-hero: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-dark) 100%);
+  --gradient-secondary: linear-gradient(135deg, #E8A838 0%, #C98E2A 100%);
+  --gradient-hero: linear-gradient(to bottom right, #2D1F0E, #5C3317, #C8622A);
   --gradient-card: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(0,0,0,0.02) 100%);
   --gradient-shimmer: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
   
@@ -74,9 +74,9 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(11, 110, 79, 0.3);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 12px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px rgba(200, 98, 42, 0.3);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.13);
 }
 
 /* ============================================
@@ -90,7 +90,7 @@
 h1, h2 {
   font-family: var(--font-brand);
   font-weight: 700;
-  color: #0a1f17;
+  color: var(--color-text);
   letter-spacing: -0.02em;
 }
 
@@ -256,7 +256,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
   .btn:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
+    box-shadow: 0 0 0 3px rgba(200, 98, 42, 0.4);
   }
 
   .btn:disabled {
@@ -280,23 +280,23 @@ input[type="search"]::-webkit-search-results-decoration {
     cursor: pointer;
     
     /* New Global Primary Button Styles */
-    background: #0B6E4F;
+    background: #C8622A;
     color: #ffffff;
     font-family: 'Sora', sans-serif;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px;
     border: none;
     font-size: 0.9375rem;
-    box-shadow: 0 2px 8px rgba(11, 110, 79, 0.35);
+    box-shadow: 0 2px 8px rgba(200, 98, 42, 0.35);
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: #084d37;
+    background: #B5561F;
   }
 
   .btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
+    box-shadow: 0 0 0 3px rgba(200, 98, 42, 0.4);
   }
 
   .btn-primary:active:not(:disabled) {
@@ -304,8 +304,10 @@ input[type="search"]::-webkit-search-results-decoration {
   }
 
   .btn-primary:disabled {
-    opacity: 0.5;
+    background-color: #E8D5C0;
+    color: #9A6B50;
     cursor: not-allowed;
+    box-shadow: none;
   }
 
   /* Secondary button */
@@ -370,7 +372,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
   .btn-outline:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.3);
+    box-shadow: 0 0 0 3px rgba(200, 98, 42, 0.3);
   }
 
   .btn-outline:disabled {
@@ -481,7 +483,7 @@ input[type="search"]::-webkit-search-results-decoration {
   .input {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 2px solid var(--color-border);
+    border: 1px solid var(--color-border);
     border-radius: 0.75rem;
     font-size: 1rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -499,7 +501,7 @@ input[type="search"]::-webkit-search-results-decoration {
   .input:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
+    box-shadow: 0 0 0 2px rgba(200, 98, 42, 0.3);
   }
 
   .input:disabled {
@@ -537,8 +539,8 @@ input[type="search"]::-webkit-search-results-decoration {
   .label {
     display: block;
     font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-text);
+    font-weight: 500;
+    color: var(--color-text-nav);
     margin-bottom: 0.5rem;
   }
 
@@ -614,9 +616,9 @@ input[type="search"]::-webkit-search-results-decoration {
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 600;
-    background: linear-gradient(135deg, rgba(11, 110, 79, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%);
+    background: linear-gradient(135deg, rgba(200, 98, 42, 0.15) 0%, rgba(200, 98, 42, 0.05) 100%);
     color: var(--color-primary-dark);
-    border: 1px solid rgba(11, 110, 79, 0.2);
+    border: 1px solid rgba(200, 98, 42, 0.2);
   }
 
   .badge-secondary {
@@ -689,7 +691,7 @@ input[type="search"]::-webkit-search-results-decoration {
     font-weight: 700;
     font-size: 0.9375rem;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(11, 110, 79, 0.3);
+    box-shadow: 0 2px 8px rgba(200, 98, 42, 0.3);
   }
 
   /* ============================================
@@ -780,6 +782,16 @@ input[type="search"]::-webkit-search-results-decoration {
   overflow: hidden;
 }
 
+.stat-pill {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  color: white;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 .hero-gradient::before {
   content: '';
   position: absolute;
@@ -846,7 +858,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
 .search-bar:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
+  box-shadow: 0 0 0 3px rgba(200, 98, 42, 0.15);
 }
 
 .filter-chip {
@@ -1050,7 +1062,7 @@ input[type="search"]::-webkit-search-results-decoration {
 
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.4);
+  box-shadow: 0 0 0 3px rgba(200, 98, 42, 0.4);
 }
 
 /* ============================================

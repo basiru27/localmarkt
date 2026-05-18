@@ -141,7 +141,7 @@ export function getWhatsAppLink(phone, listingTitle) {
   if (!normalizedPhone) return null;
   
   const message = encodeURIComponent(
-    `Hi! I'm interested in your listing: "${listingTitle}" on LocalMarkt.`
+    `Hi! I'm interested in your listing: "${listingTitle}" on GMarkt.`
   );
   return `https://wa.me/${normalizedPhone}?text=${message}`;
 }
