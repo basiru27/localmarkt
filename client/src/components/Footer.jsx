@@ -7,38 +7,28 @@ export default function Footer() {
 
   if (!isHome) {
     return (
-      <footer className="bg-gray-100 border-t border-border-light mt-auto h-[48px] flex items-center justify-center">
-        <p className="text-[13px] text-text-secondary text-center px-4">
-          © {currentYear} LocalMarkt · The Gambia · hello@localmarkt.gm · Made with <span className="text-red-500 mx-0.5">♥</span> for The Gambia
+      <footer className="bg-[#1A1A1A] text-white border-t border-white/10 mt-auto h-[48px] flex items-center justify-center">
+        <p className="text-[13px] text-white/50 text-center px-4">
+          © {currentYear} GMarkt · The Gambia's Marketplace · Made with <span className="text-red-500 mx-0.5">♥</span> for The Gambia
         </p>
       </footer>
     );
   }
 
   return (
-    <footer className="bg-gradient-to-b from-gray-50 to-gray-100 border-t border-border-light mt-auto">
+    <footer className="bg-[#1A1A1A] text-white mt-auto">
       <div className="container-app py-8">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2.5 mb-4 group">
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#0B6E4F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 6h18M3 6l2 13h14L21 6M3 6l1.5-3h15L21 6" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round"/>
-                  <circle cx="9" cy="21" r="1" fill="#ffffff"/>
-                  <circle cx="15" cy="21" r="1" fill="#ffffff"/>
-                  <path d="M9 10v5M12 9v6M15 10v5" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'left' }}>
-                <span style={{ fontFamily: 'var(--font-brand)', fontSize: '20px', fontWeight: 700, color: '#0a1f17', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  Local<span style={{ color: '#0B6E4F' }}>Markt</span>
-                </span>
-              </div>
+            <Link to="/" className="flex items-center gap-2 mb-4 group">
+              <span className="font-bold text-2xl tracking-tight leading-none text-white">
+                <span className="text-[#C8622A]">G</span>Markt
+              </span>
             </Link>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Your trusted local marketplace for The Gambia. Buy, sell, and connect with your community.
+            <p className="text-sm text-white/50 leading-relaxed uppercase tracking-wide">
+              The Gambia's Marketplace
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 mt-4">
@@ -46,7 +36,7 @@ export default function Footer() {
                 href="https://facebook.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-11 h-11 rounded-lg bg-white border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary transition-colors"
+                className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                 aria-label="Visit our Facebook page (opens in new tab)"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -57,7 +47,7 @@ export default function Footer() {
                 href="https://wa.me/2201234567" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-11 h-11 rounded-lg bg-white border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary transition-colors"
+                className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                 aria-label="Contact us on WhatsApp (opens in new tab)"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -68,7 +58,7 @@ export default function Footer() {
                 href="https://instagram.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-11 h-11 rounded-lg bg-white border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary transition-colors"
+                className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                 aria-label="Visit our Instagram page (opens in new tab)"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -80,20 +70,20 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-text mb-4">Quick Links</h4>
+            <h4 className="font-semibold text-white mb-4">Quick Links</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/" className="text-sm text-white/70 hover:text-white transition-colors">
                   Browse Listings
                 </Link>
               </li>
               <li>
-                <Link to="/listings/new" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/listings/new" className="text-sm text-white/70 hover:text-white transition-colors">
                   Post a Listing
                 </Link>
               </li>
               <li>
-                <Link to="/my-listings" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/my-listings" className="text-sm text-white/70 hover:text-white transition-colors">
                   My Listings
                 </Link>
               </li>
@@ -102,25 +92,25 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="font-semibold text-text mb-4">Categories</h4>
+            <h4 className="font-semibold text-white mb-4">Categories</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/?category=1" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=1" className="text-sm text-white/70 hover:text-white transition-colors">
                   Electronics & Phones
                 </Link>
               </li>
               <li>
-                <Link to="/?category=2" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=2" className="text-sm text-white/70 hover:text-white transition-colors">
                   Clothing & Apparel
                 </Link>
               </li>
               <li>
-                <Link to="/?category=3" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=3" className="text-sm text-white/70 hover:text-white transition-colors">
                   Food & Groceries
                 </Link>
               </li>
               <li>
-                <Link to="/?category=6" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                <Link to="/?category=6" className="text-sm text-white/70 hover:text-white transition-colors">
                   Services
                 </Link>
               </li>
@@ -129,10 +119,10 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-text mb-4">Contact</h4>
+            <h4 className="font-semibold text-white mb-4">Contact</h4>
             <ul className="space-y-2.5">
-              <li className="flex items-center gap-2 text-sm text-text-secondary">
-                <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <li className="flex items-center gap-2 text-sm text-white/70">
+                <svg className="w-4 h-4 text-[#C8622A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -140,13 +130,13 @@ export default function Footer() {
               </li>
               <li>
                 <a 
-                  href="mailto:hello@localmarkt.gm" 
-                  className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors py-1"
+                  href="mailto:hello@gmarkt.gm" 
+                  className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors py-1"
                 >
-                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-4 h-4 text-[#C8622A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>hello@localmarkt.gm</span>
+                  <span>hello@gmarkt.gm</span>
                 </a>
               </li>
             </ul>
@@ -154,12 +144,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-6 border-t border-border">
+        <div className="pt-6 border-t border-white/10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-text-secondary">
-              &copy; {currentYear} LocalMarkt. All rights reserved.
+            <p className="text-xs text-white/40">
+              &copy; {currentYear} GMarkt. All rights reserved.
             </p>
-            <div className="flex items-center gap-1 text-sm text-text-secondary">
+            <div className="flex items-center gap-1 text-xs text-white/40">
               <span>Made with</span>
               <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>

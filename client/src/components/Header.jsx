@@ -71,21 +71,13 @@ export default function Header() {
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            {/* Logo Icon */}
-            <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: '#0B6E4F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 6h18M3 6l2 13h14L21 6M3 6l1.5-3h15L21 6" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round"/>
-                <circle cx="9" cy="21" r="1" fill="#ffffff"/>
-                <circle cx="15" cy="21" r="1" fill="#ffffff"/>
-                <path d="M9 10v5M12 9v6M15 10v5" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-brand)', fontSize: '16px', fontWeight: 700, color: '#0a1f17', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                Local<span style={{ color: '#0B6E4F' }}>Markt</span>
+            <div className="flex flex-col justify-center">
+              <span className="font-bold text-2xl tracking-tight leading-none">
+                <span className="text-[#C8622A]">G</span>
+                <span className="text-[#1A1A1A]">Markt</span>
               </span>
-              <span style={{ fontSize: '9px', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-brand-muted)', marginTop: '2px' }} className="hidden sm:block">
-                The Gambia Marketplace
+              <span className="text-xs text-[#6B6B6B] tracking-wide uppercase font-medium mt-0.5 hidden sm:block">
+                The Gambia's Marketplace
               </span>
             </div>
           </Link>
@@ -177,26 +169,9 @@ export default function Header() {
                 {/* Post Listing Button - Desktop */}
                 <Link
                   to="/listings/new"
-                  style={{
-                    background: 'var(--color-brand-primary)',
-                    color: '#ffffff',
-                    fontFamily: 'var(--font-brand)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '7px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s'
-                  }}
-                  className="hidden sm:inline-flex hover:bg-brand-dark"
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-brand-dark)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-brand-primary)'}
+                  className="hidden sm:inline-flex items-center gap-2 bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                   Post Listing
@@ -205,17 +180,10 @@ export default function Header() {
                 {/* Post Listing Button - Mobile */}
                 <Link
                   to="/listings/new"
-                  className="sm:hidden flex items-center justify-center shadow-md active:scale-95 transition-transform"
-                  style={{
-                    background: 'var(--color-brand-primary)',
-                    color: '#ffffff',
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                  }}
+                  className="sm:hidden flex items-center justify-center bg-[#C8622A] text-white w-10 h-10 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
                   aria-label="Post Listing"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                 </Link>
@@ -233,10 +201,10 @@ export default function Header() {
                       <img 
                         src={profile.avatar_url} 
                         alt="Profile" 
-                        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-[#E8A838]"
                       />
                     ) : (
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-brand-primary)', color: '#ffffff', fontFamily: 'var(--font-brand)', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+                      <div className="w-8 h-8 rounded-full bg-[#C8622A] text-white flex items-center justify-center font-bold text-sm ring-2 ring-[#E8A838]" aria-hidden="true">
                         {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
                       </div>
                     )}
@@ -411,10 +379,10 @@ export default function Header() {
                       <img 
                         src={profile.avatar_url} 
                         alt="Profile" 
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-[#E8A838]"
                       />
                     ) : (
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-brand-primary)', color: '#ffffff', fontFamily: 'var(--font-brand)', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+                      <div className="w-10 h-10 rounded-full bg-[#C8622A] text-white flex items-center justify-center font-bold text-lg ring-2 ring-[#E8A838]" aria-hidden="true">
                         {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
                       </div>
                     )}

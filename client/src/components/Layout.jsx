@@ -23,10 +23,9 @@ function BackToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className={`fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-opacity duration-300 ${
+      className={`fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full flex items-center justify-center text-white bg-[#C8622A] hover:bg-[#B5561F] shadow-lg transition-all duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
-      style={{ backgroundColor: '#0B6E4F' }}
       aria-label="Back to top"
     >
       <svg 
