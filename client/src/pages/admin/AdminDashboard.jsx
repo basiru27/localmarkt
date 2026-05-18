@@ -5,10 +5,10 @@ import { formatRelativeDate } from '../../lib/utils';
 
 function StatCard({ label, value, hint }) {
   return (
-    <div className="card-static p-4 sm:p-5">
-      <p className="text-sm text-text-secondary">{label}</p>
-      <p className="text-3xl font-bold text-text mt-1">{value}</p>
-      {hint && <p className="text-xs text-text-muted mt-2">{hint}</p>}
+    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <p className="text-sm text-[#6B6B6B]">{label}</p>
+      <p className="text-3xl font-bold text-[#1A1A1A] mt-1">{value}</p>
+      {hint && <p className="text-xs text-[#94a3b8] mt-2">{hint}</p>}
     </div>
   );
 }
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         {/* Listings Chart */}
-        <div className="lg:col-span-2 card-static p-5 flex flex-col">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-5 flex flex-col">
           <h3 className="text-lg font-bold text-text mb-4">New Listings per Day (Last 14 Days)</h3>
           <div className="flex-1 mt-2">
             <SvgSparkline 
@@ -63,13 +63,13 @@ export default function AdminDashboard() {
               height={240} 
               dataKey="count" 
               labelKey="listings"
-              color="#0B6E4F" 
+              color="#C8622A" 
             />
           </div>
         </div>
 
         {/* Recent Admin Actions */}
-        <div className="card-static p-5 flex flex-col">
+        <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-text">Recent Admin Actions</h3>
             <Link to="/admin/logs" className="text-sm text-primary hover:underline font-medium">View all</Link>

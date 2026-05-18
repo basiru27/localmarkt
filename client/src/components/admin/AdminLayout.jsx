@@ -25,13 +25,13 @@ export default function AdminLayout() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-5">
-        <aside className="card-static p-4 h-fit">
-          <div className="mb-4 pb-4 border-b border-border-light">
-            <h1 className="text-lg font-bold text-text">Admin Console</h1>
-            <p className="text-sm text-text-secondary mt-1">
+        <aside className="bg-[#1A1A1A] text-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 h-fit">
+          <div className="mb-4 pb-4 border-b border-white/10">
+            <h1 className="text-lg font-bold text-white">Admin Console</h1>
+            <p className="text-sm text-white/70 mt-1">
               {profile?.display_name || 'Administrator'}
             </p>
-            <p className="text-xs text-text-muted uppercase tracking-wide mt-1">{profile?.role || 'admin'}</p>
+            <p className="text-xs text-white/50 uppercase tracking-wide mt-1">{profile?.role || 'admin'}</p>
           </div>
 
           <nav className="space-y-1" aria-label="Admin navigation">
@@ -45,8 +45,8 @@ export default function AdminLayout() {
                   className={({ isActive }) =>
                     `block px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
-                        ? 'bg-primary-50 text-primary font-semibold'
-                        : 'text-text-secondary hover:bg-gray-50 hover:text-text'
+                        ? 'bg-[#C8622A] text-white font-semibold'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }`
                   }
                 >
