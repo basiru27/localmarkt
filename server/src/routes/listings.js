@@ -173,6 +173,9 @@ router.get('/', async (req, res, next) => {
       .eq('moderation_status', 'approved')
       .eq('seller.is_banned', false);
 
+    // Always deprioritize sold listings
+    query = query.order('is_sold', { ascending: true });
+
     if (sort === 'price_asc') {
       query = query.order('price', { ascending: true });
     } else if (sort === 'price_desc') {

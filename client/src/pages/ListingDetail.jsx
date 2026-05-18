@@ -475,8 +475,8 @@ export default function ListingDetail() {
               </div>
             )}
 
-            {/* Purchase Section - hidden for listing owner and sold items */}
-            {!isOwner && !listing.is_sold && (
+            {/* Purchase Section - hidden for sold items */}
+            {!listing.is_sold && (
               <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
                 <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
                   <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -484,7 +484,11 @@ export default function ListingDetail() {
                   </svg>
                   Purchase
                 </h2>
-                {isAuthenticated ? (
+                {isOwner ? (
+                  <p className="text-sm text-[#6B6B6B] text-center py-2">
+                    This is your listing
+                  </p>
+                ) : isAuthenticated ? (
                   <>
                     <button
                       onClick={() => setShowCheckoutModal(true)}
