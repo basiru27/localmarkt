@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 export default function SvgSparkline({ 
   data = [], 
   height = 192, 
-  color = '#0B6E4F', // LocalMarkt's primary green
+  color = '#C8622A', // GMarkt's primary terracotta
   strokeWidth = 2,
   className = '',
   dataKey = 'view_count',

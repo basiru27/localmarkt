@@ -5,10 +5,10 @@ import { StarRatingCompact } from './StarRating';
 
 // Condition display labels and colors
 const CONDITION_CONFIG = {
-  new: { label: 'New', color: 'text-primary-dark' },
-  used_like_new: { label: 'Used – Like New', color: 'text-primary' },
-  used_good: { label: 'Used – Good', color: 'text-amber-600' },
-  used_fair: { label: 'Used – Fair', color: 'text-orange-600' },
+  new: { label: 'New', badgeClass: 'bg-green-50 text-green-700 border border-green-100' },
+  used_like_new: { label: 'Used – Like New', badgeClass: 'bg-blue-50 text-blue-700 border border-blue-100' },
+  used_good: { label: 'Used – Good', badgeClass: 'bg-amber-50 text-amber-700 border border-amber-100' },
+  used_fair: { label: 'Used – Fair', badgeClass: 'bg-red-50 text-red-600 border border-red-100' },
 };
 
 export default function ListingCard({ listing, index = 0 }) {
@@ -47,11 +47,11 @@ export default function ListingCard({ listing, index = 0 }) {
   return (
     <Link 
       to={`/listings/${id}`} 
-      className={`card group block animate-fade-in-up ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}
+      className={`card group block animate-fade-in-up hover:-translate-y-1 ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0]">
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
         )}
@@ -62,75 +62,65 @@ export default function ListingCard({ listing, index = 0 }) {
           className={`relative z-1 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
           onError={(e) => {
-            e.target.src = getPlaceholderImage(category?.name);
+            e.target.style.display = 'none';
             setImageLoaded(true);
           }}
         />
         
-        {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Category badge - top left */}
-        {category && (
-          <div className="absolute top-3 left-3">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white bg-gradient-to-r ${gradientClass} shadow-lg`}>
-              {category.name}
-            </span>
+        {/* Placeholder Icon if image fails or is missing */}
+        {(!imageUrl || imageUrl.includes('placeholder')) && (
+          <div className="absolute inset-0 flex items-center justify-center z-0">
+            <svg className="w-10 h-10 text-[#C8622A]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
           </div>
         )}
+        
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Sold badge - top right */}
         {is_sold && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-extrabold text-white bg-red-600 shadow-lg uppercase tracking-wider">
+          <div className="absolute top-0 right-0 z-10">
+            <span className="inline-block bg-[#1A1A1A] text-white text-xs font-bold px-2 py-1 rounded-bl-xl uppercase tracking-wider">
               Sold
             </span>
           </div>
         )}
-
-        {/* Price tag - always visible, enhanced on hover */}
-        <div className="absolute bottom-3 right-3 transition-all duration-300 transform group-hover:scale-105">
-          <span className={`price-tag ${is_sold ? 'bg-gray-800 border-gray-700' : ''}`}>
-            {is_sold ? 'Sold' : formatPrice(price)}
-          </span>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 space-y-1">
         {/* Title */}
-        <h3 className="font-bold text-text text-base leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-[#1A1A1A] text-sm leading-snug line-clamp-2 group-hover:text-[#C8622A] transition-colors">
           {truncateText(title, 60)}
         </h3>
 
+        {/* Condition badges inline below title */}
+        {conditionConfig && !is_sold && (
+          <div className="flex flex-wrap gap-1 mt-1 mb-2">
+            <span className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${conditionConfig.badgeClass}`}>
+              {conditionConfig.label}
+            </span>
+            {listing.negotiable && (
+              <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 border border-gray-200 text-[10px] font-medium rounded-full">
+                Negotiable
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Price - always visible for accessibility */}
-        <div className="mb-3">
-          <p className="price text-xl font-extrabold flex items-center gap-2">
+        <div className="mt-2 mb-2">
+          <p className="text-lg font-bold text-[#C8622A] flex items-center gap-2">
             {is_sold ? (
-              <>
-                <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
-                <span className="text-red-600">Sold</span>
-              </>
+              <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
             ) : (
               formatPrice(price)
             )}
           </p>
-          {listing.negotiable && !is_sold && (
-            <span className="inline-block mt-1 px-2 py-0.5 bg-green-50 text-green-700 text-[11px] font-semibold rounded-full border border-green-100">
-              Negotiable
-            </span>
-          )}
         </div>
-
-        {/* Condition */}
-        {conditionConfig && (
-          <div className="flex items-center gap-1.5 text-xs mb-3">
-            <svg className={`w-3.5 h-3.5 ${conditionConfig.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className={`font-medium ${conditionConfig.color}`}>{conditionConfig.label}</span>
-          </div>
-        )}
 
         {/* Rating */}
         <div className="mb-3 min-h-[20px]">
@@ -148,12 +138,12 @@ export default function ListingCard({ listing, index = 0 }) {
         </div>
 
         {/* Meta info */}
-        <div className="flex items-center justify-between text-xs text-text-secondary">
+        <div className="flex items-center justify-between text-xs text-[#6B6B6B] mt-2">
           {/* Region */}
           {area && (
             <span className="flex items-center gap-1.5">
               <svg
-                className="w-3.5 h-3.5 text-primary"
+                className="w-3.5 h-3.5 text-[#C8622A]/60"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -178,7 +168,7 @@ export default function ListingCard({ listing, index = 0 }) {
           {/* Time */}
           {created_at && (
             <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-[#C8622A]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {formatRelativeDate(created_at)}
