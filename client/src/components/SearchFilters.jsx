@@ -101,10 +101,10 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             <button
               key={name}
               onClick={() => handleChipClick(name)}
-              className={`flex-shrink-0 h-[24px] px-[12px] text-[13px] rounded-full whitespace-nowrap transition-colors ${
+              className={`flex-shrink-0 px-4 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors duration-200 ${
                 isActive
-                  ? 'bg-[#1a5c38] text-white border border-[#1a5c38]'
-                  : 'bg-white text-[#1a5c38] border border-[#1a5c38] hover:bg-gray-50'
+                  ? 'bg-[#C8622A] text-white font-semibold border border-transparent'
+                  : 'bg-white text-[#3D3D3D] border border-[#E8E3DC] hover:border-[#C8622A] hover:text-[#C8622A]'
               }`}
             >
               {name}

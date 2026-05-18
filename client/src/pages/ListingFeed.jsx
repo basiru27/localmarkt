@@ -86,11 +86,10 @@ export default function ListingFeed() {
         <div className="hero-gradient text-white py-12 sm:py-16 mb-6">
           <div className="container-app relative z-10">
             <div className="max-w-2xl mx-auto text-center">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 leading-tight">
-                Buy & Sell Locally in{' '}
-                <span className="text-secondary-light">The Gambia</span>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight !text-white">
+                Buy & Sell in The Gambia
               </h1>
-              <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed">
                 Your trusted marketplace for products and services. Connect with your community today.
               </p>
               
@@ -105,11 +104,11 @@ export default function ListingFeed() {
                   value={heroSearch}
                   onChange={(e) => setHeroSearch(e.target.value)}
                   placeholder="Search products in The Gambia..."
-                  className="w-full bg-white text-gray-900 rounded-full py-4 pl-12 pr-32 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-white text-gray-900 rounded-2xl py-3 px-5 pl-12 pr-32 shadow-lg focus:outline-none focus:ring-2 focus:ring-[#C8622A] focus:border-[#C8622A]"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-full transition-colors"
+                  className="absolute right-2 bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold py-2 px-6 rounded-xl transition-colors"
                 >
                   Search
                 </button>
@@ -118,7 +117,7 @@ export default function ListingFeed() {
               {isAuthenticated && (
                 <Link
                   to="/listings/new"
-                  className="btn bg-white text-primary font-semibold px-8 py-3 hover:bg-gray-100 shadow-lg inline-flex"
+                  className="btn bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold px-8 py-3 rounded-xl shadow-lg inline-flex transition-all duration-200"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -130,35 +129,35 @@ export default function ListingFeed() {
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-10 text-center">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <div className="stat-pill flex flex-col justify-center">
                 <div className="text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
-                    `${statsData?.totalListings || 0}+`
+                    statsData?.totalListings > 10 ? `${Math.floor(statsData.totalListings / 10) * 10}+` : (statsData?.totalListings || 0)
                   )}
                 </div>
-                <div className="text-sm text-white/80">Listings</div>
+                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Listings</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <div className="stat-pill flex flex-col justify-center">
                 <div className="text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
-                    `${statsData?.activeAreas || 0}`
+                    statsData?.activeAreas > 10 ? `${Math.floor(statsData.activeAreas / 10) * 10}+` : (statsData?.activeAreas || 0)
                   )}
                 </div>
-                <div className="text-sm text-white/80">Areas</div>
+                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Areas</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <div className="stat-pill flex flex-col justify-center">
                 <div className="text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
-                    `${statsData?.activeSellers || 0}`
+                    statsData?.activeSellers > 10 ? `${Math.floor(statsData.activeSellers / 10) * 10}+` : (statsData?.activeSellers || 0)
                   )}
                 </div>
-                <div className="text-sm text-white/80">Active Sellers</div>
+                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Sellers</div>
               </div>
             </div>
           </div>
