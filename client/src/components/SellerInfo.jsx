@@ -66,9 +66,9 @@ export default function SellerInfo({ seller, sellerId }) {
   const memberSince = formatMemberSince(seller?.created_at);
 
   return (
-    <div className="card-static p-4 sm:p-5">
-      <h2 className="font-semibold text-text mb-4 flex items-center gap-2">
-        <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <div className="bg-white border border-[#F0EDE8] rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <h2 className="font-semibold text-[#1A1A1A] mb-4 flex items-center gap-2">
+        <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
         About the Seller
@@ -91,11 +91,11 @@ export default function SellerInfo({ seller, sellerId }) {
         {/* Seller details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to={`/sellers/${sellerId || seller?.id}`} className="font-semibold text-text text-lg truncate hover:text-primary transition-colors">
+            <Link to={`/sellers/${sellerId || seller?.id}`} className="font-semibold text-[#1A1A1A] text-lg truncate hover:text-[#C8622A] transition-colors">
               {displayName}
             </Link>
             {seller?.verified_seller && (
-              <span className="inline-flex items-center text-green-600 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Verified Seller">
+              <span className="inline-flex items-center text-[#2D7A4F] bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 px-1.5 py-0.5 rounded text-xs font-medium" title="Verified Seller">
                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -121,7 +121,7 @@ export default function SellerInfo({ seller, sellerId }) {
       {/* View all listings link */}
       <Link
         to={`/sellers/${sellerId || seller?.id}`}
-        className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors"
+        className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[#C8622A] bg-[#C8622A]/5 hover:bg-[#C8622A]/10 rounded-xl transition-colors"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />

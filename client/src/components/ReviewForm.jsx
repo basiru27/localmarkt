@@ -137,7 +137,7 @@ export default function ReviewForm({ listingId, existingReview, onCancel }) {
         <button
           type="submit"
           disabled={isSubmitting || rating === 0}
-          className="btn-primary flex-1"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 disabled:bg-[#E8D5C0] disabled:text-[#9A6B50] disabled:cursor-not-allowed bg-[#C8622A] text-white hover:bg-[#B5561F] shadow-sm"
         >
           {isSubmitting ? (
             <>

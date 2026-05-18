@@ -19,10 +19,10 @@ import ListingCard from '../components/ListingCard';
 
 // Condition display configuration
 const CONDITION_CONFIG = {
-  new: { label: 'New', bgColor: 'bg-primary-50', textColor: 'text-primary-dark', borderColor: 'border-primary-100' },
-  used_like_new: { label: 'Used – Like New', bgColor: 'bg-primary-50', textColor: 'text-primary', borderColor: 'border-primary-100' },
+  new: { label: 'New', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
+  used_like_new: { label: 'Used – Like New', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
   used_good: { label: 'Used – Good', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
-  used_fair: { label: 'Used – Fair', bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200' },
+  used_fair: { label: 'Used – Fair', bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200' },
 };
 
 export default function ListingDetail() {
@@ -326,7 +326,7 @@ export default function ListingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Image Section */}
           <div className="lg:col-span-3">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg">
               {!imageLoaded && (
                 <div className="absolute inset-0 skeleton" aria-hidden="true" />
               )}
@@ -347,7 +347,7 @@ export default function ListingDetail() {
               {/* Category badge overlay */}
               {listing.category && (
                 <div className="absolute top-4 left-4">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r ${gradientClass} shadow-lg`}>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FEF3E8] text-[#C8622A] font-semibold rounded-lg shadow-sm">
                     {listing.category.name}
                   </span>
                 </div>
@@ -356,7 +356,7 @@ export default function ListingDetail() {
               {/* Sold badge overlay */}
               {listing.is_sold && (
                 <div className="absolute top-4 right-4 z-10">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-extrabold text-white bg-red-600 shadow-lg uppercase tracking-wider">
+                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-extrabold text-white bg-[#1A1A1A] shadow-lg uppercase tracking-wider">
                     Sold
                   </span>
                 </div>
@@ -392,7 +392,7 @@ export default function ListingDetail() {
           <div className="lg:col-span-2 space-y-6">
             {/* Title & Price */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text leading-tight mb-2">
+              <h1 className="text-3xl font-bold tracking-tight text-[#1A1A1A] leading-tight mb-2">
                 {listing.title}
               </h1>
               
@@ -400,16 +400,16 @@ export default function ListingDetail() {
               {listing.review_count > 0 && (
                 <div className="flex items-center gap-2 mb-4">
                   <StarRating rating={listing.rating_avg} readonly size="sm" />
-                  <span className="text-sm font-semibold text-text">{listing.rating_avg?.toFixed(1)}</span>
-                  <span className="text-sm text-text-secondary">({listing.review_count} review{listing.review_count !== 1 ? 's' : ''})</span>
+                  <span className="text-sm font-semibold text-[#1A1A1A]">{listing.rating_avg?.toFixed(1)}</span>
+                  <span className="text-sm text-[#6B6B6B]">({listing.review_count} review{listing.review_count !== 1 ? 's' : ''})</span>
                 </div>
               )}
               
-              <div className="price-tag text-xl inline-flex items-center gap-2">
+              <div className="text-3xl font-bold text-[#C8622A] inline-flex items-center gap-2">
                 {listing.is_sold ? (
                   <>
-                    <span className="text-gray-300 line-through text-lg">{formatPrice(listing.price)}</span>
-                    <span className="text-red-600 font-bold">Sold</span>
+                    <span className="text-gray-300 line-through text-2xl">{formatPrice(listing.price)}</span>
+                    <span className="text-[#1A1A1A] font-bold">Sold</span>
                   </>
                 ) : (
                   <>
@@ -460,14 +460,14 @@ export default function ListingDetail() {
 
             {/* Description */}
             {listing.description && (
-              <div className="card-static p-4 sm:p-5">
-                <h2 className="font-semibold text-text mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
+                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                   </svg>
                   Description
                 </h2>
-                <p className="text-text-secondary whitespace-pre-wrap leading-relaxed">
+                <p className="text-[#6B6B6B] whitespace-pre-wrap leading-relaxed">
                   {listing.description}
                 </p>
               </div>
@@ -475,9 +475,9 @@ export default function ListingDetail() {
 
             {/* Purchase Section - hidden for listing owner and sold items */}
             {!isOwner && !listing.is_sold && (
-              <div className="card-static p-4 sm:p-5">
-                <h2 className="font-semibold text-text mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
+                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                   Purchase
@@ -486,25 +486,25 @@ export default function ListingDetail() {
                   <>
                     <button
                       onClick={() => setShowCheckoutModal(true)}
-                      className="btn-primary w-full shadow-lg"
+                      className="w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
                       disabled={!isOnline}
                       title={!isOnline ? "Checkout is not available offline" : ""}
                     >
                       Express Interest
                     </button>
-                    <p className="text-xs text-gray-500 mt-2 text-center">
+                    <p className="text-xs text-[#6B6B6B] mt-2 text-center">
                       The seller will contact you to arrange payment and delivery.
                     </p>
                   </>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-text-secondary mb-4">
+                    <p className="text-[#6B6B6B] mb-4">
                       Log in to purchase this item
                     </p>
                     <Link 
                       to="/login" 
                       state={{ from: { pathname: `/listings/${id}` } }} 
-                      className="btn-primary w-full"
+                      className="inline-block w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
                     >
                       Log in to Buy
                     </Link>
@@ -515,9 +515,9 @@ export default function ListingDetail() {
 
             {/* Contact Section - hidden for listing owner */}
             {!isOwner && (
-              <div className="card-static p-4 sm:p-5">
-                <h2 className="font-semibold text-text mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
+                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   Contact Seller
@@ -525,8 +525,8 @@ export default function ListingDetail() {
                 
                 {isAuthenticated ? (
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-4 border border-primary/10">
-                      <p className="text-text font-semibold text-lg">{listing.contact}</p>
+                    <div className="bg-[#FEF3E8] rounded-xl p-4 border border-[#C8622A]/10">
+                      <p className="text-[#1A1A1A] font-semibold text-lg">{listing.contact}</p>
                     </div>
                     
                     {/* WhatsApp button */}
@@ -545,24 +545,24 @@ export default function ListingDetail() {
                       </a>
                     )}
                     
-                    <p className="text-xs text-text-muted text-center">
+                    <p className="text-xs text-[#6B6B6B] text-center">
                       Please be respectful when contacting the seller
                     </p>
                   </div>
                 ) : (
                   <div className="text-center py-4">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </div>
-                    <p className="text-text-secondary mb-4">
+                    <p className="text-[#6B6B6B] mb-4">
                       Log in to see contact information
                     </p>
                     <Link 
                       to="/login" 
                       state={{ from: { pathname: `/listings/${id}` } }} 
-                      className="btn-primary w-full"
+                      className="inline-block w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
                     >
                       Log in to Contact
                     </Link>
