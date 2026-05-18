@@ -47,11 +47,20 @@ export default function ListingCard({ listing, index = 0 }) {
   return (
     <Link 
       to={`/listings/${id}`} 
-      className={`card group block animate-fade-in-up hover:-translate-y-1 ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}
+      className={`card block relative animate-fade-in-up overflow-hidden ${!is_sold ? 'group hover:-translate-y-1' : ''}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
+      {/* Sold badge - top right (Outside opacity wrapper) */}
+      {is_sold && (
+        <div className="absolute top-0 right-0 z-20">
+          <span className="inline-block bg-[#1A1A1A] text-white text-xs font-bold px-2.5 py-1 rounded-bl-xl uppercase tracking-wider">
+            Sold
+          </span>
+        </div>
+      )}
+
       {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0]">
+      <div className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}>
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
         )}
@@ -79,19 +88,10 @@ export default function ListingCard({ listing, index = 0 }) {
         
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-        {/* Sold badge - top right */}
-        {is_sold && (
-          <div className="absolute top-0 right-0 z-10">
-            <span className="inline-block bg-[#1A1A1A] text-white text-xs font-bold px-2 py-1 rounded-bl-xl uppercase tracking-wider">
-              Sold
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-1">
+      <div className={`p-4 space-y-1 ${is_sold ? 'opacity-60' : ''}`}>
         {/* Title */}
         <h3 className="font-semibold text-[#1A1A1A] text-sm leading-snug line-clamp-2 group-hover:text-[#C8622A] transition-colors">
           {truncateText(title, 60)}
@@ -115,7 +115,7 @@ export default function ListingCard({ listing, index = 0 }) {
         <div className="mt-2 mb-2">
           <p className="text-lg font-bold text-[#C8622A] flex items-center gap-2">
             {is_sold ? (
-              <span className="text-gray-400 line-through text-base font-medium">{formatPrice(price)}</span>
+              <span className="text-[#9A6B50] line-through text-base font-medium">{formatPrice(price)}</span>
             ) : (
               formatPrice(price)
             )}

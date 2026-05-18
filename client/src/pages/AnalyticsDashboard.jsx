@@ -159,14 +159,14 @@ export default function AnalyticsDashboard() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+        <div className="h-8 bg-[#F5EFE8] rounded-xl w-1/4 mb-8"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+            <div key={i} className="h-32 bg-[#F5EFE8] rounded-xl"></div>
           ))}
         </div>
-        <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
-        <div className="h-64 bg-gray-200 rounded-lg"></div>
+        <div className="h-64 bg-[#F5EFE8] rounded-xl mb-8"></div>
+        <div className="h-64 bg-[#F5EFE8] rounded-xl"></div>
       </div>
     );
   }
@@ -267,32 +267,32 @@ export default function AnalyticsDashboard() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full">
+              <thead className="bg-[#FAFAF8] border-b border-[#F0EDE8]">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listing</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => requestSort('views')}>
+                  <th scope="col" className="px-6 py-3 text-left text-xs uppercase tracking-wide text-[#6B6B6B] font-medium">Listing</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs uppercase tracking-wide text-[#6B6B6B] font-medium">Status</th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs uppercase tracking-wide text-[#6B6B6B] font-medium cursor-pointer hover:bg-[#F5EFE8]" onClick={() => requestSort('views')}>
                     Views {sortConfig.key === 'views' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => requestSort('contacts')}>
+                  <th scope="col" className="px-6 py-3 text-right text-xs uppercase tracking-wide text-[#6B6B6B] font-medium cursor-pointer hover:bg-[#F5EFE8]" onClick={() => requestSort('contacts')}>
                     Contacts {sortConfig.key === 'contacts' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => requestSort('date')}>
+                  <th scope="col" className="px-6 py-3 text-right text-xs uppercase tracking-wide text-[#6B6B6B] font-medium cursor-pointer hover:bg-[#F5EFE8]" onClick={() => requestSort('date')}>
                     Date Created {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white">
                 {sortedListings.map((listing) => (
-                  <tr key={listing.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={listing.id} className="hover:bg-[#FAFAF8] transition-colors border-b border-[#F0EDE8] last:border-0">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                        <div className="h-10 w-10 flex-shrink-0 bg-[#F5EFE8] rounded-lg overflow-hidden">
                           {listing.image_url ? (
                             <img className="h-10 w-10 object-cover" src={listing.image_url} alt="" />
                           ) : (
-                            <div className="h-10 w-10 flex items-center justify-center text-gray-400">
+                            <div className="h-10 w-10 flex items-center justify-center text-[#9A6B50]">
                               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
@@ -300,35 +300,35 @@ export default function AnalyticsDashboard() {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                          <div className="text-sm font-medium text-[#1A1A1A] truncate max-w-[200px]">
                             {listing.title}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-[#6B6B6B]">
                             {formatPrice(listing.price)}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                         listing.is_sold
-                          ? 'bg-gray-100 text-gray-800'
+                          ? 'bg-[#1A1A1A] text-white'
                           : listing.moderation_status === 'approved' 
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-green-50 text-green-700 border border-green-100' 
                           : listing.moderation_status === 'rejected'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-red-50 text-red-700 border border-red-100'
+                          : 'bg-amber-50 text-amber-700 border border-amber-100'
                       }`}>
                         {listing.is_sold ? 'sold' : listing.moderation_status || 'pending'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[#6B6B6B] font-medium">
                       {listing.view_count || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[#6B6B6B] font-medium">
                       {listing.contact_count || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[#6B6B6B]">
                       {new Date(listing.created_at).toLocaleDateString()}
                     </td>
                   </tr>

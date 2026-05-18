@@ -488,15 +488,24 @@ export default function ListingDetail() {
                   <>
                     <button
                       onClick={() => setShowCheckoutModal(true)}
-                      className="w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
+                      className={`w-full font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors ${
+                        !isOnline
+                          ? "bg-[#E8D5C0] text-[#9A6B50] cursor-not-allowed opacity-75"
+                          : "bg-[#C8622A] hover:bg-[#B5561F] text-white"
+                      }`}
                       disabled={!isOnline}
-                      title={!isOnline ? "Checkout is not available offline" : ""}
                     >
                       Express Interest
                     </button>
-                    <p className="text-xs text-[#6B6B6B] mt-2 text-center">
-                      The seller will contact you to arrange payment and delivery.
-                    </p>
+                    {!isOnline ? (
+                      <p className="text-xs text-[#9A6B50] mt-1 text-center">
+                        You must be online to express interest
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#6B6B6B] mt-2 text-center">
+                        The seller will contact you to arrange payment and delivery.
+                      </p>
+                    )}
                   </>
                 ) : (
                   <div className="text-center py-4">
