@@ -13,11 +13,11 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'LocalMarkt',
-        short_name: 'LocalMarkt',
-        description: 'The Gambia Marketplace',
-        theme_color: '#0B6E4F',
-        background_color: '#ffffff',
+        name: 'GMarkt',
+        short_name: 'GMarkt',
+        description: 'The Gambia\'s Marketplace',
+        theme_color: '#C8622A',
+        background_color: '#FAFAF8',
         display: 'standalone',
         start_url: '/',
         icons: [
