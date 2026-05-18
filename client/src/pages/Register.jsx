@@ -216,17 +216,9 @@ export default function Register() {
         {/* Logo & Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-6 group">
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#0B6E4F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 6h18M3 6l2 13h14L21 6M3 6l1.5-3h15L21 6" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round"/>
-                <circle cx="9" cy="21" r="1" fill="#ffffff"/>
-                <circle cx="15" cy="21" r="1" fill="#ffffff"/>
-                <path d="M9 10v5M12 9v6M15 10v5" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-            </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'left' }}>
-              <span style={{ fontFamily: 'var(--font-brand)', fontSize: '24px', fontWeight: 700, color: '#0a1f17', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                Local<span style={{ color: '#0B6E4F' }}>Markt</span>
+              <span className="font-bold text-4xl tracking-tight leading-none text-[#1A1A1A]">
+                <span className="text-[#C8622A]">G</span>Markt
               </span>
             </div>
           </Link>
