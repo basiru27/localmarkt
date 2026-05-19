@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice, truncateText, getPlaceholderImage, formatRelativeDate } from '../lib/utils';
 import { StarRatingCompact } from './StarRating';
@@ -11,7 +11,7 @@ const CONDITION_CONFIG = {
   used_fair: { label: 'Used – Fair', badgeClass: 'bg-red-50 text-red-600 border border-red-100' },
 };
 
-export default function ListingCard({ listing, index = 0 }) {
+const ListingCard = React.memo(({ listing, index = 0 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const {
@@ -181,4 +181,6 @@ export default function ListingCard({ listing, index = 0 }) {
       <div className={`h-1 bg-gradient-to-r ${gradientClass} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`} />
     </Link>
   );
-}
+});
+
+export default ListingCard;
