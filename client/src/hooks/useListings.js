@@ -19,7 +19,7 @@ export function useListingStats() {
     queryKey: listingKeys.stats(),
     queryFn: async () => {
       // Direct fetch to our new endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/listings/stats`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/listings/stats`);
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
