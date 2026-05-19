@@ -10,6 +10,26 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => {
+      signOut().then(() => {
+        window.location.href = '/login';
+      });
+    };
+    window.addEventListener('auth:expired', handler);
+    return () => window.removeEventListener('auth:expired', handler);
+  }, []);
+
   const refreshProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
@@ -112,11 +132,6 @@ export function AuthProvider({ children }) {
     }
 
     return data;
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
   };
 
   const getAuthHeader = async () => {

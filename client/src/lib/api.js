@@ -51,6 +51,12 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
     const response = await fetch(url, config);
 
     if (!response.ok) {
+      if (response.status === 401) {
+        // Clear local auth state and redirect to login
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+        throw new ApiError('Session expired. Please log in again.', 401);
+      }
+
       const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
       
       // Check if we should retry
