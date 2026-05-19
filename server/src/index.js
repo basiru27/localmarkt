@@ -33,13 +33,17 @@ const apiLimiter = rateLimit({
   },
 });
 
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.CLIENT_ORIGIN]
+  : [
+      process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+      'http://localhost:5173',
+      'http://localhost:4173'
+    ];
+
 // CORS configuration
 const corsOptions = {
-  origin: [
-    process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-    'http://localhost:5173',
-    'http://localhost:4173', // Vite preview
-  ],
+  origin: allowedOrigins,
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -88,8 +92,9 @@ app.use((err, req, res, _next) => {
   }
 
   // Default error
+  const isDev = process.env.NODE_ENV === 'development';
   res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
+    error: isDev ? err.message : 'Something went wrong',
   });
 });
 

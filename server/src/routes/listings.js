@@ -20,17 +20,6 @@ const createListingLimiter = rateLimit({
   },
 });
 
-function sanitizeSearchInput(input) {
-  if (!input || typeof input !== 'string') return '';
-
-  return input
-    .replace(/\\/g, '\\\\')
-    .replace(/%/g, '\\%')
-    .replace(/_/g, '\\_')
-    .replace(/\*/g, '\\*')
-    .slice(0, 100);
-}
-
 async function deleteStorageImage(imageUrl) {
   if (!imageUrl) return;
 
@@ -156,7 +145,7 @@ router.get('/', async (req, res, next) => {
     const { category, area_id, search, page, limit, sort, cursor, user_id } = req.query;
 
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 24;
+    const limitNum = Math.min(parseInt(limit) || 24, 50);
     const from = (pageNum - 1) * limitNum;
     const to = from + limitNum - 1;
 
@@ -205,9 +194,8 @@ router.get('/', async (req, res, next) => {
     }
 
     if (search) {
-      const sanitized = sanitizeSearchInput(search);
-      if (sanitized) {
-        query = query.textSearch('fts', sanitized, { type: 'websearch' });
+      if (search.trim()) {
+        query = query.textSearch('fts', search, { type: 'plain', config: 'english' });
       }
     }
 
@@ -253,7 +241,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
     const { category, area_id, search, sort, page, limit } = req.query;
 
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 50;
+    const limitNum = Math.min(parseInt(limit) || 50, 50);
     const from = (pageNum - 1) * limitNum;
     const to = from + limitNum - 1;
 
@@ -276,9 +264,8 @@ router.get('/mine', authenticate, async (req, res, next) => {
     }
 
     if (search) {
-      const sanitized = sanitizeSearchInput(search);
-      if (sanitized) {
-        query = query.textSearch('fts', sanitized, { type: 'websearch' });
+      if (search.trim()) {
+        query = query.textSearch('fts', search, { type: 'plain', config: 'english' });
       }
     }
 
@@ -382,6 +369,20 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
  */
 router.post('/', authenticate, createListingLimiter, validateBody(createListingSchema), async (req, res, next) => {
   try {
+    const { data: recent } = await supabase
+      .from('listings')
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('title', req.body.title)
+      .gte('created_at', new Date(Date.now() - 30000).toISOString())
+      .limit(1);
+    
+    if (recent?.length > 0) {
+      return res.status(409).json({ 
+        error: 'Duplicate listing. Please wait before resubmitting.' 
+      });
+    }
+
     const listingData = {
       ...req.body,
       user_id: req.user.id,
@@ -467,6 +468,13 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
     }
 
     if (imageIsBeingReplaced) {
+      const match = oldImageUrl.match(/\/listing-images\/(.+)$/);
+      if (match) {
+        const imagePath = match[1];
+        if (!imagePath.startsWith(req.user.id + '/')) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
+      }
       await deleteStorageImage(oldImageUrl);
     }
 
@@ -510,7 +518,16 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       throw error;
     }
 
-    await deleteStorageImage(existing.image_url);
+    if (existing.image_url) {
+      const match = existing.image_url.match(/\/listing-images\/(.+)$/);
+      if (match) {
+        const imagePath = match[1];
+        if (!imagePath.startsWith(req.user.id + '/')) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
+      }
+      await deleteStorageImage(existing.image_url);
+    }
 
     res.status(204).send();
   } catch (err) {
