@@ -18,6 +18,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -229,6 +230,20 @@ export default function Login() {
                 </div>
               )}
             </FormField>
+
+            {/* Remember Me */}
+            <div className="flex items-center">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+              />
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-text-secondary">
+                Remember me
+              </label>
+            </div>
 
             {/* Submit Button */}
             <button

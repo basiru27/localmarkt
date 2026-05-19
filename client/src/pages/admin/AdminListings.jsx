@@ -1,15 +1,18 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminDeleteListing, useAdminListings, useModerateListing, adminKeys } from '../../hooks/useAdmin';
 import { useToast } from '../../context/ToastContext';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
+import SafeImage from '../../components/SafeImage';
 
 export default function AdminListings() {
   useDocumentTitle('Manage Listings');
 
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status') || 'all';
   const [search, setSearch] = useState('');
   const [selectedListings, setSelectedListings] = useState(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
@@ -33,7 +36,7 @@ export default function AdminListings() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'listings' },
-        (payload) => {
+        () => {
           queryClient.invalidateQueries({ queryKey: adminKeys.listings(filters), exact: false });
         }
       )
@@ -171,7 +174,15 @@ export default function AdminListings() {
           </label>
         </div>
 
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input py-2">
+        <select value={statusFilter} onChange={(event) => {
+          const value = event.target.value;
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (value === 'all') next.delete('status');
+            else next.set('status', value);
+            return next;
+          });
+        }} className="input py-2">
           <option value="all">All statuses</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
@@ -228,11 +239,7 @@ export default function AdminListings() {
                       className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                     />
                   </div>
-                  {listing.image_url ? (
-                    <img src={listing.image_url} alt="Thumbnail" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <span className="text-xs text-gray-400 h-full w-full flex items-center justify-center">No Image</span>
-                  )}
+                  <SafeImage src={listing.image_url} alt="Thumbnail" className="w-full h-full object-cover" placeholderClassName="w-full h-full" />
                 </div>
                 
                 <div className="min-w-0 flex-1">

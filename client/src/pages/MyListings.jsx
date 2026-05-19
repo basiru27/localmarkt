@@ -10,6 +10,7 @@ import SearchFilters from '../components/SearchFilters';
 import Pagination from '../components/Pagination';
 import { supabase } from '../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
+import SafeImage from '../components/SafeImage';
 
 export default function MyListings() {
   useDocumentTitle('My Listings');
@@ -215,13 +216,11 @@ export default function MyListings() {
                   {/* Thumbnail */}
                   <Link to={`/listings/${listing.id}`} className="shrink-0" aria-label={`View ${listing.title}`}>
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group">
-                      <img
+                      <SafeImage
                         src={listing.image_url || getPlaceholderImage(listing.category?.name)}
                         alt=""
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.target.src = getPlaceholderImage(listing.category?.name);
-                        }}
+                        placeholderClassName="w-full h-full"
                       />
                     </div>
                   </Link>

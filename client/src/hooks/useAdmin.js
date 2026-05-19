@@ -5,7 +5,7 @@ import { listingKeys } from './useListings';
 
 export const adminKeys = {
   all: ['admin'],
-  stats: () => [...adminKeys.all, 'stats'],
+  stats: (days) => [...adminKeys.all, 'stats', days],
   users: (filters) => [...adminKeys.all, 'users', filters],
   listings: (filters) => [...adminKeys.all, 'listings', filters],
   reports: (filters) => [...adminKeys.all, 'reports', filters],
@@ -18,14 +18,14 @@ function useAdminHeader() {
   return getAuthHeader;
 }
 
-export function useAdminStats() {
+export function useAdminStats(days = 14) {
   const getAuthHeader = useAdminHeader();
 
   return useQuery({
-    queryKey: adminKeys.stats(),
+    queryKey: adminKeys.stats(days),
     queryFn: async () => {
       const authHeader = await getAuthHeader();
-      return adminApi.getStats(authHeader);
+      return adminApi.getStats(days, authHeader);
     },
     refetchInterval: 30000,
   });

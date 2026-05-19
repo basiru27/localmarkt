@@ -28,7 +28,7 @@ export default function AdminReports() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reports' },
-        (payload) => {
+        () => {
           queryClient.invalidateQueries({ queryKey: adminKeys.reports(filters), exact: false });
         }
       )

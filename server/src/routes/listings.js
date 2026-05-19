@@ -136,6 +136,35 @@ router.get('/stats', async (req, res, next) => {
 });
 
 /**
+ * GET /api/listings/search/suggestions
+ * Get search autocomplete suggestions
+ */
+router.get('/search/suggestions', async (req, res, next) => {
+  try {
+    const q = req.query.q || '';
+    if (q.length < 2) {
+      return res.json([]);
+    }
+    
+    const escaped = String(q).replaceAll('%', '\\%').replaceAll('_', '\\_');
+    const { data, error } = await supabase
+      .from('listings')
+      .select('title')
+      .eq('moderation_status', 'approved')
+      .ilike('title', `%${escaped}%`)
+      .limit(20); // Fetch more to ensure we get 5 unique after deduplication
+
+    if (error) throw error;
+    
+    const uniqueTitles = [...new Set(data.map(d => d.title))].slice(0, 5);
+    
+    res.json(uniqueTitles);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/listings
  * List all listings with optional filters
  * Query params: category, area_id, search, page, limit, sort, cursor, user_id
@@ -195,7 +224,8 @@ router.get('/', async (req, res, next) => {
 
     if (search) {
       if (search.trim()) {
-        query = query.textSearch('fts', search, { type: 'plain', config: 'english' });
+        const escaped = String(search.trim()).replaceAll('%', '\\%').replaceAll('_', '\\_');
+        query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
       }
     }
 
@@ -265,7 +295,8 @@ router.get('/mine', authenticate, async (req, res, next) => {
 
     if (search) {
       if (search.trim()) {
-        query = query.textSearch('fts', search, { type: 'plain', config: 'english' });
+        const escaped = String(search.trim()).replaceAll('%', '\\%').replaceAll('_', '\\_');
+        query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
       }
     }
 

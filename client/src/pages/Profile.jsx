@@ -77,7 +77,6 @@ export default function Profile() {
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       refreshProfile(user.id);
       success('Profile updated successfully!');
-      setErrorMsg('');
     },
     onError: (err) => {
       showError(err.response?.data?.error || err.message || 'Failed to update profile');

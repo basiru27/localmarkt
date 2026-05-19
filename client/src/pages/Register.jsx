@@ -1,6 +1,6 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
@@ -10,6 +10,7 @@ export default function Register() {
   useDocumentTitle('Register');
 
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const nameInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -115,18 +116,24 @@ export default function Register() {
 
   // Password strength indicator
   const getPasswordStrength = (password) => {
-    if (!password) return { strength: 0, label: '', color: '', textColor: '' };
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    if (!password) return { level: 0, label: '', activeBars: 0 };
+    
+    let types = 0;
+    if (/[a-z]/.test(password)) types++;
+    if (/[A-Z]/.test(password)) types++;
+    if (/[0-9]/.test(password)) types++;
+    if (/[^A-Za-z0-9]/.test(password)) types++;
 
-    if (strength <= 2) return { strength, label: 'Weak', color: 'bg-red-500', textColor: 'text-red-600' };
-    if (strength <= 3) return { strength, label: 'Fair', color: 'bg-yellow-500', textColor: 'text-yellow-600' };
-    if (strength <= 4) return { strength, label: 'Good', color: 'bg-blue-500', textColor: 'text-blue-600' };
-    return { strength, label: 'Strong', color: 'bg-primary', textColor: 'text-primary-dark' };
+    if (password.length < 8 || types <= 1) {
+      return { level: 1, label: 'Weak', activeBars: 1, color: 'bg-red-500', textColor: 'text-red-600' };
+    }
+    if (password.length >= 8 && types === 2) {
+      return { level: 2, label: 'Fair', activeBars: 2, color: 'bg-orange-500', textColor: 'text-orange-600' };
+    }
+    if (password.length >= 8 && types >= 3) {
+      return { level: 3, label: 'Strong', activeBars: 3, color: 'bg-green-500', textColor: 'text-green-600' };
+    }
+    return { level: 0, label: '', activeBars: 0 };
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
@@ -172,6 +179,9 @@ export default function Register() {
     try {
       await signUp(formData.email, formData.password, formData.displayName, formData.phoneNumber);
       setSuccess(true);
+      setTimeout(() => {
+        navigate('/browse');
+      }, 1500);
     } catch (err) {
       if (err.message?.includes('already registered')) {
         setError('An account with this email already exists.');
@@ -193,20 +203,7 @@ export default function Register() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-text mb-3">Check your email</h2>
-            <p className="text-text-secondary mb-6 leading-relaxed">
-              We've sent a confirmation link to{' '}
-              <span className="font-semibold text-text">{formData.email}</span>.
-              Click the link to verify your account.
-            </p>
-            <div className="space-y-3">
-              <Link to="/login" className="btn-primary w-full">
-                Go to Login
-              </Link>
-              <p className="text-sm text-text-muted">
-                Didn't receive the email? Check your spam folder.
-              </p>
-            </div>
+            <h2 className="text-2xl font-bold text-text mb-3">Account created! Welcome to GMarkt</h2>
           </div>
         </div>
       </div>
@@ -384,13 +381,12 @@ export default function Register() {
                   {formData.password && (
                     <div className="mt-2 animate-fade-in" aria-live="polite">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow={passwordStrength.strength} aria-valuemin="0" aria-valuemax="5" aria-label="Password strength">
-                          <div 
-                            className={`h-full ${passwordStrength.color} transition-all duration-300`}
-                            style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
-                          />
+                        <div className="flex-1 flex gap-1 h-1.5 rounded-full overflow-hidden" role="progressbar" aria-valuenow={passwordStrength.activeBars} aria-valuemin="0" aria-valuemax="3" aria-label="Password strength">
+                          <div className={`flex-1 h-full ${passwordStrength.activeBars >= 1 ? passwordStrength.color : 'bg-gray-200'} transition-all duration-300`} />
+                          <div className={`flex-1 h-full ${passwordStrength.activeBars >= 2 ? passwordStrength.color : 'bg-gray-200'} transition-all duration-300`} />
+                          <div className={`flex-1 h-full ${passwordStrength.activeBars >= 3 ? passwordStrength.color : 'bg-gray-200'} transition-all duration-300`} />
                         </div>
-                        <span className={`text-xs font-medium ${passwordStrength.textColor}`}>
+                        <span className={`text-xs font-medium w-12 ${passwordStrength.textColor}`}>
                           {passwordStrength.label}
                         </span>
                       </div>

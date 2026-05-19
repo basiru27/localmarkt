@@ -1,6 +1,6 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useMemo, useCallback, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useListings, useListingStats } from '../hooks/useListings';
 import { useOffline } from '../context/OfflineContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +15,6 @@ export default function ListingFeed() {
   useDocumentTitle('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [heroSearch, setHeroSearch] = useState('');
   
   // Derive filters directly from URL params (single source of truth)

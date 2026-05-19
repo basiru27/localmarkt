@@ -15,7 +15,8 @@ router.use('/admin', authenticate, requireAdmin);
  */
 router.get('/admin/stats', async (req, res, next) => {
   try {
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const days = parseInt(req.query.days) || 14;
+    const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     const [
       usersCountRes,
@@ -23,22 +24,24 @@ router.get('/admin/stats', async (req, res, next) => {
       listingsCountRes,
       pendingListingsCountRes,
       pendingReportsCountRes,
+      pendingDisputesCountRes,
       recentLogsRes,
-      listings14dRes
+      listingsDaysRes
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_banned', true),
       supabase.from('listings').select('*', { count: 'exact', head: true }),
       supabase.from('listings').select('*', { count: 'exact', head: true }).eq('moderation_status', 'pending'),
       supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'disputed'),
       supabase.from('admin_logs').select(`
         id, action, target_type, created_at,
         admin:profiles!admin_id(display_name)
-      `).order('created_at', { ascending: false }).limit(5),
-      supabase.from('listings').select('created_at').gte('created_at', fourteenDaysAgo).order('created_at', { ascending: true })
+      `).order('created_at', { ascending: false }).limit(10),
+      supabase.from('listings').select('created_at').gte('created_at', daysAgo).order('created_at', { ascending: true })
     ]);
 
-    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes, recentLogsRes, listings14dRes]
+    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes, pendingDisputesCountRes, recentLogsRes, listingsDaysRes]
       .find((result) => result.error)?.error;
     if (firstError) {
       throw firstError;
@@ -46,14 +49,14 @@ router.get('/admin/stats', async (req, res, next) => {
 
     // Group listings by day for the chart
     const dailyCounts = {};
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < days; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       dailyCounts[dateStr] = 0;
     }
 
-    listings14dRes.data.forEach(item => {
+    listingsDaysRes.data.forEach(item => {
       const dateStr = item.created_at.split('T')[0];
       if (dailyCounts[dateStr] !== undefined) {
         dailyCounts[dateStr]++;
@@ -70,6 +73,7 @@ router.get('/admin/stats', async (req, res, next) => {
       listings_total: listingsCountRes.count || 0,
       listings_pending: pendingListingsCountRes.count || 0,
       reports_pending: pendingReportsCountRes.count || 0,
+      disputes_pending: pendingDisputesCountRes.count || 0,
       recent_logs: recentLogsRes.data || [],
       listings_chart,
     });

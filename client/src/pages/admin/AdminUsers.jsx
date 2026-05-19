@@ -1,5 +1,6 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers } from '../../hooks/useAdmin';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -8,10 +9,12 @@ import Modal, { ModalFooter } from '../../components/Modal';
 export default function AdminUsers() {
   useDocumentTitle('Manage Users');
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [banFilter, setBanFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
+
+  const banFilter = searchParams.get('banned') || 'all';
+  const roleFilter = searchParams.get('role') || 'all';
 
   const { user, isSuperAdmin } = useAuth();
   const { success, error: showError } = useToast();
@@ -91,13 +94,29 @@ export default function AdminUsers() {
           placeholder="Search by display name"
         />
 
-        <select value={banFilter} onChange={(event) => setBanFilter(event.target.value)} className="input">
+        <select value={banFilter} onChange={(event) => {
+          const value = event.target.value;
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (value === 'all') next.delete('banned');
+            else next.set('banned', value);
+            return next;
+          });
+        }} className="input">
           <option value="all">All statuses</option>
           <option value="true">Banned</option>
           <option value="false">Active</option>
         </select>
 
-        <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="input">
+        <select value={roleFilter} onChange={(event) => {
+          const value = event.target.value;
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (value === 'all') next.delete('role');
+            else next.set('role', value);
+            return next;
+          });
+        }} className="input">
           <option value="all">All roles</option>
           <option value="user">User</option>
           <option value="admin">Admin</option>

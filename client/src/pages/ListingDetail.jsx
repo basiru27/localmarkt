@@ -18,6 +18,8 @@ import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
 import ListingCard from '../components/ListingCard';
 
+import SafeImage from '../components/SafeImage';
+
 // Condition display configuration
 const CONDITION_CONFIG = {
   new: { label: 'New', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
@@ -272,19 +274,6 @@ export default function ListingDetail() {
     ? allImages[activeImageIndex] || allImages[0] 
     : getPlaceholderImage(listing.category?.name);
 
-  // Category color mapping
-  const categoryColors = {
-    'Electronics & Phones': 'from-blue-500 to-indigo-600',
-    'Clothing & Apparel': 'from-pink-500 to-rose-600',
-    'Food & Groceries': 'from-primary to-primary-dark',
-    'Home & Furniture': 'from-amber-500 to-orange-600',
-    Vehicles: 'from-violet-500 to-purple-600',
-    Services: 'from-primary-light to-primary',
-    Other: 'from-gray-500 to-slate-600',
-  };
-
-  const gradientClass = categoryColors[listing.category?.name] || categoryColors.Other;
-
   return (
     <div className="container-app py-4 sm:py-6">
       <div className="max-w-4xl mx-auto animate-fade-in">
@@ -332,18 +321,16 @@ export default function ListingDetail() {
               {!imageLoaded && (
                 <div className="absolute inset-0 skeleton" aria-hidden="true" />
               )}
-              <img
+              <SafeImage
                 key={currentImageUrl}
                 src={currentImageUrl}
                 alt={listing.title}
                 loading="lazy"
                 decoding="async"
                 className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                placeholderClassName="w-full h-full object-cover"
                 onLoad={() => setImageLoaded(true)}
-                onError={(e) => {
-                  e.target.src = getPlaceholderImage(listing.category?.name);
-                  setImageLoaded(true);
-                }}
+                iconClassName="w-16 h-16 text-[#C8622A]/50"
               />
               
               {/* Category badge overlay */}
@@ -378,11 +365,11 @@ export default function ListingDetail() {
                     className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden snap-center transition-all ${activeImageIndex === idx ? 'ring-2 ring-primary ring-offset-2 opacity-100' : 'opacity-60 hover:opacity-100'}`}
                     aria-label={`View image ${idx + 1}`}
                   >
-                    <img
+                    <SafeImage
                       src={img}
                       alt={`${listing.title} thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      placeholderClassName="w-full h-full"
                     />
                   </button>
                 ))}

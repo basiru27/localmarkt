@@ -7,9 +7,10 @@ import { useToast } from '../context/ToastContext';
 import { useOffline } from '../context/OfflineContext';
 import { ordersApi } from '../lib/api';
 import { supabase } from '../lib/supabase';
-import { formatPrice, getPlaceholderImage } from '../lib/utils';
+import { formatPrice } from '../lib/utils';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import DisputeModal from '../components/DisputeModal';
+import SafeImage from '../components/SafeImage';
 
 export default function MyPurchases() {
   useDocumentTitle('My Purchases');
@@ -85,6 +86,10 @@ export default function MyPurchases() {
     }
   });
 
+  const handleReferenceChange = (orderId, value) => {
+    setPaymentReferences((prev) => ({ ...prev, [orderId]: value }));
+  };
+
   const handleMarkPaid = (orderId) => {
     const reference = paymentReferences[orderId] || '';
     if (!reference.trim()) {
@@ -101,7 +106,7 @@ export default function MyPurchases() {
     updateStatusMutation.mutate({ id: orderId, status: 'buyer_paid', reference: reference.trim() });
   };
 
-const handleCancelOrder = (orderId) => {
+  const handleCancelOrder = (orderId) => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
     if (!isOnline) {
       showError('You must be online to cancel an order.');
@@ -109,15 +114,6 @@ const handleCancelOrder = (orderId) => {
     }
     setSubmittingId(orderId);
     updateStatusMutation.mutate({ id: orderId, status: 'cancelled' });
-  };
-
-  const handleConfirmDelivered = (orderId) => {
-    if (!isOnline) {
-      showError('You must be online to confirm delivery.');
-      return;
-    }
-    setSubmittingId(orderId);
-    updateStatusMutation.mutate({ id: orderId, status: 'delivered' });
   };
 
   const handleConfirmCompleted = (orderId) => {
@@ -193,12 +189,13 @@ const handleCancelOrder = (orderId) => {
         <div className="space-y-4">
           {data.map((order) => (
             <div key={order.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col md:flex-row">
-              <div className="h-32 w-full md:w-32 flex-shrink-0 bg-gray-100">
-                {order.listing?.image_url ? (
-                  <img src={order.listing.image_url} alt={`Image of ${order.listing.title}`} className="h-full w-full object-cover" />
-                ) : (
-                  <img src={getPlaceholderImage('Listing')} alt="Placeholder for missing image" className="h-full w-full object-cover opacity-50" />
-                )}
+              <div className="h-32 w-full md:w-32 flex-shrink-0 bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0]">
+                <SafeImage
+                  src={order.listing?.image_url}
+                  alt={`Image of ${order.listing?.title}`}
+                  className="h-full w-full object-cover"
+                  placeholderClassName="h-full w-full"
+                />
               </div>
               
               <div className="p-4 flex-1 flex flex-col justify-between">

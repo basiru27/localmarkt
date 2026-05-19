@@ -112,6 +112,8 @@ export const listingsApi = {
     return fetchApi(`/listings${query ? `?${query}` : ''}`);
   },
 
+  getSuggestions: (q) => fetchApi(`/listings/search/suggestions?q=${encodeURIComponent(q)}`),
+
   getById: (id, authHeader = {}) =>
     fetchApi(`/listings/${id}`, {
       headers: authHeader,
@@ -222,7 +224,7 @@ export const ordersApi = {
 
 // Admin API
 export const adminApi = {
-  getStats: (authHeader) => fetchApi('/admin/stats', { headers: authHeader }),
+  getStats: (days, authHeader) => fetchApi(`/admin/stats${days ? `?days=${days}` : ''}`, { headers: authHeader }),
   getDisputes: (authHeader) => fetchApi('/admin/disputes', { headers: authHeader }),
 
   getUsers: (params = {}, authHeader) => {

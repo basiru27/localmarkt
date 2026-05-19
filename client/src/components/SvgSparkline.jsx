@@ -150,22 +150,31 @@ export default function SvgSparkline({
               {isHovered && (
                 <g className="pointer-events-none">
                   <rect 
-                    x={cx - 30} 
-                    y={cy - 35} 
-                    width="60" 
-                    height="24" 
+                    x={cx - 50} 
+                    y={cy - 45} 
+                    width="100" 
+                    height="34" 
                     rx="4" 
                     fill="#1f2937" 
                   />
                   <text 
                     x={cx} 
-                    y={cy - 18} 
+                    y={cy - 30} 
                     fill="#fff" 
                     fontSize="12" 
                     fontWeight="bold" 
                     textAnchor="middle"
                   >
                     {val} {labelKey}
+                  </text>
+                  <text 
+                    x={cx} 
+                    y={cy - 16} 
+                    fill="#9ca3af" 
+                    fontSize="10" 
+                    textAnchor="middle"
+                  >
+                    {new Date(data[index].date || data[index].day).toLocaleDateString()}
                   </text>
                 </g>
               )}

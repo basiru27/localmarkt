@@ -1,14 +1,39 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
+import { listingsApi } from '../lib/api';
 
 export default function SearchFilters({ filters, onFiltersChange, hideSearch = false }) {
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedZone, setSelectedZone] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const containerRef = useRef(null);
+  
   const { data: zones, isLoading: zonesLoading } = useZones();
   const { data: areas, isLoading: areasLoading } = useAreas(selectedZone);
   const { data: categories } = useCategories();
+
+  // Handle outside click and escape for suggestions
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
 
   // Sync searchInput with filters.search when it changes externally
   useEffect(() => {
@@ -34,11 +59,36 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     []
   );
 
+  const fetchSuggestions = useMemo(
+    () => debounce(async (value) => {
+      if (value.length >= 2) {
+        try {
+          const res = await listingsApi.getSuggestions(value);
+          setSuggestions(res || []);
+          setShowSuggestions(true);
+        } catch {
+          // ignore
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300),
+    []
+  );
+
   const handleSearchChange = useCallback((e) => {
     const value = e.target.value;
     setSearchInput(value);
     debouncedSearch(value, filters, onFiltersChange);
-  }, [debouncedSearch, filters, onFiltersChange]);
+    fetchSuggestions(value);
+  }, [debouncedSearch, fetchSuggestions, filters, onFiltersChange]);
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchInput(suggestion);
+    setShowSuggestions(false);
+    onFiltersChange({ ...filters, search: suggestion });
+  };
 
   const handleZoneChange = (e) => {
     const value = e.target.value;
@@ -116,7 +166,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       {/* Search Bar */}
       {!hideSearch && (
         <div className="flex gap-3">
-          <div className="flex-1 relative">
+          <div className="flex-1 relative" ref={containerRef}>
           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
             <svg
               className="w-5 h-5 text-text-muted"
@@ -137,14 +187,22 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             placeholder="Search for products, services..."
             value={searchInput}
             onChange={handleSearchChange}
+            onFocus={() => {
+              if (suggestions.length > 0 && searchInput.length >= 2) {
+                setShowSuggestions(true);
+              }
+            }}
             className="input pl-12 pr-10 py-3 text-base"
             aria-label="Search listings"
+            autoComplete="off"
           />
           {searchInput && (
             <button
               onClick={() => {
                 setSearchInput('');
                 onFiltersChange({ ...filters, search: undefined });
+                setSuggestions([]);
+                setShowSuggestions(false);
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-gray-100 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
               aria-label="Clear search"
@@ -153,6 +211,23 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          )}
+
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-1 overflow-hidden">
+              {suggestions.map((suggestion, idx) => (
+                <li 
+                  key={idx}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="px-4 py-2 hover:bg-[#FEF3E8] cursor-pointer flex items-center gap-3 text-text"
+                >
+                  <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
