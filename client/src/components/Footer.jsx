@@ -44,7 +44,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a 
-                href="https://wa.me/2201234567" 
+                href="https://wa.me/2202422553"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
