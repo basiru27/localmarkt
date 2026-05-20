@@ -5,6 +5,7 @@ import { requireAdmin, requireSuperAdmin } from '../middleware/admin.js';
 import { updateReportStatusSchema, validateBody as validateReportBody } from '../schemas/report.js';
 import { moderateListingSchema, updateBanStatusSchema, updateVerifyStatusSchema, validateBody as validateAdminBody } from '../schemas/admin.js';
 import { createAdminLog } from '../utils/adminLogs.js';
+import { createNotification } from '../services/notifications.js';
 
 const router = Router();
 
@@ -193,6 +194,24 @@ router.put('/admin/users/:id/ban', validateAdminBody(updateBanStatusSchema), asy
       },
     });
 
+    if (is_banned) {
+      createNotification({
+        user_id: targetUserId,
+        type: 'ACCOUNT_BANNED',
+        title: 'Your account has been suspended',
+        message: 'Your GMarkt account has been suspended. Contact support if you believe this is an error.',
+        link: null
+      }).catch(err => console.error('Notification error:', err));
+    } else {
+      createNotification({
+        user_id: targetUserId,
+        type: 'ACCOUNT_UNBANNED',
+        title: 'Your account has been reinstated',
+        message: 'Your GMarkt account has been unsuspended. You can now use the platform again.',
+        link: null
+      }).catch(err => console.error('Notification error:', err));
+    }
+
     return res.json(updatedProfile);
   } catch (err) {
     return next(err);
@@ -237,6 +256,16 @@ router.put('/admin/users/:id/verify', validateAdminBody(updateVerifyStatusSchema
       targetType: 'USER',
       targetId: targetUserId,
     });
+
+    createNotification({
+      user_id: targetUserId,
+      type: verified_seller ? 'SELLER_VERIFIED' : 'SELLER_UNVERIFIED',
+      title: verified_seller ? 'You are now a verified seller!' : 'Seller verification removed',
+      message: verified_seller
+        ? 'Congratulations! You are now a verified seller on GMarkt.'
+        : 'Your verified seller status has been removed.',
+      link: '/profile'
+    }).catch(err => console.error('Notification error:', err));
 
     return res.json(updatedProfile);
   } catch (err) {
@@ -389,6 +418,39 @@ router.put('/admin/listings/:id/moderate', validateAdminBody(moderateListingSche
       await supabase.from('listings').update({ image_url: null }).eq('id', listingId);
       if (data) data.image_url = null;
     }
+
+    // Send notifications asynchronously
+    (async () => {
+      try {
+        const { data: listingData } = await supabase
+          .from('listings')
+          .select('title, user_id')
+          .eq('id', listingId)
+          .single();
+          
+        if (listingData) {
+          if (moderation_status === 'approved') {
+            await createNotification({
+              user_id: listingData.user_id,
+              type: 'LISTING_APPROVED',
+              title: 'Your listing was approved!',
+              message: `"${listingData.title}" is now live on GMarkt`,
+              link: `/listings/${listingId}`
+            });
+          } else if (moderation_status === 'rejected') {
+            await createNotification({
+              user_id: listingData.user_id,
+              type: 'LISTING_REJECTED',
+              title: 'Your listing was not approved',
+              message: `"${listingData.title}" was rejected. Check admin guidelines.`,
+              link: '/my-listings'
+            });
+          }
+        }
+      } catch (notifyError) {
+        console.error('Notification error:', notifyError);
+      }
+    })();
 
     return res.json(data);
   } catch (err) {

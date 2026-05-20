@@ -315,4 +315,26 @@ export const profileApi = {
     }),
 };
 
+export const notificationsApi = {
+  getAll: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.limit) searchParams.append('limit', params.limit);
+    if (params.unread_only !== undefined) searchParams.append('unread_only', params.unread_only);
+    const query = searchParams.toString();
+    return fetchApi(`/notifications${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
+  markRead: (id, authHeader) => fetchApi(`/notifications/${id}/read`, {
+    method: 'PATCH',
+    headers: authHeader
+  }),
+  markAllRead: (authHeader) => fetchApi('/notifications/read-all', {
+    method: 'PATCH',
+    headers: authHeader
+  }),
+  delete: (id, authHeader) => fetchApi(`/notifications/${id}`, {
+    method: 'DELETE',
+    headers: authHeader
+  }),
+};
+
 export { ApiError };

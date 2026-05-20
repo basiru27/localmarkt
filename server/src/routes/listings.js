@@ -8,6 +8,8 @@ import {
   validateBody,
 } from '../schemas/listing.js';
 
+import { createNotifications } from '../services/notifications.js';
+
 const router = Router();
 
 const createListingLimiter = rateLimit({
@@ -438,6 +440,37 @@ router.post('/', authenticate, createListingLimiter, validateBody(createListingS
     }
 
     res.status(201).json(data);
+
+    // Notify admins asynchronously
+    (async () => {
+      try {
+        const { data: seller } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', req.user.id)
+          .single();
+        
+        const sellerName = seller?.display_name || 'A user';
+
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['admin', 'super_admin']);
+        
+        if (admins && admins.length > 0) {
+          const notifications = admins.map((admin) => ({
+            user_id: admin.id,
+            type: 'NEW_LISTING',
+            title: 'New Listing Pending Review',
+            message: `${sellerName} posted "${data.title}" — needs approval`,
+            link: '/admin/listings?status=pending'
+          }));
+          await createNotifications(notifications);
+        }
+      } catch (notifyError) {
+        console.error('Notification error:', notifyError);
+      }
+    })();
   } catch (err) {
     next(err);
   }
@@ -510,6 +543,37 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
     }
 
     res.json(data);
+
+    // Notify admins asynchronously that listing was resubmitted
+    (async () => {
+      try {
+        const { data: seller } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', req.user.id)
+          .single();
+        
+        const sellerName = seller?.display_name || 'A user';
+
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['admin', 'super_admin']);
+        
+        if (admins && admins.length > 0) {
+          const notifications = admins.map((admin) => ({
+            user_id: admin.id,
+            type: 'NEW_LISTING',
+            title: 'New Listing Pending Review',
+            message: `${sellerName} updated "${data.title}" — needs approval`,
+            link: '/admin/listings?status=pending'
+          }));
+          await createNotifications(notifications);
+        }
+      } catch (notifyError) {
+        console.error('Notification error:', notifyError);
+      }
+    })();
   } catch (err) {
     next(err);
   }

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
 import AvatarImage from './AvatarImage';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const { user, profile, signOut, isAuthenticated, isAdmin } = useAuth();
@@ -188,6 +189,8 @@ export default function Header() {
                     <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                 </Link>
+
+                <NotificationBell />
 
                 {/* User Dropdown */}
                 <div className="relative">

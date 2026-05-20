@@ -27,6 +27,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const [selectedZone, setSelectedZone] = useState(() => {
+    if (initialData?.area?.zone?.id) return initialData.area.zone.id.toString();
     if (initialData?.area?.zone_id) return initialData.area.zone_id.toString();
     return '';
   });

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../supabase.js';
 import { authenticate } from '../middleware/auth.js';
 import { createOrderSchema, updateOrderStatusSchema, validateBody } from '../schemas/order.js';
+import { createNotification, createNotifications } from '../services/notifications.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.post('/', validateBody(createOrderSchema), async (req, res) => {
     // 1. Fetch the listing to validate it exists, is approved, and isn't owned by the buyer
     const { data: listing, error: listingError } = await supabase
       .from('listings')
-      .select('id, user_id, price, moderation_status')
+      .select('id, user_id, price, moderation_status, title')
       .eq('id', listing_id)
       .single();
 
@@ -60,6 +61,29 @@ router.post('/', validateBody(createOrderSchema), async (req, res) => {
     }
 
     res.status(201).json(order);
+
+    // Notifications
+    (async () => {
+      try {
+        const { data: buyer } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', buyer_id)
+          .single();
+          
+        const buyerName = buyer?.display_name || 'A buyer';
+        
+        await createNotification({
+          user_id: listing.user_id, // SELLER
+          type: 'NEW_ORDER',
+          title: 'New order received!',
+          message: `${buyerName} is interested in "${listing.title}"`,
+          link: '/my-listings?tab=sales'
+        });
+      } catch (err) {
+        console.error('Notification error:', err);
+      }
+    })();
   } catch (error) {
     console.error('Order creation error:', error);
     res.status(500).json({ error: 'Failed to create order' });
@@ -258,6 +282,86 @@ router.put('/:id/status', validateBody(updateOrderStatusSchema), async (req, res
     if (updateError) throw updateError;
 
     res.json(updatedOrder);
+
+    // Notifications
+    (async () => {
+      try {
+        const { data: listing } = await supabase
+          .from('listings')
+          .select('title')
+          .eq('id', order.listing_id)
+          .single();
+          
+        const title = listing?.title || 'a listing';
+        
+        const { data: buyer } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', order.buyer_id)
+          .single();
+        const buyerName = buyer?.display_name || 'A buyer';
+        
+        const { data: seller } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', order.seller_id)
+          .single();
+        const sellerName = seller?.display_name || 'A seller';
+
+        if (newStatus === 'buyer_paid') { // paid
+          await createNotification({
+            user_id: order.seller_id,
+            type: 'PAYMENT_RECEIVED',
+            title: 'Payment received',
+            message: `${buyerName} marked payment sent for "${title}". Verify and mark as delivered.`,
+            link: '/my-listings?tab=sales'
+          });
+        } else if (newStatus === 'delivered') {
+          await createNotification({
+            user_id: order.buyer_id,
+            type: 'ORDER_DELIVERED',
+            title: 'Order marked as delivered',
+            message: `Your order for "${title}" has been marked delivered. Please confirm.`,
+            link: '/my-purchases'
+          });
+        } else if (newStatus === 'completed') {
+          await createNotifications([
+            {
+              user_id: order.buyer_id,
+              type: 'ORDER_COMPLETED',
+              title: 'Order completed!',
+              message: `Your purchase of "${title}" is complete.`,
+              link: '/my-purchases'
+            },
+            {
+              user_id: order.seller_id,
+              type: 'ORDER_COMPLETED',
+              title: 'Sale completed!',
+              message: `Your sale of "${title}" is complete. Funds released.`,
+              link: '/my-listings?tab=sales'
+            }
+          ]);
+        } else if (newStatus === 'disputed') {
+          const { data: admins } = await supabase
+            .from('profiles')
+            .select('id')
+            .in('role', ['admin', 'super_admin']);
+            
+          if (admins && admins.length > 0) {
+            const notifications = admins.map((admin) => ({
+              user_id: admin.id,
+              type: 'NEW_DISPUTE',
+              title: 'Dispute raised',
+              message: `A dispute was raised on "${title}" between ${buyerName} and ${sellerName}`,
+              link: '/admin/disputes'
+            }));
+            await createNotifications(notifications);
+          }
+        }
+      } catch (err) {
+        console.error('Notification error:', err);
+      }
+    })();
   } catch (error) {
     console.error('Update order status error:', error);
     res.status(500).json({ error: 'Failed to update order status' });
