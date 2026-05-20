@@ -308,6 +308,11 @@ export const profileApi = {
       headers: authHeader,
       body: JSON.stringify(data),
     }),
+  deleteAvatar: (authHeader) =>
+    fetchApi('/profile/avatar', {
+      method: 'DELETE',
+      headers: authHeader,
+    }),
 };
 
 export { ApiError };

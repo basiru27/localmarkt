@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import imageCompression from 'browser-image-compression';
 import { supabase } from '../lib/supabase';
 import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
+import AvatarImage from '../components/AvatarImage';
 
 export default function Profile() {
   useDocumentTitle('My Profile');
@@ -79,7 +80,13 @@ export default function Profile() {
       success('Profile updated successfully!');
     },
     onError: (err) => {
-      showError(err.response?.data?.error || err.message || 'Failed to update profile');
+      const details = err.response?.data?.details;
+      if (details && Array.isArray(details)) {
+        const msgs = details.map(d => `${d.field}: ${d.message}`).join('; ');
+        showError(msgs || 'Failed to update profile');
+      } else {
+        showError(err.response?.data?.error || err.message || 'Failed to update profile');
+      }
     }
   });
 
@@ -90,39 +97,42 @@ export default function Profile() {
     setUploading(true);
 
     try {
-      // Compress
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 500,
-        useWebWorker: true,
       };
-      const compressedFile = await imageCompression(file, options);
 
-      // Upload to Supabase Storage
+      let compressedFile;
+      try {
+        compressedFile = await imageCompression(file, options);
+      } catch (compressErr) {
+        console.error('Image compression failed:', compressErr);
+        showError('Image compression failed. Try a smaller image.');
+        return;
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile?.id || user.id}-${Math.random()}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, compressedFile, { upsert: true });
+        .upload(fileName, compressedFile);
 
-      if (error) throw error;
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        showError(`Upload failed: ${uploadError.message || 'Unknown storage error'}`);
+        return;
+      }
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(data.path);
+        .getPublicUrl(uploadData.path);
 
-      // Update Profile Record
-      mutation.mutate({ 
-        ...profile, 
-        avatar_url: publicUrl 
-      });
-      success('Avatar updated successfully!');
+      mutation.mutate({ avatar_url: publicUrl });
 
     } catch (err) {
-      console.error('Avatar upload error:', err);
-      showError('Failed to upload avatar.');
+      console.error('Unexpected avatar error:', err);
+      showError(err.message || 'Failed to upload avatar.');
     } finally {
       setUploading(false);
     }
@@ -134,24 +144,14 @@ export default function Profile() {
     setUploading(true);
 
     try {
-      if (profile?.avatar_url) {
-        const urlParts = profile.avatar_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        if (fileName) {
-          await supabase.storage.from('avatars').remove([fileName]);
-        }
-      }
-
-      mutation.mutate({ 
-        ...profile, 
-        avatar_url: null 
-      }, {
-        onSettled: () => setUploading(false)
-      });
+      await profileApi.deleteAvatar(getAuthHeader());
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+      refreshProfile(user.id);
       success('Avatar removed successfully!');
     } catch (err) {
       console.error('Avatar remove error:', err);
-      showError('Failed to remove avatar.');
+      showError(err.response?.data?.error || err.message || 'Failed to remove avatar.');
+    } finally {
       setUploading(false);
     }
   };
@@ -275,7 +275,6 @@ export default function Profile() {
 
   const displayName = profile?.display_name || user?.user_metadata?.display_name || '';
   const email = profile?.email || user?.email || '';
-  const initial = (displayName.charAt(0) || email.charAt(0) || 'U').toUpperCase();
 
   return (
     <div className="container-app py-8 max-w-2xl">
@@ -322,32 +321,27 @@ export default function Profile() {
           {/* Avatar Section */}
           <div className="p-6 border-b border-border-light flex flex-col sm:flex-row items-center gap-6">
             <div className="relative group inline-block">
-              {profile?.avatar_url ? (
-                <>
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Profile" 
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleAvatarRemove();
-                    }}
-                    disabled={uploading}
-                    className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 transition-opacity z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    title="Remove avatar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </>
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                  {initial}
-                </div>
+              <AvatarImage 
+                src={profile?.avatar_url} 
+                name={displayName}
+                size="xl"
+                className="border-4 border-white shadow-md"
+              />
+              {profile?.avatar_url && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAvatarRemove();
+                  }}
+                  disabled={uploading}
+                  className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 transition-opacity z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  title="Remove avatar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               )}
               
               <label className={`absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}>

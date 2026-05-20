@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const updateProfileSchema = z.object({
-  display_name: z.string().min(2, 'Display name must be at least 2 characters').max(50),
-  phone_number: z.string().regex(/^\+220\d{7}$/, 'Enter a valid Gambian number (+220 followed by 7 digits)'),
+  display_name: z.string().min(2, 'Display name must be at least 2 characters').max(50).optional(),
+  phone_number: z.string().regex(/^\+220\d{7}$/, 'Enter a valid Gambian number (+220 followed by 7 digits)').optional(),
   bio: z.string().max(500).optional().nullable(),
   avatar_url: z.string().url().optional().nullable(),
   notifications: z.record(z.boolean()).optional(),

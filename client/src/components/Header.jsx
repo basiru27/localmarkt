@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
+import AvatarImage from './AvatarImage';
 
 export default function Header() {
   const { user, profile, signOut, isAuthenticated, isAdmin } = useAuth();
@@ -197,17 +198,12 @@ export default function Header() {
                     aria-haspopup="true"
                     aria-label="User menu"
                   >
-                    {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-[#E8A838]"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-[#C8622A] text-white flex items-center justify-center font-bold text-sm ring-2 ring-[#E8A838]" aria-hidden="true">
-                        {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
-                      </div>
-                    )}
+                    <AvatarImage 
+                      src={profile?.avatar_url} 
+                      name={profile?.display_name || user?.user_metadata?.display_name || user?.email}
+                      size="sm"
+                      className="ring-2 ring-[#E8A838]"
+                    />
                     <span className="hidden sm:block truncate max-w-[100px]" style={{ fontSize: '13px', fontWeight: 500, color: '#0a1f17' }}>
                       {profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0]}
                     </span>
@@ -375,17 +371,12 @@ export default function Header() {
               <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                 {isAuthenticated ? (
                   <div className="flex items-center gap-3">
-                    {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt="Profile" 
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-[#E8A838]"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#C8622A] text-white flex items-center justify-center font-bold text-lg ring-2 ring-[#E8A838]" aria-hidden="true">
-                        {(profile?.display_name?.charAt(0) || user?.user_metadata?.display_name?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
-                      </div>
-                    )}
+                    <AvatarImage 
+                      src={profile?.avatar_url} 
+                      name={profile?.display_name || user?.user_metadata?.display_name || user?.email}
+                      size="md"
+                      className="ring-2 ring-[#E8A838]"
+                    />
                     <div className="flex flex-col">
                       <span className="font-semibold text-gray-900 truncate max-w-[180px]">
                         {profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0]}

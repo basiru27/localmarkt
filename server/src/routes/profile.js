@@ -63,4 +63,54 @@ router.put('/profile', validateBody(updateProfileSchema), async (req, res, next)
   }
 });
 
+/**
+ * DELETE /api/profile/avatar
+ * Delete the current user's avatar (storage file + profile field).
+ * Uses service role key to bypass RLS on storage.
+ */
+router.delete('/profile/avatar', async (req, res, next) => {
+  try {
+    // Get current profile to find the avatar URL
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', req.user.id)
+      .single();
+
+    if (profileError) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // Delete from storage if URL exists
+    if (profile?.avatar_url) {
+      const urlParts = profile.avatar_url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      if (fileName) {
+        const { error: deleteError } = await supabase.storage
+          .from('avatars')
+          .remove([fileName]);
+
+        if (deleteError) {
+          console.error('Storage delete error:', deleteError);
+          // Don't block the profile update if storage delete fails
+        }
+      }
+    }
+
+    // Update profile to clear avatar_url
+    const { data, error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: null })
+      .eq('id', req.user.id)
+      .select('id, display_name, email, role, created_at, phone_number, avatar_url, bio, notifications')
+      .single();
+
+    if (updateError) throw updateError;
+
+    return res.json(data);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 export default router;

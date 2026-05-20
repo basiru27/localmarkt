@@ -3,9 +3,9 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useListings } from '../hooks/useListings';
-import { getInitials, getAvatarColor } from '../components/SellerInfo';
 import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
+import AvatarImage from '../components/AvatarImage';
 
 function formatMemberSinceShort(dateString) {
   if (!dateString) return 'Member';
@@ -83,8 +83,6 @@ export default function SellerProfile() {
   }
 
   const displayName = derivedSeller.display_name || 'Seller';
-  const initials = getInitials(displayName);
-  const avatarColor = getAvatarColor(derivedSeller.id || id);
 
   return (
     <div className="container-app py-8">
@@ -96,17 +94,12 @@ export default function SellerProfile() {
             
             {/* Avatar */}
             <div className="flex-shrink-0">
-              {derivedSeller.avatar_url ? (
-                <img 
-                  src={derivedSeller.avatar_url} 
-                  alt={displayName} 
-                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md border-2 border-white"
-                />
-              ) : (
-                <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-bold text-3xl shadow-md border-2 border-white`}>
-                  {initials}
-                </div>
-              )}
+              <AvatarImage 
+                src={derivedSeller.avatar_url} 
+                name={displayName}
+                size="xl"
+                className="border-2 border-white shadow-md sm:w-28 sm:h-28"
+              />
             </div>
 
             {/* Info */}

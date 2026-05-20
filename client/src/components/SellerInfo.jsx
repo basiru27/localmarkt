@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AvatarImage from './AvatarImage';
 
 /**
  * Get initials from a display name
@@ -61,8 +62,6 @@ export default function SellerInfo({ seller, sellerId }) {
   if (!seller && !sellerId) return null;
 
   const displayName = seller?.display_name || 'Seller';
-  const initials = getInitials(displayName);
-  const avatarColor = getAvatarColor(sellerId || seller?.id);
   const memberSince = formatMemberSince(seller?.created_at);
 
   return (
@@ -75,18 +74,12 @@ export default function SellerInfo({ seller, sellerId }) {
       </h2>
       
       <div className="flex items-center gap-4">
-        {/* Avatar */}
-        {seller?.avatar_url ? (
-          <img 
-            src={seller.avatar_url} 
-            alt={displayName} 
-            className="w-14 h-14 rounded-full object-cover shadow-md border border-border-light"
-          />
-        ) : (
-          <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
-            {initials}
-          </div>
-        )}
+        <AvatarImage 
+          src={seller?.avatar_url} 
+          name={displayName}
+          size="lg"
+          className="shadow-md border border-border-light"
+        />
         
         {/* Seller details */}
         <div className="flex-1 min-w-0">
@@ -135,29 +128,13 @@ export default function SellerInfo({ seller, sellerId }) {
 /**
  * Compact avatar for use in review lists
  */
-export function SellerAvatar({ name, userId, avatarUrl, size = 'md' }) {
-  const initials = getInitials(name);
-  const avatarColor = getAvatarColor(userId);
-  
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-10 h-10 text-sm',
-    lg: 'w-12 h-12 text-base',
-  };
-
-  if (avatarUrl) {
-    return (
-      <img 
-        src={avatarUrl} 
-        alt={name} 
-        className={`${sizeClasses[size]} rounded-full object-cover shadow-sm border border-border-light`}
-      />
-    );
-  }
-
+export function SellerAvatar({ name, avatarUrl, size = 'md' }) {
   return (
-    <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white font-semibold shadow-sm`}>
-      {initials}
-    </div>
+    <AvatarImage
+      src={avatarUrl}
+      name={name}
+      size={size}
+      className="shadow-sm border border-border-light"
+    />
   );
 }
