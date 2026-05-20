@@ -179,5 +179,5 @@ export function getPlaceholderImage(category = 'Other') {
     </svg>
   </svg>`;
   
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+  return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
 }

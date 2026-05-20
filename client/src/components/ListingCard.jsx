@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { formatPrice, truncateText, getPlaceholderImage, formatRelativeDate } from '../lib/utils';
+import { formatPrice, truncateText, formatRelativeDate } from '../lib/utils';
 import { StarRatingCompact } from './StarRating';
 import SafeImage from './SafeImage';
 
@@ -30,7 +30,7 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
     images,
   } = listing;
 
-  const imageUrl = image_url || (images && images.length > 0 ? images[0] : null) || getPlaceholderImage(category?.name);
+  const imageUrl = image_url || (images && images.length > 0 ? images[0] : null) ;
   const conditionConfig = condition ? CONDITION_CONFIG[condition] : null;
 
   // Category color mapping

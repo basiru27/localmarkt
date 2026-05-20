@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useCreateReport } from '../hooks/useReports';
 import { useOffline } from '../context/OfflineContext';
-import { formatPrice, formatRelativeDate, getPlaceholderImage, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
+import { formatPrice, formatRelativeDate, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import Modal, { ModalFooter } from '../components/Modal';
 import CheckoutModal from '../components/CheckoutModal';
@@ -272,7 +272,7 @@ export default function ListingDetail() {
   
   const currentImageUrl = allImages.length > 0 
     ? allImages[activeImageIndex] || allImages[0] 
-    : getPlaceholderImage(listing.category?.name);
+    : null;
 
   return (
     <div className="container-app py-4 sm:py-6">

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { formatPrice, formatRelativeDate, getPlaceholderImage } from '../lib/utils';
+import { formatPrice, formatRelativeDate } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 import SearchFilters from '../components/SearchFilters';
 import Pagination from '../components/Pagination';
@@ -217,7 +217,7 @@ export default function MyListings() {
                   <Link to={`/listings/${listing.id}`} className="shrink-0" aria-label={`View ${listing.title}`}>
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group">
                       <SafeImage
-                        src={listing.image_url || getPlaceholderImage(listing.category?.name)}
+                        src={listing.image_url}
                         alt=""
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         placeholderClassName="w-full h-full"
