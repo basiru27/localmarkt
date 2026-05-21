@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 class ApiError extends Error {
@@ -52,9 +54,27 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
 
     if (!response.ok) {
       if (response.status === 401) {
-        // Clear local auth state and redirect to login
-        window.dispatchEvent(new CustomEvent('auth:expired'));
-        throw new ApiError('Session expired. Please log in again.', 401);
+        // Already tried refreshing once for this request — give up
+        if (retryCount > 0) {
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+          throw new ApiError('Session expired. Please log in again.', 401);
+        }
+
+        // Try to refresh the session before concluding it's expired
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData?.session) {
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+          throw new ApiError('Session expired. Please log in again.', 401);
+        }
+        // Retry the original request with the refreshed token
+        const retryOptions = {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${refreshData.session.access_token}`,
+          },
+        };
+        return fetchApi(endpoint, retryOptions, retryCount + 1);
       }
 
       const errorData = await response.json().catch(() => ({ error: 'Request failed' }));

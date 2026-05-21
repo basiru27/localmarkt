@@ -86,7 +86,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      await signIn(email, password, rememberMe);
       success('Welcome back!');
       navigate(from, { replace: true });
     } catch (err) {

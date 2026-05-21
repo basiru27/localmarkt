@@ -4,6 +4,15 @@ import { ApiError } from '../lib/api';
 
 const AuthContext = createContext(null);
 
+const clearSupabaseStorage = () => {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+      localStorage.removeItem(key);
+    }
+  }
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
@@ -12,6 +21,7 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
+      localStorage.removeItem('gmarkt_no_persist');
       await supabase.auth.signOut();
     } finally {
       setUser(null);
@@ -55,12 +65,35 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Get initial session
     async function bootstrapAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      // Check if the last session was marked as "do not persist"
+      if (localStorage.getItem('gmarkt_no_persist')) {
+        localStorage.removeItem('gmarkt_no_persist');
+        clearSupabaseStorage();
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
 
-      if (session?.user?.id) {
-        const fetchedProfile = await refreshProfile(session.user.id);
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // If session exists but access token is expired, refresh it first
+      let activeSession = session;
+      if (session?.expires_at && Date.now() / 1000 > session.expires_at) {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshData?.session) {
+          activeSession = refreshData.session;
+        } else {
+          activeSession = null;
+        }
+      }
+
+      setSession(activeSession);
+      setUser(activeSession?.user ?? null);
+
+      if (activeSession?.user?.id) {
+        const fetchedProfile = await refreshProfile(activeSession.user.id);
         if (fetchedProfile?.is_banned) {
           await supabase.auth.signOut();
           setLoading(false);
@@ -117,13 +150,19 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const signIn = async (email, password) => {
+  const signIn = async (email, password, rememberMe = true) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) throw error;
+
+    if (!rememberMe) {
+      localStorage.setItem('gmarkt_no_persist', 'true');
+    } else {
+      localStorage.removeItem('gmarkt_no_persist');
+    }
 
     const fetchedProfile = await refreshProfile(data?.user?.id);
     if (fetchedProfile?.is_banned) {
