@@ -9,6 +9,7 @@ import {
 } from '../schemas/listing.js';
 
 import { createNotifications } from '../services/notifications.js';
+import { deleteStorageImage, deleteStorageImages } from '../utils/storage.js';
 
 const router = Router();
 
@@ -21,26 +22,6 @@ const createListingLimiter = rateLimit({
     error: 'Too many listings created, please try again later.',
   },
 });
-
-async function deleteStorageImage(imageUrl) {
-  if (!imageUrl) return;
-
-  try {
-    const match = imageUrl.match(/\/listing-images\/(.+)$/);
-    if (!match) return;
-
-    const filePath = match[1];
-    const { error } = await supabase.storage
-      .from('listing-images')
-      .remove([filePath]);
-
-    if (error) {
-      console.error('Failed to delete image from storage:', error);
-    }
-  } catch (error) {
-    console.error('Error during image cleanup:', error);
-  }
-}
 
 function sanitizeListingForResponse(listing) {
   if (!listing) return listing;
@@ -486,7 +467,7 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
 
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
-      .select('id, user_id, image_url')
+      .select('id, user_id, image_url, images')
       .eq('id', id)
       .single();
 
@@ -542,6 +523,18 @@ router.put('/:id', authenticate, validateBody(updateListingSchema), async (req, 
       await deleteStorageImage(oldImageUrl);
     }
 
+    if (
+      existing.images?.length &&
+      req.body.images !== undefined
+    ) {
+      const removedImages = existing.images.filter(
+        (url) => !req.body.images.includes(url)
+      );
+      if (removedImages.length > 0) {
+        await deleteStorageImages(removedImages);
+      }
+    }
+
     res.json(data);
 
     // Notify admins asynchronously that listing was resubmitted
@@ -589,7 +582,7 @@ router.delete('/:id', authenticate, async (req, res, next) => {
 
     const { data: existing, error: fetchError } = await supabase
       .from('listings')
-      .select('id, user_id, image_url')
+      .select('id, user_id, image_url, images')
       .eq('id', id)
       .single();
 
@@ -622,6 +615,10 @@ router.delete('/:id', authenticate, async (req, res, next) => {
         }
       }
       await deleteStorageImage(existing.image_url);
+    }
+
+    if (existing.images?.length) {
+      await deleteStorageImages(existing.images);
     }
 
     res.status(204).send();

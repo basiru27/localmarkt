@@ -6,6 +6,7 @@ import { updateReportStatusSchema, validateBody as validateReportBody } from '..
 import { moderateListingSchema, updateBanStatusSchema, updateVerifyStatusSchema, validateBody as validateAdminBody } from '../schemas/admin.js';
 import { createAdminLog } from '../utils/adminLogs.js';
 import { createNotification } from '../services/notifications.js';
+import { deleteStorageImage, deleteStorageImages } from '../utils/storage.js';
 
 const router = Router();
 
@@ -367,40 +368,12 @@ router.get('/admin/listings', async (req, res, next) => {
 });
 
 /**
- * Delete an image from Supabase Storage
- */
-async function deleteStorageImage(imageUrl) {
-  if (!imageUrl) return;
-  try {
-    const match = imageUrl.match(/\/listing-images\/(.+)$/);
-    if (!match) return;
-    const filePath = match[1];
-    await supabase.storage.from('listing-images').remove([filePath]);
-  } catch (error) {
-    console.error('Error during image cleanup:', error);
-  }
-}
-
-/**
  * PUT /api/admin/listings/:id/moderate
  */
 router.put('/admin/listings/:id/moderate', validateAdminBody(moderateListingSchema), async (req, res, next) => {
   try {
     const listingId = req.params.id;
     const { moderation_status, moderation_note } = req.body;
-
-    const { data: existing, error: existingError } = await supabase
-      .from('listings')
-      .select('id, image_url')
-      .eq('id', listingId)
-      .single();
-
-    if (existingError) {
-      if (existingError.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Listing not found' });
-      }
-      throw existingError;
-    }
 
     const { data, error } = await supabase.rpc('moderate_listing_transaction', {
       p_listing_id: listingId,
@@ -410,14 +383,6 @@ router.put('/admin/listings/:id/moderate', validateAdminBody(moderateListingSche
     });
 
     if (error) throw error;
-
-    if (moderation_status === 'rejected' && existing.image_url) {
-      await deleteStorageImage(existing.image_url);
-      
-      // Also clear it from DB so it doesn't show a broken image link
-      await supabase.from('listings').update({ image_url: null }).eq('id', listingId);
-      if (data) data.image_url = null;
-    }
 
     // Send notifications asynchronously
     (async () => {
@@ -467,7 +432,7 @@ router.delete('/admin/listings/:id', async (req, res, next) => {
 
     const { data: existing, error: existingError } = await supabase
       .from('listings')
-      .select('id, image_url')
+      .select('id, image_url, images')
       .eq('id', listingId)
       .single();
 
@@ -489,6 +454,10 @@ router.delete('/admin/listings/:id', async (req, res, next) => {
 
     if (existing.image_url) {
       await deleteStorageImage(existing.image_url);
+    }
+
+    if (existing.images?.length) {
+      await deleteStorageImages(existing.images);
     }
 
     await createAdminLog({
