@@ -8,7 +8,7 @@ import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const { user, profile, signOut, isAuthenticated, isAdmin } = useAuth();
-  const { isOnline } = useOffline();
+  const { isOnline, canInstall, installApp } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
@@ -165,6 +165,19 @@ export default function Header() {
             )}
             
             <PendingSyncBadge />
+
+            {canInstall && (
+              <button
+                onClick={installApp}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FEF3E8] text-[#C8622A] text-sm font-medium rounded-lg shadow-sm hover:bg-[#FCE6D3] transition-colors"
+                aria-label="Install App"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Install App
+              </button>
+            )}
 
             {isAuthenticated ? (
               <>
@@ -402,6 +415,20 @@ export default function Header() {
               </div>
 
               <div className="flex flex-col flex-1 overflow-y-auto py-2">
+                {canInstall && (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      installApp();
+                    }}
+                    className="flex items-center gap-3 px-4 h-12 text-primary hover:bg-primary-50 font-medium text-left"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Install App
+                  </button>
+                )}
                 <Link
                   to="/"
                   onClick={() => setMobileMenuOpen(false)}

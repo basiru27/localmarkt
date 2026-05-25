@@ -1,9 +1,9 @@
 import { useOffline } from '../context/OfflineContext';
 
 export default function PendingSyncBadge() {
-  const { pendingCount, isOnline } = useOffline();
+  const { pendingCount, isOnline, isSwSupported } = useOffline();
 
-  if (pendingCount === 0) {
+  if (!isSwSupported || pendingCount === 0) {
     return null;
   }
 

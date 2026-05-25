@@ -15,12 +15,60 @@ export function OfflineProvider({ children }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const isInitialized = useRef(false);
   
+  // Progressive Enhancement State
+  const [isSwSupported] = useState('serviceWorker' in navigator);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showUnsupportedBanner, setShowUnsupportedBanner] = useState(false);
+
   // Inject context dependencies safely
   const { getAuthHeader, user } = useAuth();
   const { success, error: showError, info } = useToast();
 
+  useEffect(() => {
+    if (!isSwSupported) {
+      const hasSeenBanner = sessionStorage.getItem('hasSeenUnsupportedBanner');
+      if (!hasSeenBanner) {
+        setShowUnsupportedBanner(true);
+      }
+    }
+  }, [isSwSupported]);
+
+  const dismissUnsupportedBanner = () => {
+    sessionStorage.setItem('hasSeenUnsupportedBanner', 'true');
+    setShowUnsupportedBanner(false);
+  };
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      try {
+        if (!('serviceWorker' in navigator)) return;
+        e.preventDefault();
+        setDeferredPrompt(e);
+      } catch (err) {
+        console.error('Error handling beforeinstallprompt:', err);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const installApp = async () => {
+    if (!deferredPrompt) return;
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } catch (err) {
+      console.error('Error installing app:', err);
+    }
+  };
+
   // Update pending count
   const refreshPendingCount = useCallback(async () => {
+    if (!isSwSupported) return 0;
     try {
       const count = await getPendingCount();
       setPendingCount(count);
@@ -29,11 +77,11 @@ export function OfflineProvider({ children }) {
       console.error('Failed to get pending count:', error);
       return 0;
     }
-  }, []);
+  }, [isSwSupported]);
 
   // Process offline queue when online
   const processOfflineQueue = useCallback(async () => {
-    if (!navigator.onLine || isSyncing) return;
+    if (!navigator.onLine || isSyncing || !isSwSupported) return;
 
     try {
       const pendingListings = await getPendingListings();
@@ -92,7 +140,7 @@ export function OfflineProvider({ children }) {
     } finally {
       setIsSyncing(false);
     }
-  }, [getAuthHeader, isSyncing, refreshPendingCount, success, showError, info, user?.id]);
+  }, [getAuthHeader, isSyncing, refreshPendingCount, success, showError, info, user?.id, isSwSupported]);
 
   // Update online status
   useEffect(() => {
@@ -150,6 +198,11 @@ export function OfflineProvider({ children }) {
     setShowCachedDataNotice,
     refreshPendingCount,
     isSyncing,
+    isSwSupported,
+    showUnsupportedBanner,
+    dismissUnsupportedBanner,
+    canInstall: !!deferredPrompt,
+    installApp,
   };
 
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
