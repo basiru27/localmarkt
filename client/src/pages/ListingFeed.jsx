@@ -9,7 +9,7 @@ import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
 
-import Pagination from '../components/Pagination';
+import Pagination from '../components/ui/Pagination';
 
 export default function ListingFeed() {
   useDocumentTitle('');

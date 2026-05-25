@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatPrice, formatRelativeDate } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 import SearchFilters from '../components/SearchFilters';
-import Pagination from '../components/Pagination';
+import Pagination from '../components/ui/Pagination';
 import { supabase } from '../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import SafeImage from '../components/SafeImage';
