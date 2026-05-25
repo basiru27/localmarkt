@@ -15,11 +15,9 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   const stageRef = useRef(null);
   const prevFocusRef = useRef(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
+  
   const reducedMotionRef = useRef(reducedMotion);
-  reducedMotionRef.current = reducedMotion;
-
+  
   const handlePrev = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
   }, [images.length]);
@@ -29,9 +27,14 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   }, [images.length]);
 
   const handlePrevRef = useRef(handlePrev);
-  handlePrevRef.current = handlePrev;
   const handleNextRef = useRef(handleNext);
-  handleNextRef.current = handleNext;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    reducedMotionRef.current = reducedMotion;
+    handlePrevRef.current = handlePrev;
+    handleNextRef.current = handleNext;
+  });
 
   useEffect(() => {
     setImageLoaded(false);
@@ -129,17 +132,18 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   }, [currentIndex, reducedMotion]);
 
   const handleTouchStart = (e) => {
+    if (images.length <= 1) return;
     setTouchStartX(e.touches[0].clientX);
     setTouchDelta(0);
   };
 
   const handleTouchMove = (e) => {
-    if (touchStartX === null) return;
+    if (touchStartX === null || images.length <= 1) return;
     setTouchDelta(e.touches[0].clientX - touchStartX);
   };
 
   const handleTouchEnd = (e) => {
-    if (touchStartX === null) return;
+    if (touchStartX === null || images.length <= 1) return;
     const delta = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(delta) > 50) {
       if (delta > 0) handlePrev();

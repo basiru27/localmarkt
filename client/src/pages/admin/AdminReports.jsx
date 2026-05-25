@@ -15,6 +15,11 @@ export default function AdminReports() {
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [statusFilter]);
+
   const filters = useMemo(() => {
     const next = { page, limit: 20 };
     if (statusFilter !== 'all') next.status = statusFilter;

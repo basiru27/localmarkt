@@ -1,5 +1,5 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers } from '../../hooks/useAdmin';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +20,11 @@ export default function AdminUsers() {
 
   const { user, isSuperAdmin } = useAuth();
   const { success, error: showError } = useToast();
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [search, banFilter, roleFilter]);
 
   const filters = useMemo(() => {
     const next = { page, limit: 20 };

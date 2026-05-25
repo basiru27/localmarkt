@@ -39,10 +39,10 @@ export function useListings(filters = {}) {
           return {
             data: [],
             pagination: {
-              currentPage: 1,
+              page: 1,
               totalPages: 0,
-              totalItems: 0,
-              itemsPerPage: 0,
+              total: 0,
+              limit: 0,
               hasNextPage: false,
               hasPrevPage: false,
             },
@@ -111,7 +111,7 @@ export function useCreateListing() {
             data: [data, ...oldData.data],
             pagination: oldData.pagination ? {
               ...oldData.pagination,
-              totalItems: oldData.pagination.totalItems + 1,
+              total: oldData.pagination.total + 1,
             } : undefined,
           };
         });
@@ -166,7 +166,7 @@ export function useDeleteListing() {
           data: oldData.data.filter((item) => item.id !== id),
           pagination: oldData.pagination ? {
             ...oldData.pagination,
-            totalItems: Math.max(0, oldData.pagination.totalItems - 1),
+            total: Math.max(0, oldData.pagination.total - 1),
           } : undefined,
         };
       });

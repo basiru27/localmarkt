@@ -185,7 +185,7 @@ export default function ListingFeed() {
                   {listings?.[0]?.seller?.display_name || 'Seller'}'s Listings
                 </h1>
                 <p className="text-text-secondary">
-                  {pagination?.totalItems || listings?.length || 0} listing{(pagination?.totalItems || listings?.length || 0) !== 1 ? 's' : ''} from this seller
+                  {pagination?.total || listings?.length || 0} listing{(pagination?.total || listings?.length || 0) !== 1 ? 's' : ''} from this seller
                 </p>
               </>
             ) : (

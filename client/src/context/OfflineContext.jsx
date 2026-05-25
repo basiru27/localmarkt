@@ -26,15 +26,24 @@ export function OfflineProvider({ children }) {
 
   useEffect(() => {
     if (!isSwSupported) {
-      const hasSeenBanner = sessionStorage.getItem('hasSeenUnsupportedBanner');
-      if (!hasSeenBanner) {
+      try {
+        const hasSeenBanner = sessionStorage.getItem('hasSeenUnsupportedBanner');
+        if (!hasSeenBanner) {
+          setShowUnsupportedBanner(true);
+        }
+      } catch {
+        // Safari private mode might throw
         setShowUnsupportedBanner(true);
       }
     }
   }, [isSwSupported]);
 
   const dismissUnsupportedBanner = () => {
-    sessionStorage.setItem('hasSeenUnsupportedBanner', 'true');
+    try {
+      sessionStorage.setItem('hasSeenUnsupportedBanner', 'true');
+    } catch {
+      // Ignore
+    }
     setShowUnsupportedBanner(false);
   };
 

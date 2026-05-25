@@ -168,7 +168,7 @@ router.get('/', async (req, res, next) => {
         area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
-      `, { count: 'estimated' });
+      `, { count: 'exact' });
 
     query = query
       .eq('moderation_status', 'approved')
@@ -232,10 +232,10 @@ router.get('/', async (req, res, next) => {
     res.json({
       data: dataWithRatings,
       pagination: {
-        currentPage: pageNum,
+        page: pageNum,
+        limit: limitNum,
+        total: count || 0,
         totalPages,
-        totalItems: count || 0,
-        itemsPerPage: limitNum,
         hasNextPage: pageNum < totalPages,
         hasPrevPage: pageNum > 1,
       },
@@ -265,7 +265,7 @@ router.get('/mine', authenticate, async (req, res, next) => {
         area:areas(id, name, zone:zones(id, name)),
         category:categories(id, name),
         seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number, verified_seller)
-      `, { count: 'estimated' })
+      `, { count: 'exact' })
       .eq('user_id', req.user.id);
 
     if (category) {
@@ -309,10 +309,10 @@ router.get('/mine', authenticate, async (req, res, next) => {
     res.json({
       data: dataWithRatings,
       pagination: {
-        currentPage: pageNum,
+        page: pageNum,
+        limit: limitNum,
+        total: count || 0,
         totalPages,
-        totalItems: count || 0,
-        itemsPerPage: limitNum,
         hasNextPage: pageNum < totalPages,
         hasPrevPage: pageNum > 1,
       },

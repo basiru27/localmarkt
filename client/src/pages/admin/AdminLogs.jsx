@@ -1,5 +1,5 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminLogs } from '../../hooks/useAdmin';
 import { formatRelativeDate } from '../../lib/utils';
@@ -33,6 +33,11 @@ export default function AdminLogs() {
     if (!unfilteredLogs) return [];
     return Array.from(new Set(unfilteredLogs.map(l => l.action))).sort();
   }, [unfilteredLogs]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [filterAdmin, filterAction, dateFrom, dateTo]);
 
   const filters = useMemo(() => {
     const next = { page, limit: 20 };

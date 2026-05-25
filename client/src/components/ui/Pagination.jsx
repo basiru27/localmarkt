@@ -1,7 +1,16 @@
 export default function Pagination({ pagination, onPageChange }) {
-  if (!pagination || pagination.totalPages <= 1) return null;
+  if (!pagination) return null;
 
-  const { page: currentPage, totalPages, total: totalItems, limit: itemsPerPage, hasNextPage, hasPrevPage } = pagination;
+  const currentPage = Number(pagination.page) || 1;
+  const itemsPerPage = Number(pagination.limit) || 20;
+  const totalItems = Number(pagination.total) || 0;
+  const totalPages = Number(pagination.totalPages) || 0;
+  
+  if (totalPages <= 1 && totalItems === 0) return null;
+  if (totalPages <= 1) return null;
+
+  const hasNextPage = Boolean(pagination.hasNextPage);
+  const hasPrevPage = Boolean(pagination.hasPrevPage);
 
   const handlePrev = () => {
     if (hasPrevPage) onPageChange(currentPage - 1);
