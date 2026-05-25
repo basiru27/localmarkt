@@ -17,6 +17,7 @@ import SellerInfo from '../components/SellerInfo';
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
 import ListingCard from '../components/ListingCard';
+import ImageLightbox from '../components/ui/ImageLightbox';
 
 import SafeImage from '../components/SafeImage';
 
@@ -115,6 +116,7 @@ export default function ListingDetail() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
 
   const isOwner = user && listing && user.id === listing.user_id;
   
@@ -317,7 +319,11 @@ export default function ListingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Image Section */}
           <div className="lg:col-span-3">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg">
+            <button 
+              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              onClick={() => setShowLightbox(true)}
+              aria-label="Open image gallery"
+            >
               {!imageLoaded && (
                 <div className="absolute inset-0 skeleton" aria-hidden="true" />
               )}
@@ -327,7 +333,7 @@ export default function ListingDetail() {
                 alt={listing.title}
                 loading="lazy"
                 decoding="async"
-                className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`w-full h-full object-cover transition-transform duration-300 hover:scale-[1.02] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 placeholderClassName="w-full h-full object-cover"
                 onLoad={() => setImageLoaded(true)}
                 iconClassName="w-16 h-16 text-[#C8622A]/50"
@@ -335,7 +341,7 @@ export default function ListingDetail() {
               
               {/* Category badge overlay */}
               {listing.category && (
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 z-10">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FEF3E8] text-[#C8622A] font-semibold rounded-lg shadow-sm">
                     {listing.category.name}
                   </span>
@@ -350,7 +356,7 @@ export default function ListingDetail() {
                   </span>
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Thumbnail Row */}
             {allImages.length > 1 && (
@@ -812,6 +818,16 @@ export default function ListingDetail() {
         onClose={() => setShowCheckoutModal(false)}
         listing={listing}
       />
+
+      {/* Fullscreen Lightbox */}
+      {showLightbox && (
+        <ImageLightbox
+          images={allImages}
+          initialIndex={activeImageIndex}
+          onClose={() => setShowLightbox(false)}
+          title={listing?.title}
+        />
+      )}
     </div>
   );
 }
