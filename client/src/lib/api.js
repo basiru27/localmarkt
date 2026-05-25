@@ -245,13 +245,21 @@ export const ordersApi = {
 // Admin API
 export const adminApi = {
   getStats: (days, authHeader) => fetchApi(`/admin/stats${days ? `?days=${days}` : ''}`, { headers: authHeader }),
-  getDisputes: (authHeader) => fetchApi('/admin/disputes', { headers: authHeader }),
+  getDisputes: (params = {}, authHeader) => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
+    const query = searchParams.toString();
+    return fetchApi(`/admin/disputes${query ? `?${query}` : ''}`, { headers: authHeader });
+  },
 
   getUsers: (params = {}, authHeader) => {
     const searchParams = new URLSearchParams();
     if (params.search) searchParams.append('search', params.search);
     if (params.role) searchParams.append('role', params.role);
     if (params.banned !== undefined) searchParams.append('banned', params.banned);
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
     const query = searchParams.toString();
 
     return fetchApi(`/admin/users${query ? `?${query}` : ''}`, { headers: authHeader });
@@ -281,6 +289,8 @@ export const adminApi = {
     const searchParams = new URLSearchParams();
     if (params.status) searchParams.append('status', params.status);
     if (params.search) searchParams.append('search', params.search);
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
     const query = searchParams.toString();
 
     return fetchApi(`/admin/listings${query ? `?${query}` : ''}`, { headers: authHeader });
@@ -302,6 +312,8 @@ export const adminApi = {
   getReports: (params = {}, authHeader) => {
     const searchParams = new URLSearchParams();
     if (params.status) searchParams.append('status', params.status);
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
     const query = searchParams.toString();
 
     return fetchApi(`/admin/reports${query ? `?${query}` : ''}`, { headers: authHeader });

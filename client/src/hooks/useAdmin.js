@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { adminApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { listingKeys } from './useListings';
@@ -40,6 +40,7 @@ export function useAdminUsers(filters = {}) {
       const authHeader = await getAuthHeader();
       return adminApi.getUsers(filters, authHeader);
     },
+    placeholderData: keepPreviousData
   });
 }
 
@@ -52,7 +53,8 @@ export function useAdminListings(filters = {}) {
       const authHeader = await getAuthHeader();
       return adminApi.getListings(filters, authHeader);
     },
-    staleTime: 0
+    staleTime: 0,
+    placeholderData: keepPreviousData
   });
 }
 
@@ -65,7 +67,8 @@ export function useAdminReports(filters = {}) {
       const authHeader = await getAuthHeader();
       return adminApi.getReports(filters, authHeader);
     },
-    staleTime: 0
+    staleTime: 0,
+    placeholderData: keepPreviousData
   });
 }
 
@@ -79,6 +82,7 @@ export function useAdminLogs(filters = {}, enabled = true) {
       const authHeader = await getAuthHeader();
       return adminApi.getLogs(filters, authHeader);
     },
+    placeholderData: keepPreviousData
   });
 }
 

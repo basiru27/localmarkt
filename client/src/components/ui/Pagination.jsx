@@ -1,7 +1,7 @@
 export default function Pagination({ pagination, onPageChange }) {
   if (!pagination || pagination.totalPages <= 1) return null;
 
-  const { currentPage, totalPages, totalItems, itemsPerPage, hasNextPage, hasPrevPage } = pagination;
+  const { page: currentPage, totalPages, total: totalItems, limit: itemsPerPage, hasNextPage, hasPrevPage } = pagination;
 
   const handlePrev = () => {
     if (hasPrevPage) onPageChange(currentPage - 1);
