@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import SafeImage from '../../components/SafeImage';
+import Pagination from '../../components/ui/Pagination';
 
 export default function AdminListings() {
   useDocumentTitle('Manage Listings');
@@ -16,17 +17,20 @@ export default function AdminListings() {
   const [search, setSearch] = useState('');
   const [selectedListings, setSelectedListings] = useState(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
 
   const filters = useMemo(() => {
-    const next = {};
+    const next = { page, limit: 20 };
     if (statusFilter !== 'all') next.status = statusFilter;
     if (search.trim()) next.search = search.trim();
     return next;
-  }, [statusFilter, search]);
+  }, [statusFilter, search, page]);
 
-  const { data: listings, isLoading, isError, error } = useAdminListings(filters);
+  const { data, isLoading, isError, error } = useAdminListings(filters);
+  const listings = data?.data || [];
+  const pagination = data?.pagination;
   const moderateMutation = useModerateListing();
   const deleteMutation = useAdminDeleteListing();
 
@@ -302,6 +306,10 @@ export default function AdminListings() {
             <div className="card-static p-5 text-center text-text-secondary">No listings found.</div>
           )}
         </div>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={setPage} />
       )}
 
       {selectedListings.size > 0 && (

@@ -5,6 +5,7 @@ import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, u
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Modal, { ModalFooter } from '../../components/Modal';
+import Pagination from '../../components/ui/Pagination';
 
 export default function AdminUsers() {
   useDocumentTitle('Manage Users');
@@ -12,6 +13,7 @@ export default function AdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
+  const [page, setPage] = useState(1);
 
   const banFilter = searchParams.get('banned') || 'all';
   const roleFilter = searchParams.get('role') || 'all';
@@ -20,14 +22,16 @@ export default function AdminUsers() {
   const { success, error: showError } = useToast();
 
   const filters = useMemo(() => {
-    const next = {};
+    const next = { page, limit: 20 };
     if (search.trim()) next.search = search.trim();
     if (banFilter !== 'all') next.banned = banFilter;
     if (roleFilter !== 'all') next.role = roleFilter;
     return next;
-  }, [search, banFilter, roleFilter]);
+  }, [search, banFilter, roleFilter, page]);
 
-  const { data: users, isLoading, isError, error } = useAdminUsers(filters);
+  const { data, isLoading, isError, error } = useAdminUsers(filters);
+  const users = data?.data || [];
+  const pagination = data?.pagination;
   const updateBanMutation = useUpdateUserBanStatus();
   const updateVerifyMutation = useUpdateUserVerifyStatus();
   const hardDeleteMutation = useHardDeleteUser();
@@ -233,6 +237,11 @@ export default function AdminUsers() {
               )}
             </tbody>
           </table>
+          {pagination && (
+            <div className="px-4 pb-4">
+              <Pagination pagination={pagination} onPageChange={setPage} />
+            </div>
+          )}
         </div>
       )}
 

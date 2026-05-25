@@ -5,21 +5,25 @@ import { useAdminReports, useUpdateReportStatus, adminKeys } from '../../hooks/u
 import { useToast } from '../../context/ToastContext';
 import { formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
+import Pagination from '../../components/ui/Pagination';
 
 export default function AdminReports() {
   useDocumentTitle('Review Reports');
 
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [page, setPage] = useState(1);
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
 
   const filters = useMemo(() => {
-    const next = {};
+    const next = { page, limit: 20 };
     if (statusFilter !== 'all') next.status = statusFilter;
     return next;
-  }, [statusFilter]);
+  }, [statusFilter, page]);
 
-  const { data: reports, isLoading, isError, error } = useAdminReports(filters);
+  const { data, isLoading, isError, error } = useAdminReports(filters);
+  const reports = data?.data || [];
+  const pagination = data?.pagination;
   const updateReportMutation = useUpdateReportStatus();
 
   useEffect(() => {
@@ -148,6 +152,10 @@ export default function AdminReports() {
             <div className="card-static p-5 text-center text-text-secondary">No reports found.</div>
           )}
         </div>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={setPage} />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { adminApi, ordersApi } from '../../lib/api';
@@ -8,6 +8,7 @@ import { adminKeys } from '../../hooks/useAdmin';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import { supabase } from '../../lib/supabase';
+import Pagination from '../../components/ui/Pagination';
 
 export default function AdminDisputes() {
   useDocumentTitle('Manage Disputes');
@@ -16,16 +17,20 @@ export default function AdminDisputes() {
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
   const [submittingId, setSubmittingId] = useState(null);
+  const [page, setPage] = useState(1);
 
-  const { data: disputes, isLoading, isError, error } = useQuery({
-    queryKey: adminKeys.disputes(),
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: [...adminKeys.disputes(), { page }],
     queryFn: async () => {
       const authHeader = await getAuthHeader();
-      const response = await adminApi.getDisputes(authHeader);
-      return response || [];
+      return adminApi.getDisputes({ page, limit: 20 }, authHeader);
     },
-    staleTime: 0
+    staleTime: 0,
+    placeholderData: keepPreviousData
   });
+
+  const disputes = data?.data || [];
+  const pagination = data?.pagination;
 
   useEffect(() => {
     const channel = supabase
@@ -183,6 +188,10 @@ export default function AdminDisputes() {
           </div>
         ))}
       </div>
+      
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={setPage} />
+      )}
     </div>
   );
 }

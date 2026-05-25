@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminLogs } from '../../hooks/useAdmin';
 import { formatRelativeDate } from '../../lib/utils';
+import Pagination from '../../components/ui/Pagination';
 
 export default function AdminLogs() {
   useDocumentTitle('System Logs');
@@ -13,9 +14,11 @@ export default function AdminLogs() {
   const [filterAction, setFilterAction] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(1);
 
   // Collect options globally from the unfiltered response
-  const { data: unfilteredLogs } = useAdminLogs({}, isSuperAdmin);
+  const { data: unfilteredData } = useAdminLogs({ limit: 100 }, isSuperAdmin);
+  const unfilteredLogs = unfilteredData?.data || [];
   
   const admins = useMemo(() => {
     if (!unfilteredLogs) return [];
@@ -28,19 +31,21 @@ export default function AdminLogs() {
 
   const actions = useMemo(() => {
     if (!unfilteredLogs) return [];
-    return [...new Set(unfilteredLogs.map(l => l.action))];
+    return Array.from(new Set(unfilteredLogs.map(l => l.action))).sort();
   }, [unfilteredLogs]);
 
   const filters = useMemo(() => {
-    const f = {};
-    if (filterAdmin) f.admin_id = filterAdmin;
-    if (filterAction) f.action = filterAction;
-    if (dateFrom) f.date_from = dateFrom;
-    if (dateTo) f.date_to = dateTo;
-    return f;
-  }, [filterAdmin, filterAction, dateFrom, dateTo]);
+    const next = { page, limit: 20 };
+    if (filterAdmin) next.admin_id = filterAdmin;
+    if (filterAction) next.action = filterAction;
+    if (dateFrom) next.date_from = dateFrom;
+    if (dateTo) next.date_to = dateTo;
+    return next;
+  }, [filterAdmin, filterAction, dateFrom, dateTo, page]);
 
-  const { data: logs, isLoading, isError, error } = useAdminLogs(filters, isSuperAdmin);
+  const { data, isLoading, isError, error } = useAdminLogs(filters, isSuperAdmin);
+  const logs = data?.data || [];
+  const pagination = data?.pagination;
 
   const exportCSV = () => {
     if (!logs || logs.length === 0) return;
@@ -207,6 +212,11 @@ export default function AdminLogs() {
               )}
             </tbody>
           </table>
+          {pagination && (
+            <div className="px-4 pb-4">
+              <Pagination pagination={pagination} onPageChange={setPage} />
+            </div>
+          )}
         </div>
       )}
     </div>
