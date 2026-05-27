@@ -147,6 +147,8 @@ export const listingsApi = {
     if (params.page) searchParams.append('page', params.page);
     if (params.limit) searchParams.append('limit', params.limit);
     if (params.sort) searchParams.append('sort', params.sort);
+    if (params.is_sold !== undefined) searchParams.append('is_sold', params.is_sold);
+    if (params.moderation_status) searchParams.append('moderation_status', params.moderation_status);
     const query = searchParams.toString();
 
     return fetchApi(`/listings/mine${query ? `?${query}` : ''}`, {
@@ -171,6 +173,19 @@ export const listingsApi = {
   delete: (id, authHeader) =>
     fetchApi(`/listings/${id}`, {
       method: 'DELETE',
+      headers: authHeader,
+    }),
+
+  markAsSold: (id, is_sold, authHeader) =>
+    fetchApi(`/listings/${id}/sold`, {
+      method: 'PATCH',
+      headers: authHeader,
+      body: JSON.stringify({ is_sold }),
+    }),
+
+  bump: (id, authHeader) =>
+    fetchApi(`/listings/${id}/bump`, {
+      method: 'POST',
       headers: authHeader,
     }),
 };
@@ -224,34 +239,10 @@ export const reportsApi = {
     }),
 };
 
-// Orders API
-export const ordersApi = {
-  getPurchases: (authHeader) => fetchApi('/orders/purchases', { headers: authHeader }),
-  getSales: (authHeader) => fetchApi('/orders/sales', { headers: authHeader }),
-  create: (data, authHeader) =>
-    fetchApi('/orders', {
-      method: 'POST',
-      headers: authHeader,
-      body: JSON.stringify(data),
-    }),
-  updateStatus: (id, data, authHeader) =>
-    fetchApi(`/orders/${id}/status`, {
-      method: 'PUT',
-      headers: authHeader,
-      body: JSON.stringify(data),
-    }),
-};
 
 // Admin API
 export const adminApi = {
   getStats: (days, authHeader) => fetchApi(`/admin/stats${days ? `?days=${days}` : ''}`, { headers: authHeader }),
-  getDisputes: (params = {}, authHeader) => {
-    const searchParams = new URLSearchParams();
-    if (params.page) searchParams.append('page', params.page);
-    if (params.limit) searchParams.append('limit', params.limit);
-    const query = searchParams.toString();
-    return fetchApi(`/admin/disputes${query ? `?${query}` : ''}`, { headers: authHeader });
-  },
 
   getUsers: (params = {}, authHeader) => {
     const searchParams = new URLSearchParams();
@@ -367,6 +358,26 @@ export const notificationsApi = {
     method: 'DELETE',
     headers: authHeader
   }),
+};
+
+export const savedApi = {
+  getAll: (authHeader) =>
+    fetchApi('/saved', { headers: authHeader }),
+
+  getIds: (authHeader) =>
+    fetchApi('/saved/ids', { headers: authHeader }),
+
+  save: (listingId, authHeader) =>
+    fetchApi(`/saved/${listingId}`, {
+      method: 'POST',
+      headers: authHeader,
+    }),
+
+  unsave: (listingId, authHeader) =>
+    fetchApi(`/saved/${listingId}`, {
+      method: 'DELETE',
+      headers: authHeader,
+    }),
 };
 
 export { ApiError };

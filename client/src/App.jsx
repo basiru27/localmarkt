@@ -16,9 +16,8 @@ const ListingDetail = lazy(() => import('./pages/ListingDetail'));
 const CreateListing = lazy(() => import('./pages/CreateListing'));
 const EditListing = lazy(() => import('./pages/EditListing'));
 const MyListings = lazy(() => import('./pages/MyListings'));
+const SavedListings = lazy(() => import('./pages/SavedListings'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
-const MySales = lazy(() => import('./pages/MySales'));
-const MyPurchases = lazy(() => import('./pages/MyPurchases'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -30,7 +29,6 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminListings = lazy(() => import('./pages/admin/AdminListings'));
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
-const AdminDisputes = lazy(() => import('./pages/admin/AdminDisputes'));
 const AdminLogs = lazy(() => import('./pages/admin/AdminLogs'));
 
 // Loading Fallback Component
@@ -104,26 +102,18 @@ function App() {
                         }
                       />
                       <Route
+                        path="saved"
+                        element={
+                          <ProtectedRoute>
+                            <SavedListings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="my-listings/analytics"
                         element={
                           <ProtectedRoute>
                             <AnalyticsDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="my-listings/sales"
-                        element={
-                          <ProtectedRoute>
-                            <MySales />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="my-purchases"
-                        element={
-                          <ProtectedRoute>
-                            <MyPurchases />
                           </ProtectedRoute>
                         }
                       />
@@ -149,7 +139,6 @@ function App() {
                         <Route path="users" element={<AdminUsers />} />
                         <Route path="listings" element={<AdminListings />} />
                         <Route path="reports" element={<AdminReports />} />
-                        <Route path="disputes" element={<AdminDisputes />} />
                         <Route
                           path="logs"
                           element={

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatPrice, truncateText, formatRelativeDate } from '../lib/utils';
 import { StarRatingCompact } from './StarRating';
 import SafeImage from './SafeImage';
+import SaveButton from './SaveButton';
 
 // Condition display labels and colors
 const CONDITION_CONFIG = {
@@ -28,6 +29,7 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
     review_count,
     is_sold,
     images,
+    is_expired,
   } = listing;
 
   const imageUrl = image_url || (images && images.length > 0 ? images[0] : null) ;
@@ -52,17 +54,17 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
       className={`card block relative animate-fade-in-up overflow-hidden ${!is_sold ? 'group hover:-translate-y-1' : ''}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      {/* Sold badge - top right (Outside opacity wrapper) */}
+      {/* Sold badge - top left */}
       {is_sold && (
-        <div className="absolute top-0 right-0 z-20">
-          <span className="inline-block bg-[#1A1A1A] text-white text-xs font-bold px-2.5 py-1 rounded-bl-xl uppercase tracking-wider">
+        <div className="absolute top-2 left-2 z-20">
+          <span className="inline-block bg-red-600 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
             Sold
           </span>
         </div>
       )}
 
       {/* Image Container */}
-      <div className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] ${is_sold ? 'opacity-60 grayscale-[30%]' : ''}`}>
+      <div className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] ${is_sold ? 'opacity-75 grayscale' : ''}`}>
         {!imageLoaded && (
           <div className="absolute inset-0 bg-[#F5EFE8] animate-pulse z-0" />
         )}
@@ -77,6 +79,9 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
         
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Save button */}
+        <SaveButton listingId={id} size="sm" className="absolute top-2 right-2 shadow-sm z-10" />
       </div>
 
       {/* Content */}
@@ -87,7 +92,14 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
         </h3>
 
         {/* Condition badges inline below title */}
-        {conditionConfig && !is_sold && (
+        {is_expired && (
+          <div className="flex flex-wrap gap-1 mt-1 mb-2">
+            <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+              Expired
+            </span>
+          </div>
+        )}
+        {conditionConfig && !is_sold && !is_expired && (
           <div className="flex flex-wrap gap-1 mt-1 mb-2">
             <span className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${conditionConfig.badgeClass}`}>
               {conditionConfig.label}

@@ -5,6 +5,7 @@ import { useListings, useListingStats } from '../hooks/useListings';
 import { useOffline } from '../context/OfflineContext';
 import { useAuth } from '../context/AuthContext';
 import { SearchX } from 'lucide-react';
+import { addToSearchHistory } from '../lib/searchHistory';
 import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
@@ -58,6 +59,7 @@ export default function ListingFeed() {
   const handleHeroSearch = (e) => {
     e.preventDefault();
     if (heroSearch.trim()) {
+      addToSearchHistory(heroSearch);
       handleFiltersChange({ search: heroSearch });
     }
   };

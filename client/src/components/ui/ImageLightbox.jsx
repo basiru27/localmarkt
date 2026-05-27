@@ -37,12 +37,15 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setImageLoaded(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTouchDelta(0);
   }, [currentIndex]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReducedMotion(mq.matches);
     const handler = (e) => setReducedMotion(e.matches);
     mq.addEventListener('change', handler);

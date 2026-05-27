@@ -686,17 +686,6 @@ async function seed() {
 
   try {
     // 1. Clear existing data (order matters for FK constraints)
-    console.log('Clearing existing orders...');
-    const { error: deleteOrdersError } = await supabase
-      .from('orders')
-      .delete()
-      .not('id', 'is', null);
-    if (deleteOrdersError) {
-      console.warn('Could not clear orders:', deleteOrdersError.message);
-    } else {
-      console.log('Orders cleared.');
-    }
-
     console.log('Clearing existing reports...');
     const { error: deleteReportsError } = await supabase
       .from('reports')

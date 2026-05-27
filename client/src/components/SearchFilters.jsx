@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 import { listingsApi } from '../lib/api';
+import { getSearchHistory, addToSearchHistory, removeFromSearchHistory, clearSearchHistory } from '../lib/searchHistory';
 
 export default function SearchFilters({ filters, onFiltersChange, hideSearch = false }) {
   const [searchInput, setSearchInput] = useState(filters.search || '');
@@ -9,22 +10,31 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   const [selectedZone, setSelectedZone] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyItems, setHistoryItems] = useState(getSearchHistory());
   const containerRef = useRef(null);
   
   const { data: zones, isLoading: zonesLoading } = useZones();
   const { data: areas, isLoading: areasLoading } = useAreas(selectedZone);
   const { data: categories } = useCategories();
 
-  // Handle outside click and escape for suggestions
+  const refreshHistory = useCallback(() => {
+    setHistoryItems(getSearchHistory());
+  }, []);
+
+  // Handle outside click and escape for suggestions + history
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setShowSuggestions(false);
+        setShowHistory(false);
       }
     };
     const handleEsc = (e) => {
       if (e.key === 'Escape') {
         setShowSuggestions(false);
+        setShowHistory(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -34,6 +44,13 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       document.removeEventListener('keydown', handleEsc);
     };
   }, []);
+
+  // Refresh history when it might have changed
+  useEffect(() => {
+    if (searchFocused && !searchInput) {
+      setHistoryItems(getSearchHistory());
+    }
+  }, [searchFocused, searchInput]);
 
   // Sync searchInput with filters.search when it changes externally
   useEffect(() => {
@@ -54,9 +71,13 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
 
   const debouncedSearch = useMemo(
     () => debounce((value, currentFilters, onChange) => {
+      if (value && value.trim().length >= 2) {
+        addToSearchHistory(value);
+        refreshHistory();
+      }
       onChange({ ...currentFilters, search: value || undefined });
     }, 300),
-    []
+    [refreshHistory]
   );
 
   const fetchSuggestions = useMemo(
@@ -80,13 +101,21 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   const handleSearchChange = useCallback((e) => {
     const value = e.target.value;
     setSearchInput(value);
+    if (value) {
+      setShowHistory(false);
+    } else if (searchFocused) {
+      refreshHistory();
+      setShowHistory(getSearchHistory().length > 0);
+    }
     debouncedSearch(value, filters, onFiltersChange);
     fetchSuggestions(value);
-  }, [debouncedSearch, fetchSuggestions, filters, onFiltersChange]);
+  }, [debouncedSearch, fetchSuggestions, filters, onFiltersChange, searchFocused, refreshHistory]);
 
   const handleSuggestionClick = (suggestion) => {
     setSearchInput(suggestion);
     setShowSuggestions(false);
+    addToSearchHistory(suggestion);
+    refreshHistory();
     onFiltersChange({ ...filters, search: suggestion });
   };
 
@@ -188,9 +217,18 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             value={searchInput}
             onChange={handleSearchChange}
             onFocus={() => {
+              setSearchFocused(true);
+              if (!searchInput) {
+                const current = getSearchHistory();
+                setHistoryItems(current);
+                setShowHistory(current.length > 0);
+              }
               if (suggestions.length > 0 && searchInput.length >= 2) {
                 setShowSuggestions(true);
               }
+            }}
+            onBlur={() => {
+              setTimeout(() => setSearchFocused(false), 200);
             }}
             className="input pl-12 pr-10 py-3 text-base"
             aria-label="Search listings"
@@ -228,6 +266,63 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                 </li>
               ))}
             </ul>
+          )}
+
+          {showHistory && !searchInput && historyItems.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-2 overflow-hidden">
+              <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Recent searches
+              </div>
+              {historyItems.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center px-4 py-2 hover:bg-[#FEF3E8] group"
+                >
+                  <button
+                    onClick={() => {
+                      setSearchInput(item);
+                      setShowHistory(false);
+                      addToSearchHistory(item);
+                      refreshHistory();
+                      onFiltersChange({ ...filters, search: item });
+                    }}
+                    className="flex-1 flex items-center gap-3 text-left text-text"
+                  >
+                    <svg className="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="truncate">{item}</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromSearchHistory(item);
+                      refreshHistory();
+                      if (historyItems.length <= 1) setShowHistory(false);
+                    }}
+                    className="p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Remove "${item}" from search history`}
+                  >
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => {
+                  clearSearchHistory();
+                  setHistoryItems([]);
+                  setShowHistory(false);
+                }}
+                className="w-full px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 text-left flex items-center gap-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear all recent searches
+              </button>
+            </div>
           )}
         </div>
 

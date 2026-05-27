@@ -163,6 +163,9 @@ CREATE TABLE IF NOT EXISTS listings (
   contact TEXT NOT NULL,
   image_url TEXT,
   images TEXT[] DEFAULT ARRAY[]::TEXT[],
+  is_sold BOOLEAN DEFAULT false,
+  sold_at TIMESTAMPTZ,
+  bumped_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -172,6 +175,7 @@ CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_area_id ON listings(area_id);
 CREATE INDEX IF NOT EXISTS idx_listings_category_id ON listings(category_id);
 CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_listings_bumped_at ON listings(bumped_at DESC NULLS LAST);
 
 -- Enable RLS on listings
 ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
@@ -225,6 +229,62 @@ CREATE TRIGGER update_listings_updated_at
   BEFORE UPDATE ON listings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- FUNCTION: Auto-set sold_at when is_sold changes
+-- ============================================
+CREATE OR REPLACE FUNCTION set_listing_sold_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.is_sold IS DISTINCT FROM OLD.is_sold THEN
+    NEW.sold_at = CASE WHEN NEW.is_sold = true THEN NOW() ELSE NULL END;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_set_listing_sold_at ON listings;
+CREATE TRIGGER trigger_set_listing_sold_at
+  BEFORE UPDATE OF is_sold ON listings
+  FOR EACH ROW
+  EXECUTE FUNCTION set_listing_sold_at();
+
+-- ============================================
+-- SAVED LISTINGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS saved_listings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT saved_listings_unique UNIQUE (user_id, listing_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_saved_listings_user_id
+  ON saved_listings (user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_saved_listings_listing_id
+  ON saved_listings (listing_id);
+
+ALTER TABLE saved_listings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own saved listings" ON saved_listings;
+CREATE POLICY "Users can view own saved listings"
+  ON saved_listings FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can save listings" ON saved_listings;
+CREATE POLICY "Users can save listings"
+  ON saved_listings FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can unsave listings" ON saved_listings;
+CREATE POLICY "Users can unsave listings"
+  ON saved_listings FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
 
 -- ============================================
 -- FUNCTION: Auto-create profile on signup

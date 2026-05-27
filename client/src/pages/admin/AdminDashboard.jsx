@@ -114,7 +114,7 @@ export default function AdminDashboard() {
           </div>
           
           {/* Quick Actions */}
-          {(data?.listings_pending > 0 || data?.reports_pending > 0 || data?.disputes_pending > 0) && (
+          {(data?.listings_pending > 0 || data?.reports_pending > 0) && (
             <div className="mt-6 pt-6 border-t border-gray-100">
               <h4 className="text-sm font-medium text-text mb-3">Quick Actions</h4>
               <div className="flex flex-wrap gap-3">
@@ -122,12 +122,6 @@ export default function AdminDashboard() {
                   <Link to="/admin/listings?status=pending" className="btn-outline text-[#C8622A] border-[#C8622A] hover:bg-[#C8622A]/5 text-sm py-1.5 px-3 rounded-lg flex items-center gap-2">
                     Review Pending Listings
                     <span className="bg-[#C8622A] text-white text-xs px-1.5 py-0.5 rounded-full">{data.listings_pending}</span>
-                  </Link>
-                )}
-                {data?.disputes_pending > 0 && (
-                  <Link to="/admin/disputes" className="btn-outline text-[#C8622A] border-[#C8622A] hover:bg-[#C8622A]/5 text-sm py-1.5 px-3 rounded-lg flex items-center gap-2">
-                    Resolve Disputes
-                    <span className="bg-[#C8622A] text-white text-xs px-1.5 py-0.5 rounded-full">{data.disputes_pending}</span>
                   </Link>
                 )}
                 {data?.reports_pending > 0 && (

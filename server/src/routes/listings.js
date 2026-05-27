@@ -85,6 +85,14 @@ function isPubliclyVisibleListing(listing) {
   return listing?.moderation_status === 'approved' && !listing?.seller?.is_banned;
 }
 
+function addComputedFields(listing) {
+  if (!listing) return listing;
+  return {
+    ...listing,
+    is_expired: !!listing.created_at && new Date(listing.created_at) < new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+  };
+}
+
 /**
  * GET /api/listings/stats
  * Get high-level marketplace statistics
@@ -174,7 +182,6 @@ router.get('/', async (req, res, next) => {
       .eq('moderation_status', 'approved')
       .eq('seller.is_banned', false);
 
-    // Always deprioritize sold listings
     query = query.order('is_sold', { ascending: true });
 
     if (sort === 'price_asc') {
@@ -186,7 +193,9 @@ router.get('/', async (req, res, next) => {
     } else if (sort === 'oldest') {
       query = query.order('created_at', { ascending: true });
     } else {
-      query = query.order('created_at', { ascending: false });
+      query = query
+        .order('bumped_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
     }
 
     if (cursor) {
@@ -226,11 +235,12 @@ router.get('/', async (req, res, next) => {
 
     const sanitizedListings = data.map(sanitizeListingForResponse);
     const dataWithRatings = await attachRatingStats(sanitizedListings);
+    const dataWithComputed = dataWithRatings.map(addComputedFields);
 
     const totalPages = Math.ceil((count || 0) / limitNum);
 
     res.json({
-      data: dataWithRatings,
+      data: dataWithComputed,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -251,7 +261,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/mine', authenticate, async (req, res, next) => {
   try {
-    const { category, area_id, search, sort, page, limit } = req.query;
+    const { category, area_id, search, sort, page, limit, is_sold, moderation_status } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = Math.min(parseInt(limit) || 50, 50);
@@ -267,6 +277,18 @@ router.get('/mine', authenticate, async (req, res, next) => {
         seller:profiles!user_id(id, display_name, created_at, avatar_url, bio, phone_number, verified_seller)
       `, { count: 'exact' })
       .eq('user_id', req.user.id);
+
+    if (is_sold !== undefined) {
+      query = query.eq('is_sold', is_sold === 'true');
+    }
+
+    if (moderation_status) {
+      if (moderation_status === 'pending_or_rejected') {
+        query = query.in('moderation_status', ['pending', 'rejected']);
+      } else {
+        query = query.eq('moderation_status', moderation_status);
+      }
+    }
 
     if (category) {
       query = query.eq('category_id', parseInt(category));
@@ -304,10 +326,11 @@ router.get('/mine', authenticate, async (req, res, next) => {
     }
 
     const dataWithRatings = await attachRatingStats(data.map(sanitizeListingForResponse));
+    const dataWithComputed = dataWithRatings.map(addComputedFields);
     const totalPages = Math.ceil((count || 0) / limitNum);
 
     res.json({
-      data: dataWithRatings,
+      data: dataWithComputed,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -367,11 +390,11 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       review_count = reviews.length;
     }
 
-    res.json({
+    res.json(addComputedFields({
       ...sanitizeListingForResponse(data),
       rating_avg,
       review_count,
-    });
+    }));
   } catch (err) {
     next(err);
   }
@@ -452,6 +475,86 @@ router.post('/', authenticate, createListingLimiter, validateBody(createListingS
         console.error('Notification error:', notifyError);
       }
     })();
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/listings/:id/bump
+ * Bump a listing to the top of the feed (authenticated, owner only, 24h cooldown)
+ * Requires: ALTER TABLE listings ADD COLUMN IF NOT EXISTS bumped_at TIMESTAMPTZ;
+ */
+router.post('/:id/bump', authenticate, async (req, res, next) => {
+  try {
+    const { data: listing, error: fetchError } = await supabase
+      .from('listings')
+      .select('user_id, bumped_at, moderation_status')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchError || !listing) {
+      return res.status(404).json({ error: 'Listing not found.' });
+    }
+
+    if (listing.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+
+    if (listing.moderation_status !== 'approved') {
+      return res.status(400).json({ error: 'Only approved listings can be bumped.' });
+    }
+
+    // Global user cooldown: only one bump per user per 24 hours
+    const { data: recentBump, error: recentBumpError } = await supabase
+      .from('listings')
+      .select('id, title, bumped_at')
+      .eq('user_id', req.user.id)
+      .not('bumped_at', 'is', null)
+      .order('bumped_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (recentBump && !recentBumpError) {
+      const lastBump = new Date(recentBump.bumped_at).getTime();
+      const now = Date.now();
+      const msIn24Hours = 24 * 60 * 60 * 1000;
+
+      if (now - lastBump < msIn24Hours) {
+        const msRemaining = msIn24Hours - (now - lastBump);
+        const hoursLeft = Math.ceil(msRemaining / (1000 * 60 * 60));
+        return res.status(429).json({
+          error: `You already bumped "${recentBump.title}" recently. You can bump again in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''}.`,
+          retry_after_hours: hoursLeft,
+        });
+      }
+    }
+
+    // Per-listing cooldown safety net
+    if (listing.bumped_at) {
+      const lastBump = new Date(listing.bumped_at).getTime();
+      const now = Date.now();
+      const msIn24Hours = 24 * 60 * 60 * 1000;
+
+      if (now - lastBump < msIn24Hours) {
+        const msRemaining = msIn24Hours - (now - lastBump);
+        const hoursLeft = Math.ceil(msRemaining / (1000 * 60 * 60));
+        return res.status(429).json({
+          error: `You can bump this listing again in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''}.`,
+          retry_after_hours: hoursLeft,
+        });
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update({ bumped_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+
+    if (updateError) throw updateError;
+
+    res.json({ success: true, message: 'Listing bumped to top of feed.' });
   } catch (err) {
     next(err);
   }
@@ -622,6 +725,53 @@ router.delete('/:id', authenticate, async (req, res, next) => {
     }
 
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/listings/:id/sold
+ * Toggle sold status of a listing (authenticated, owner only)
+ */
+router.patch('/:id/sold', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { is_sold } = req.body;
+
+    if (typeof is_sold !== 'boolean') {
+      return res.status(400).json({ error: 'is_sold must be a boolean' });
+    }
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('listings')
+      .select('id, user_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Listing not found' });
+      }
+      throw fetchError;
+    }
+
+    if (existing.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'You can only edit your own listings' });
+    }
+
+    const { data, error } = await supabase
+      .from('listings')
+      .update({ is_sold })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    res.json(data);
   } catch (err) {
     next(err);
   }

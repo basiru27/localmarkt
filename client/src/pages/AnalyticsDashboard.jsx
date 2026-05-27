@@ -8,13 +8,12 @@ import { formatPrice } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import StatsCard from '../components/StatsCard';
 import SvgSparkline from '../components/SvgSparkline';
-import { ordersApi } from '../lib/api';
 import SafeImage from '../components/SafeImage';
 
 export default function AnalyticsDashboard() {
   useDocumentTitle('Analytics Dashboard');
 
-  const { user, getAuthHeader } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // 1. Fetch user listings
@@ -24,20 +23,7 @@ export default function AnalyticsDashboard() {
   } = useListings({ mine: true, limit: 100 });
   const listings = useMemo(() => listingsData?.data || [], [listingsData?.data]);
 
-  // 1.5 Fetch sales data for revenue
-  const {
-    data: salesResponse,
-    isLoading: isSalesLoading
-  } = useQuery({
-    queryKey: ['seller-sales', user?.id],
-    queryFn: async () => {
-      const authHeader = await getAuthHeader();
-      return ordersApi.getSales(authHeader);
-    },
-    enabled: !!user?.id,
-    staleTime: 0
-  });
-  const sales = useMemo(() => salesResponse?.data || [], [salesResponse?.data]);
+  
 
   // 2. Fetch sparkline data directly via RPC
   const { 
@@ -108,15 +94,15 @@ export default function AnalyticsDashboard() {
       }
     });
 
-    let totalRevenue = 0;
-    sales.forEach(order => {
-      if (order.status === 'completed') {
-        totalRevenue += Number(order.price_at_purchase) || 0;
+    let soldCount = 0;
+    listings.forEach(listing => {
+      if (listing.is_sold) {
+        soldCount += 1;
       }
     });
 
-    return { totalViews, totalContacts, activeListings, totalRevenue };
-  }, [listings, sales]);
+    return { totalViews, totalContacts, activeListings, soldCount };
+  }, [listings]);
 
   // 4. Sort listings for the performance table
   const [sortConfig, setSortConfig] = useState({ key: 'views', direction: 'desc' });
@@ -155,7 +141,7 @@ export default function AnalyticsDashboard() {
     return sortableItems;
   }, [listings, sortConfig]);
 
-  const isLoading = isListingsLoading || isSparklineLoading || isSalesLoading;
+  const isLoading = isListingsLoading || isSparklineLoading;
 
   if (isLoading) {
     return (
@@ -182,12 +168,6 @@ export default function AnalyticsDashboard() {
             className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
           >
             Active Listings
-          </Link>
-          <Link
-            to="/my-listings/sales"
-            className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
-          >
-            Sales
           </Link>
           <Link
             to="/my-listings/analytics"
@@ -232,11 +212,11 @@ export default function AnalyticsDashboard() {
           } 
         />
         <StatsCard 
-          title="Total Revenue" 
-          value={formatPrice(stats.totalRevenue)} 
+          title="Sold Listings" 
+          value={stats.soldCount} 
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           } 
         />

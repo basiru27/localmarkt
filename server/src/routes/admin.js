@@ -41,7 +41,6 @@ router.get('/admin/stats', async (req, res, next) => {
       listingsCountRes,
       pendingListingsCountRes,
       pendingReportsCountRes,
-      pendingDisputesCountRes,
       recentLogsRes,
       listingsDaysRes
     ] = await Promise.all([
@@ -50,7 +49,6 @@ router.get('/admin/stats', async (req, res, next) => {
       supabase.from('listings').select('*', { count: 'exact', head: true }),
       supabase.from('listings').select('*', { count: 'exact', head: true }).eq('moderation_status', 'pending'),
       supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'disputed'),
       supabase.from('admin_logs').select(`
         id, action, target_type, created_at,
         admin:profiles!admin_id(display_name)
@@ -58,7 +56,7 @@ router.get('/admin/stats', async (req, res, next) => {
       supabase.from('listings').select('created_at').gte('created_at', daysAgo).order('created_at', { ascending: true })
     ]);
 
-    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes, pendingDisputesCountRes, recentLogsRes, listingsDaysRes]
+    const firstError = [usersCountRes, bannedUsersCountRes, listingsCountRes, pendingListingsCountRes, pendingReportsCountRes, recentLogsRes, listingsDaysRes]
       .find((result) => result.error)?.error;
     if (firstError) {
       throw firstError;
@@ -90,7 +88,6 @@ router.get('/admin/stats', async (req, res, next) => {
       listings_total: listingsCountRes.count || 0,
       listings_pending: pendingListingsCountRes.count || 0,
       reports_pending: pendingReportsCountRes.count || 0,
-      disputes_pending: pendingDisputesCountRes.count || 0,
       recent_logs: recentLogsRes.data || [],
       listings_chart,
     });
@@ -640,73 +637,6 @@ router.get('/admin/logs', requireSuperAdmin, async (req, res, next) => {
     if (error) {
       throw error;
     }
-
-    return res.json({
-      data,
-      pagination: getPaginationMeta(page, limit, count)
-    });
-  } catch (err) {
-    return next(err);
-  }
-});
-
-/**
- * GET /api/admin/disputes
- * Fetch all orders with status = 'disputed'
- */
-router.get('/admin/disputes', async (req, res, next) => {
-  try {
-    const { page, limit } = paginationSchema.parse(req.query);
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-
-    const { data: orders, error, count } = await supabase
-      .from('orders')
-      .select(`
-        id,
-        status,
-        price_at_purchase,
-        dispute_reason,
-        buyer_note,
-        seller_note,
-        created_at,
-        updated_at,
-        listing_id,
-        buyer_id,
-        seller_id,
-        listing:listings(id, title)
-      `, { count: 'exact' })
-      .eq('status', 'disputed')
-      .order('updated_at', { ascending: false })
-      .range(from, to);
-
-    if (error) {
-      throw error;
-    }
-
-    // Fetch profiles for buyer and seller
-    const profileIds = [...new Set([
-      ...orders.map(o => o.buyer_id),
-      ...orders.map(o => o.seller_id)
-    ])];
-    
-    let profilesMap = {};
-    if (profileIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, email')
-        .in('id', profileIds);
-        
-      if (profiles) {
-        profilesMap = profiles.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
-      }
-    }
-
-    const data = orders.map(o => ({
-      ...o,
-      buyer: profilesMap[o.buyer_id] || null,
-      seller: profilesMap[o.seller_id] || null
-    }));
 
     return res.json({
       data,

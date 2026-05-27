@@ -140,7 +140,7 @@ export default function NotificationBell() {
                 <BellIcon className="w-10 h-10 text-gray-300 mb-3" />
                 <p className="text-sm font-medium text-[#1A1A1A]">No notifications yet</p>
                 <p className="text-xs text-[#6B6B6B] mt-1">
-                  You'll be notified about orders, listings, and more
+                  You'll be notified about listings and messages
                 </p>
               </div>
             ) : (

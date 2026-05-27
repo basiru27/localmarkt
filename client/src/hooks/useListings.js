@@ -152,25 +152,46 @@ export function useUpdateListing() {
 export function useDeleteListing() {
   const queryClient = useQueryClient();
   const { getAuthHeader } = useAuth();
-
+  
   return useMutation({
     mutationFn: async (id) => {
       const authHeader = await getAuthHeader();
       return listingsApi.delete(id, authHeader);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingKeys.all });
+    },
+  });
+}
+
+export function useMarkAsSold() {
+  const queryClient = useQueryClient();
+  const { getAuthHeader } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ id, is_sold }) => {
+      const authHeader = await getAuthHeader();
+      return listingsApi.markAsSold(id, is_sold, authHeader);
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+    },
+  });
+}
+
+export function useBumpListing() {
+  const queryClient = useQueryClient();
+  const { getAuthHeader } = useAuth();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const authHeader = await getAuthHeader();
+      return listingsApi.bump(id, authHeader);
+    },
     onSuccess: (_, id) => {
-      queryClient.setQueriesData({ queryKey: listingKeys.lists() }, (oldData) => {
-        if (!oldData || !oldData.data) return oldData;
-        return {
-          ...oldData,
-          data: oldData.data.filter((item) => item.id !== id),
-          pagination: oldData.pagination ? {
-            ...oldData.pagination,
-            total: Math.max(0, oldData.pagination.total - 1),
-          } : undefined,
-        };
-      });
-      return queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: listingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: listingKeys.detail(id) });
     },
   });
 }

@@ -22,7 +22,6 @@ export default function AdminListings() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [statusFilter, search]);
 

@@ -489,7 +489,7 @@ export default function Profile() {
           <div className="flex items-center justify-between py-4 border-b border-border-light">
             <div>
               <h3 className="font-medium text-text">Push Notifications</h3>
-              <p className="text-sm text-text-muted">Receive alerts for new orders and messages on this device.</p>
+              <p className="text-sm text-text-muted">Receive alerts for listings and messages on this device.</p>
             </div>
             <div>
               <button

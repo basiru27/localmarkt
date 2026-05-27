@@ -10,7 +10,6 @@ export const adminKeys = {
   listings: (filters) => [...adminKeys.all, 'listings', filters],
   reports: (filters) => [...adminKeys.all, 'reports', filters],
   logs: (filters) => [...adminKeys.all, 'logs', filters],
-  disputes: () => [...adminKeys.all, 'disputes'],
 };
 
 function useAdminHeader() {

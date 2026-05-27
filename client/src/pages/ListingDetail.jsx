@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useListing, useListings, useDeleteListing, listingKeys } from '../hooks/useListings';
+import { useListing, useListings, useDeleteListing, useMarkAsSold, listingKeys } from '../hooks/useListings';
 import { useReviews } from '../hooks/useReviews';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useCreateReport } from '../hooks/useReports';
-import { useOffline } from '../context/OfflineContext';
+import { useSavedIds, useToggleSave } from '../hooks/useSaved';
+import { useShareListing } from '../hooks/useShare';
 import { formatPrice, formatRelativeDate, looksLikePhoneNumber, getWhatsAppLink } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import Modal, { ModalFooter } from '../components/Modal';
-import CheckoutModal from '../components/CheckoutModal';
 import StarRating from '../components/StarRating';
 import SellerInfo from '../components/SellerInfo';
 import ReviewForm from '../components/ReviewForm';
@@ -33,7 +33,6 @@ export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { isOnline } = useOffline();
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
   const { data: listing, isLoading, isError, error } = useListing(id);
@@ -108,9 +107,14 @@ export default function ListingDetail() {
 
   const deleteMutation = useDeleteListing();
   const createReportMutation = useCreateReport();
+  const markAsSoldMutation = useMarkAsSold();
+  const { data: savedIds = [] } = useSavedIds();
+  const { mutate: toggleSave, isPending: savePending } = useToggleSave();
+  const { share } = useShareListing();
+  const isSaved = savedIds.includes(id);
+  const [copied, setCopied] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -188,6 +192,20 @@ export default function ListingDetail() {
     } catch (err) {
       showError('Failed to delete listing: ' + (err.message || 'Unknown error'));
       setShowDeleteModal(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const result = await share({
+      title: listing.title,
+      price: listing.price,
+      location: listing.area?.name || '',
+      url: window.location.href,
+    });
+
+    if (result.method === 'clipboard') {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
@@ -468,170 +486,141 @@ export default function ListingDetail() {
               </div>
             )}
 
-            {/* Purchase Section - hidden for sold items */}
-            {!listing.is_sold && (
-              <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
-                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                  Purchase
-                </h2>
-                {isOwner ? (
-                  <p className="text-sm text-[#6B6B6B] text-center py-2">
-                    This is your listing
-                  </p>
-                ) : isAuthenticated ? (
-                  <>
-                    <button
-                      onClick={() => setShowCheckoutModal(true)}
-                      className={`w-full font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors ${
-                        !isOnline
-                          ? "bg-[#E8D5C0] text-[#9A6B50] cursor-not-allowed opacity-75"
-                          : "bg-[#C8622A] hover:bg-[#B5561F] text-white"
-                      }`}
-                      disabled={!isOnline}
-                    >
-                      Express Interest
-                    </button>
-                    {!isOnline ? (
-                      <p className="text-xs text-[#9A6B50] mt-1 text-center">
-                        You must be online to express interest
-                      </p>
+            
+            {/* Action CTA Block */}
+            <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5 space-y-4">
+              {isOwner ? (
+                <>
+                  <button
+                    onClick={() => markAsSoldMutation.mutate({ id, is_sold: !listing.is_sold })}
+                    disabled={markAsSoldMutation.isPending}
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold transition-all shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none focus:ring-primary bg-[#1A1A1A] hover:bg-black text-white"
+                  >
+                    {markAsSoldMutation.isPending ? (
+                      <div className="spinner w-5 h-5 border-white border-t-transparent" aria-hidden="true" />
                     ) : (
-                      <p className="text-xs text-[#6B6B6B] mt-2 text-center">
-                        The seller will contact you to arrange payment and delivery.
-                      </p>
+                      listing.is_sold ? 'Relist Item' : 'Mark as Sold'
                     )}
-                  </>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-[#6B6B6B] mb-4">
-                      Log in to purchase this item
-                    </p>
-                    <Link 
-                      to="/login" 
-                      state={{ from: { pathname: `/listings/${id}` } }} 
-                      className="inline-block w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
-                    >
-                      Log in to Buy
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Contact Section - hidden for listing owner */}
-            {!isOwner && (
-              <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5">
-                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-[#C8622A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Contact Seller
-                </h2>
-                
-                {isAuthenticated ? (
-                  <div className="space-y-4">
-                    <div className="bg-[#FEF3E8] rounded-xl p-4 border border-[#C8622A]/10">
-                      <p className="text-[#1A1A1A] font-semibold text-lg">{listing.contact}</p>
-                    </div>
-                    
-                    {/* WhatsApp button */}
-                    {listing.contact && looksLikePhoneNumber(listing.contact) && (
-                      <a
-                        href={getWhatsAppLink(listing.contact, listing.title)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none focus:ring-[#25D366] bg-[#25D366] hover:bg-[#1ebe5d] text-white"
-                        onClick={handleContactClick}
+                  </button>
+                  <div className="flex gap-3">
+                    {!listing.is_sold && (
+                      <Link
+                        to={`/listings/${id}/edit`}
+                        className="btn-secondary flex-1"
                       >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Chat on WhatsApp
-                      </a>
+                        Edit
+                      </Link>
                     )}
-                    
-                    <p className="text-xs text-[#6B6B6B] text-center">
-                      Please be respectful when contacting the seller
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <p className="text-[#6B6B6B] mb-4">
-                      Log in to see contact information
-                    </p>
-                    <Link 
-                      to="/login" 
-                      state={{ from: { pathname: `/listings/${id}` } }} 
-                      className="inline-block w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="btn-danger flex-1"
                     >
-                      Log in to Contact
-                    </Link>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
+                </>
+              ) : (
+                <>
+                  {isAuthenticated ? (
+                    <div className="space-y-3">
+                      {listing.contact && looksLikePhoneNumber(listing.contact) && (
+                        <a
+                          href={listing.is_sold ? '#' : getWhatsAppLink(listing.contact, listing.title)}
+                          target={listing.is_sold ? undefined : "_blank"}
+                          rel="noopener noreferrer"
+                          title={listing.is_sold ? "This item has been sold" : undefined}
+                          className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold transition-all shadow-sm focus:outline-none ${listing.is_sold ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#1ebe5d] text-white focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366]'}`}
+                          onClick={(e) => { if (listing.is_sold) { e.preventDefault(); } else { handleContactClick(); } }}
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                          Chat on WhatsApp
+                        </a>
+                      )}
+                      
+                      {listing.contact && (
+                        <a
+                          href={listing.is_sold ? '#' : `tel:${listing.contact}`}
+                          title={listing.is_sold ? "This item has been sold" : undefined}
+                          className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold transition-all shadow-sm focus:outline-none ${listing.is_sold ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#FEF3E8] hover:bg-[#FCE6D3] text-[#C8622A] focus:ring-2 focus:ring-offset-2 focus:ring-[#C8622A]'}`}
+                          onClick={(e) => { if (listing.is_sold) { e.preventDefault(); } else { handleContactClick(); } }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          Call Seller
+                        </a>
+                      )}
+
+                      <button
+                        onClick={() => toggleSave({ listingId: id, isSaved })}
+                        disabled={savePending}
+                        className={`w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm border transition-colors ${
+                          isSaved
+                            ? 'border-red-300 text-red-600 bg-red-50 hover:bg-red-100'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <svg className={`w-4 h-4 ${isSaved ? 'fill-red-600' : ''}`} fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        {isSaved ? 'Saved' : 'Save Listing'}
+                      </button>
+
+                      <button
+                        onClick={handleShare}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        {copied ? '✓ Link Copied!' : '↗ Share Listing'}
+                      </button>
+                      
+                      <button
+                        onClick={() => setShowReportModal(true)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm text-error hover:bg-red-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Report Listing
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <p className="text-[#6B6B6B] mb-4">
+                        Log in to see contact information
+                      </p>
+                      <Link 
+                        to="/login" 
+                        state={{ from: { pathname: `/listings/${id}` } }} 
+                        className="inline-block w-full bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm transition-colors"
+                      >
+                        Log in to Contact
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
             {/* Seller Info Section - hidden for listing owner and non-logged-in users */}
             {!isOwner && isAuthenticated && (
+
               <SellerInfo seller={listing.seller} sellerId={listing.user_id} />
             )}
 
-            {/* Owner actions */}
-            {isOwner && !listing.is_sold && (
-              <div className="card-static p-4 sm:p-5 border-2 border-dashed border-border">
-                <h2 className="font-semibold text-text mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Manage Listing
-                </h2>
-                <div className="flex gap-3">
-                  <Link
-                    to={`/listings/${id}/edit`}
-                    className="btn-secondary flex-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => setShowDeleteModal(true)}
-                    className="btn-danger flex-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Report listing */}
-            {isAuthenticated && !isOwner && (
-              <div className="card-static p-4 sm:p-5">
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="btn-ghost w-full justify-center text-error hover:bg-red-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Report this listing
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
         </div>
 
         {/* Reviews Section */}
@@ -811,13 +800,6 @@ export default function ListingDetail() {
           </button>
         </ModalFooter>
       </Modal>
-
-      {/* Checkout Modal */}
-      <CheckoutModal
-        isOpen={showCheckoutModal}
-        onClose={() => setShowCheckoutModal(false)}
-        listing={listing}
-      />
 
       {/* Fullscreen Lightbox */}
       {showLightbox && (
