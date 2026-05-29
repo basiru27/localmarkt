@@ -18,7 +18,7 @@ export default function AdminLogs() {
 
   // Collect options globally from the unfiltered response
   const { data: unfilteredData } = useAdminLogs({ limit: 100 }, isSuperAdmin);
-  const unfilteredLogs = unfilteredData?.data || [];
+  const unfilteredLogs = useMemo(() => unfilteredData?.data || [], [unfilteredData]);
   
   const admins = useMemo(() => {
     if (!unfilteredLogs) return [];

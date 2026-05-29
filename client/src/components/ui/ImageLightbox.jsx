@@ -39,7 +39,6 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setImageLoaded(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTouchDelta(0);
   }, [currentIndex]);
 

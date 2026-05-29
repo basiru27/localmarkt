@@ -40,6 +40,15 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['recharts', 'lodash'],
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+      include: [/lodash/, /recharts/, /node_modules/],
+    },
+  },
   server: {
     port: 5173,
     proxy: {

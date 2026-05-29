@@ -53,6 +53,11 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
     const response = await fetch(url, config);
 
     if (!response.ok) {
+      // 503 = auth service temporarily unavailable (not a session expiry)
+      if (response.status === 503) {
+        throw new ApiError('Authentication service temporarily unavailable.', 503);
+      }
+
       if (response.status === 401) {
         // Already tried refreshing once for this request — give up
         if (retryCount > 0) {
@@ -186,6 +191,11 @@ export const listingsApi = {
   bump: (id, authHeader) =>
     fetchApi(`/listings/${id}/bump`, {
       method: 'POST',
+      headers: authHeader,
+    }),
+
+  getMineAnalytics: (range, authHeader) =>
+    fetchApi(`/listings/analytics?range=${range}`, {
       headers: authHeader,
     }),
 };
@@ -380,4 +390,4 @@ export const savedApi = {
     }),
 };
 
-export { ApiError };
+export { ApiError, fetchApi };

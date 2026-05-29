@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { reviewsApi } from '../lib/api';
+import { reviewsApi, fetchApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { listingKeys } from './useListings';
 
@@ -66,6 +66,17 @@ export function useUpdateReview() {
         queryClient.invalidateQueries({ queryKey: listingKeys.lists() })
       ]);
     },
+  });
+}
+
+export function useCanReview(listingId) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['can-review', listingId],
+    queryFn: () => fetchApi(`/listings/${listingId}/can-review`),
+    enabled: !!user && !!listingId,
+    staleTime: 1000 * 30,
   });
 }
 

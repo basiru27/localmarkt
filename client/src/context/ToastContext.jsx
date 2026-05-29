@@ -5,6 +5,7 @@ const ToastContext = createContext(null);
 // Maximum number of toasts visible at once
 const MAX_TOASTS = 5;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {

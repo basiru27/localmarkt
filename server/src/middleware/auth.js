@@ -44,14 +44,19 @@ export async function authenticate(req, res, next) {
     next();
   } catch (err) {
     console.error('JWT verification failed:', err.name, '-', err.message);
-    
+
+    if (err.name === 'AuthRetryableFetchError') {
+      return res.status(503).json({
+        error: 'Authentication service temporarily unavailable. Please try again.',
+      });
+    }
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired. Please sign in again.' });
     }
     if (err.name === 'JsonWebTokenError') {
       return res.status(401).json({ error: 'Invalid token. Please sign in again.' });
     }
-    return res.status(401).json({ error: 'Authentication failed' });
+    return res.status(503).json({ error: 'Authentication service temporarily unavailable. Please try again.' });
   }
 }
 

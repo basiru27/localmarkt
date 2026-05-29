@@ -203,11 +203,13 @@ router.get('/', async (req, res, next) => {
     }
 
     if (category) {
-      query = query.eq('category_id', parseInt(category));
+      const catId = parseInt(category, 10);
+      if (!Number.isNaN(catId)) query = query.eq('category_id', catId);
     }
 
     if (area_id) {
-      query = query.eq('area_id', parseInt(area_id));
+      const areaId = parseInt(area_id, 10);
+      if (!Number.isNaN(areaId)) query = query.eq('area_id', areaId);
     }
 
     if (user_id) {
@@ -261,7 +263,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/mine', authenticate, async (req, res, next) => {
   try {
-    const { category, area_id, search, sort, page, limit, is_sold, moderation_status } = req.query;
+    const { category, area_id, search, page, limit, is_sold, moderation_status } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = Math.min(parseInt(limit) || 50, 50);
@@ -291,11 +293,13 @@ router.get('/mine', authenticate, async (req, res, next) => {
     }
 
     if (category) {
-      query = query.eq('category_id', parseInt(category));
+      const catId = parseInt(category, 10);
+      if (!Number.isNaN(catId)) query = query.eq('category_id', catId);
     }
 
     if (area_id) {
-      query = query.eq('area_id', parseInt(area_id));
+      const areaId = parseInt(area_id, 10);
+      if (!Number.isNaN(areaId)) query = query.eq('area_id', areaId);
     }
 
     if (search) {
@@ -303,18 +307,6 @@ router.get('/mine', authenticate, async (req, res, next) => {
         const escaped = String(search.trim()).replaceAll('%', '\\%').replaceAll('_', '\\_');
         query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
       }
-    }
-
-    if (sort === 'price_asc') {
-      query = query.order('price', { ascending: true });
-    } else if (sort === 'price_desc') {
-      query = query.order('price', { ascending: false });
-    } else if (sort === 'views') {
-      query = query.order('view_count', { ascending: false, nullsFirst: false });
-    } else if (sort === 'oldest') {
-      query = query.order('created_at', { ascending: true });
-    } else {
-      query = query.order('created_at', { ascending: false });
     }
 
     query = query.range(from, to);
@@ -325,7 +317,29 @@ router.get('/mine', authenticate, async (req, res, next) => {
       throw error;
     }
 
-    const dataWithRatings = await attachRatingStats(data.map(sanitizeListingForResponse));
+    let dataWithRatings = await attachRatingStats(data.map(sanitizeListingForResponse));
+
+    // Add save_count from saved_listings
+    const listingIds = dataWithRatings.map(l => l.id);
+    const saveCounts = {};
+    if (listingIds.length > 0) {
+      const { data: saves } = await supabase
+        .from('saved_listings')
+        .select('listing_id')
+        .in('listing_id', listingIds);
+
+      if (saves) {
+        saves.forEach(s => {
+          saveCounts[s.listing_id] = (saveCounts[s.listing_id] || 0) + 1;
+        });
+      }
+    }
+
+    dataWithRatings = dataWithRatings.map(l => ({
+      ...l,
+      save_count: saveCounts[l.id] || 0,
+    }));
+
     const dataWithComputed = dataWithRatings.map(addComputedFields);
     const totalPages = Math.ceil((count || 0) / limitNum);
 
@@ -339,6 +353,157 @@ router.get('/mine', authenticate, async (req, res, next) => {
         hasNextPage: pageNum < totalPages,
         hasPrevPage: pageNum > 1,
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/listings/analytics
+ * Analytics dashboard data with date range support
+ */
+router.get('/analytics', authenticate, async (req, res, next) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Authentication required.' });
+    }
+    const userId = req.user.id;
+    const { range = '7' } = req.query;
+
+    const daysMap = { '7': 7, '30': 30, '90': 90 };
+    const days = range === 'all' ? null : (daysMap[range] ?? 7);
+    const since = days
+      ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    const { data: listings, error: listingsError } = await supabase
+      .from('listings')
+      .select('id, title, price, images, image_url, moderation_status, is_sold, created_at, bumped_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (listingsError) throw listingsError;
+
+    const listingIds = listings.map(l => l.id);
+
+    if (listingIds.length === 0) {
+      return res.json({
+        summary: {
+          total_views: 0, total_contacts: 0, total_saves: 0,
+          active_listings: 0, sold_listings: 0,
+        },
+        views_over_time: [],
+        listing_performance: [],
+      });
+    }
+
+    const { data: viewEvents, error: viewErr } = await (() => {
+      let q = supabase
+        .from('listing_events')
+        .select('listing_id, created_at')
+        .in('listing_id', listingIds)
+        .eq('event', 'view');
+      if (since) q = q.gte('created_at', since);
+      return q;
+    })();
+    if (viewErr) {
+      console.error('[analytics] viewEvents query failed:', viewErr);
+      throw viewErr;
+    }
+
+    const { data: contactEvents, error: contactErr } = await (() => {
+      let q = supabase
+        .from('listing_events')
+        .select('listing_id, created_at')
+        .in('listing_id', listingIds)
+        .eq('event', 'contact_click');
+      if (since) q = q.gte('created_at', since);
+      return q;
+    })();
+    if (contactErr) {
+      console.error('[analytics] contactEvents query failed:', contactErr);
+      throw contactErr;
+    }
+
+    const { data: saveEvents, error: saveErr } = await (() => {
+      let q = supabase
+        .from('saved_listings')
+        .select('listing_id, created_at')
+        .in('listing_id', listingIds);
+      if (since) q = q.gte('created_at', since);
+      return q;
+    })();
+    if (saveErr) {
+      console.error('[analytics] saveEvents query failed:', saveErr);
+      throw saveErr;
+    }
+
+    const viewCountMap = {};
+    const contactCountMap = {};
+    const saveCountMap = {};
+
+    (viewEvents || []).forEach(e => {
+      viewCountMap[e.listing_id] = (viewCountMap[e.listing_id] || 0) + 1;
+    });
+    (contactEvents || []).forEach(e => {
+      contactCountMap[e.listing_id] = (contactCountMap[e.listing_id] || 0) + 1;
+    });
+    (saveEvents || []).forEach(e => {
+      saveCountMap[e.listing_id] = (saveCountMap[e.listing_id] || 0) + 1;
+    });
+
+    const viewsByDay = {};
+    (viewEvents || []).forEach(e => {
+      const day = e.created_at.split('T')[0];
+      viewsByDay[day] = (viewsByDay[day] || 0) + 1;
+    });
+
+    const viewsOverTime = [];
+    if (days) {
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const key = date.toISOString().split('T')[0];
+        viewsOverTime.push({ date: key, views: viewsByDay[key] || 0 });
+      }
+    } else {
+      Object.entries(viewsByDay)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([date, views]) => viewsOverTime.push({ date, views }));
+    }
+
+    const totalViews = (viewEvents || []).length;
+    const totalContacts = (contactEvents || []).length;
+    const totalSaves = (saveEvents || []).length;
+    const activeListings = listings.filter(
+      l => l.moderation_status === 'approved' && !l.is_sold
+    ).length;
+    const soldListings = listings.filter(l => l.is_sold).length;
+
+    const listingPerformance = listings.map(l => ({
+      id: l.id,
+      title: l.title,
+      price: l.price,
+      image: l.image_url || l.images?.[0] || null,
+      moderation_status: l.moderation_status,
+      is_sold: l.is_sold,
+      created_at: l.created_at,
+      views: viewCountMap[l.id] || 0,
+      contacts: contactCountMap[l.id] || 0,
+      saves: saveCountMap[l.id] || 0,
+    }));
+
+    res.json({
+      summary: {
+        total_views: totalViews,
+        total_contacts: totalContacts,
+        total_saves: totalSaves,
+        active_listings: activeListings,
+        sold_listings: soldListings,
+      },
+      views_over_time: viewsOverTime,
+      listing_performance: listingPerformance,
+      range,
     });
   } catch (err) {
     next(err);
@@ -395,6 +560,59 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       rating_avg,
       review_count,
     }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/listings/:id/can-review
+ * Check if current user can review this listing (soft gate)
+ */
+router.get('/:id/can-review', authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const listingId = req.params.id;
+
+    const { data: listing } = await supabase
+      .from('listings')
+      .select('user_id, moderation_status')
+      .eq('id', listingId)
+      .single();
+
+    if (!listing || listing.moderation_status !== 'approved') {
+      return res.json({ can_review: false, reason: 'listing_unavailable' });
+    }
+    if (listing.user_id === userId) {
+      return res.json({ can_review: false, reason: 'own_listing' });
+    }
+
+    const { data: existing } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('listing_id', listingId)
+      .eq('reviewer_id', userId)
+      .single();
+
+    if (existing) {
+      return res.json({ can_review: false, reason: 'already_reviewed' });
+    }
+
+    const { data: contactEvent } = await supabase
+      .from('listing_events')
+      .select('id')
+      .eq('listing_id', listingId)
+      .eq('user_id', userId)
+      .eq('event', 'contact_click')
+      .limit(1)
+      .maybeSingle();
+
+    const hasContacted = !!contactEvent;
+
+    return res.json({
+      can_review: hasContacted,
+      reason: hasContacted ? null : 'no_contact',
+    });
   } catch (err) {
     next(err);
   }

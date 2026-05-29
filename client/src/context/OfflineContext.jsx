@@ -217,6 +217,7 @@ export function OfflineProvider({ children }) {
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useOffline() {
   const context = useContext(OfflineContext);
   if (!context) {

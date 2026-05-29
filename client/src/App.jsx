@@ -113,7 +113,9 @@ function App() {
                         path="my-listings/analytics"
                         element={
                           <ProtectedRoute>
-                            <AnalyticsDashboard />
+                            <ErrorBoundary>
+                              <AnalyticsDashboard />
+                            </ErrorBoundary>
                           </ProtectedRoute>
                         }
                       />

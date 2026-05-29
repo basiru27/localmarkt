@@ -3,7 +3,7 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useListing, useListings, useDeleteListing, useMarkAsSold, listingKeys } from '../hooks/useListings';
-import { useReviews } from '../hooks/useReviews';
+import { useReviews, useCanReview } from '../hooks/useReviews';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useCreateReport } from '../hooks/useReports';
@@ -137,7 +137,7 @@ export default function ListingDetail() {
       supabase.rpc('record_listing_event', {
         p_listing_id: id,
         p_event: 'view',
-        p_viewer_id: user?.id || null
+        p_user_id: user?.id || null
       })
       .then(({ error }) => {
         if (!error) sessionStorage.setItem(viewedKey, 'true');
@@ -150,31 +150,43 @@ export default function ListingDetail() {
   }, [id, listing, isOwner, user?.id, authLoading]);
 
   // Analytics: Track contact clicks
-  const handleContactClick = () => {
+  const handleContactClick = async () => {
     if (isOwner) return;
     
-    // Use fetch with keepalive so the request isn't cancelled when navigating to WhatsApp/email
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/record_listing_event`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({
-        p_listing_id: id,
-        p_event: 'contact_click',
-        p_viewer_id: user?.id || null
-      }),
-      keepalive: true
-    }).catch(err => console.error('Failed to record contact click:', err));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+
+      // Use fetch with keepalive so the request isn't cancelled when navigating to WhatsApp/email
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/record_listing_event`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          p_listing_id: id,
+          p_event: 'contact_click',
+          p_user_id: user?.id || null
+        }),
+        keepalive: true
+      });
+      queryClient.invalidateQueries({ queryKey: ['can-review', id] });
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('Contact event log failed:', err);
+    }
   };
   
   // Check if current user has already reviewed this listing
   const userReview = reviews?.find(r => r.reviewer_id === user?.id);
   
-  // Can review: logged in, not the owner, hasn't already reviewed (unless editing)
-  const canReview = isAuthenticated && !isOwner && !userReview;
+  // Backend review gate: must have contacted seller first
+  const { data: reviewGate } = useCanReview(listing?.id);
+  
+  // Can review: logged in, not the owner, hasn't already reviewed (unless editing), backend gate passed
+  const canReview = isAuthenticated && !isOwner && !userReview && reviewGate?.can_review;
 
   const handleEditReview = (review) => {
     setEditingReview(review);
@@ -635,6 +647,21 @@ export default function ListingDetail() {
             />
           )}
           
+          {/* Review gate: must contact seller first */}
+          {!isOwner && user && reviewGate?.reason === 'no_contact' && !userReview && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+              <p className="font-medium mb-1">Want to leave a review?</p>
+              <p>Contact the seller via WhatsApp or phone first, then come back to share your experience.</p>
+            </div>
+          )}
+
+          {/* Review gate: already reviewed (from backend) */}
+          {reviewGate?.reason === 'already_reviewed' && !userReview && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
+              You have already reviewed this listing.
+            </div>
+          )}
+
           {/* If user already has a review but isn't editing, show prompt */}
           {userReview && !editingReview && (
             <div className="card-static p-4 sm:p-5 bg-primary/5 border-primary/10">

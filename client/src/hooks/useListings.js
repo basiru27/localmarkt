@@ -180,6 +180,23 @@ export function useMarkAsSold() {
   });
 }
 
+export function useAnalytics(range = '7') {
+  const { user, getAuthHeader, loading: authLoading } = useAuth();
+
+  return useQuery({
+    queryKey: ['analytics', range],
+    queryFn: async () => {
+      const authHeader = await getAuthHeader();
+      return listingsApi.getMineAnalytics(range, authHeader);
+    },
+    enabled: !!user && !authLoading,
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    retry: false,
+  });
+}
+
 export function useBumpListing() {
   const queryClient = useQueryClient();
   const { getAuthHeader } = useAuth();

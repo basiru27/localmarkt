@@ -372,10 +372,87 @@ USING (
 );
 
 -- ============================================
+-- LISTING EVENTS TABLE (from migration 001)
+-- ============================================
+CREATE TABLE IF NOT EXISTS listing_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+  event event_type NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_listing_events_listing_time ON listing_events(listing_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_listing_events_user_listing ON listing_events (user_id, listing_id, event);
+
+ALTER TABLE listing_events ENABLE ROW LEVEL SECURITY;
+
+-- ============================================
+-- FUNCTION: Seller aggregate profile
+-- ============================================
+CREATE OR REPLACE FUNCTION get_seller_profile(p_seller_id UUID)
+RETURNS TABLE (
+  id UUID,
+  display_name TEXT,
+  avatar_url TEXT,
+  verified_seller BOOLEAN,
+  phone_number TEXT,
+  member_since TIMESTAMPTZ,
+  active_listings BIGINT,
+  total_reviews BIGINT,
+  avg_rating NUMERIC
+) LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT
+    p.id,
+    p.display_name,
+    p.avatar_url,
+    p.verified_seller,
+    p.phone_number,
+    p.created_at AS member_since,
+    COUNT(DISTINCT l.id) FILTER (
+      WHERE l.moderation_status = 'approved' AND l.is_sold = false
+    ) AS active_listings,
+    COUNT(r.id) AS total_reviews,
+    ROUND(AVG(r.rating)::NUMERIC, 1) AS avg_rating
+  FROM profiles p
+  LEFT JOIN listings l ON l.user_id = p.id
+  LEFT JOIN reviews r ON r.listing_id = l.id
+  WHERE p.id = p_seller_id
+  GROUP BY p.id;
+$$;
+
+-- ============================================
 -- VERIFICATION QUERIES (Run to verify setup)
 -- ============================================
 -- SELECT * FROM zones;
 -- SELECT * FROM areas;
 -- SELECT * FROM categories;
 -- SELECT COUNT(*) FROM listings;
+-- ============================================
+-- FUNCTION: Record listing event (view/contact_click)
+-- ============================================
+DROP FUNCTION IF EXISTS record_listing_event(uuid, event_type, uuid);
+
+CREATE FUNCTION record_listing_event(
+  p_listing_id UUID,
+  p_event event_type,
+  p_user_id UUID DEFAULT NULL
+)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM listings WHERE id = p_listing_id AND moderation_status = 'approved') THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO listing_events (listing_id, event, user_id)
+  VALUES (p_listing_id, p_event, COALESCE(p_user_id, auth.uid()));
+
+  IF p_event = 'view' THEN
+    UPDATE listings SET view_count = view_count + 1 WHERE id = p_listing_id;
+  ELSIF p_event = 'contact_click' THEN
+    UPDATE listings SET contact_count = contact_count + 1 WHERE id = p_listing_id;
+  END IF;
+END;
+$$;
+
 -- SELECT * FROM storage.buckets WHERE id = 'listing-images';

@@ -2,45 +2,6 @@ import { Link } from 'react-router-dom';
 import AvatarImage from './AvatarImage';
 
 /**
- * Get initials from a display name
- */
-export function getInitials(name) {
-  if (!name) return '?';
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-}
-
-/**
- * Generate a consistent color based on user ID
- */
-export function getAvatarColor(userId) {
-  const colors = [
-    'from-blue-500 to-indigo-600',
-    'from-primary to-primary-dark',
-    'from-amber-500 to-orange-600',
-    'from-pink-500 to-rose-600',
-    'from-violet-500 to-purple-600',
-    'from-primary-light to-primary',
-    'from-primary-dark to-primary',
-    'from-red-500 to-pink-600',
-  ];
-  
-  if (!userId) return colors[0];
-  
-  // Simple hash from userId
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
-    hash = hash & hash;
-  }
-  
-  return colors[Math.abs(hash) % colors.length];
-}
-
-/**
  * Format date as "Member since Month Year"
  */
 function formatMemberSince(dateString) {

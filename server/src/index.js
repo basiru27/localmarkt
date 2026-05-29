@@ -12,6 +12,7 @@ import adminRouter from './routes/admin.js';
 import profileRouter from './routes/profile.js';
 import notificationsRouter from './routes/notifications.js';
 import savedRouter from './routes/saved.js';
+import sellersRouter from './routes/sellers.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +71,7 @@ app.use('/api', adminRouter);
 app.use('/api', profileRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/saved', savedRouter);
+app.use('/api/sellers', sellersRouter);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
