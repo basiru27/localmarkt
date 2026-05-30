@@ -15,8 +15,8 @@
 <h1 align="center">GMarkt — The Gambia's Marketplace</h1>
 
 <p align="center">
-  A mobile-first, offline-capable progressive web application connecting buyers and sellers across the Greater Banjul Area.<br />
-  Built for low-bandwidth environments with background sync, image compression, and a rich marketplace transaction workflow.
+  A mobile-first, offline-capable classifieds progressive web application connecting buyers and sellers across the Greater Banjul Area.<br />
+  Built for low-bandwidth environments with background sync, image compression, and WhatsApp-native seller contact.
 </p>
 
 ---
@@ -56,26 +56,25 @@
 
 - **Browse & Search** — Filter listings by category, area (zone/neighbourhood), price, and condition. Full-text search with autocomplete suggestions.
 - **Listing Detail** — View seller information, rating stats, review history, and multiple images per listing.
-- **Order Workflow** — Initiate purchases with a state-machine-managed order flow: `pending → buyer_paid → delivered → completed`.
-- **Reviews & Ratings** — Leave 1–5 star reviews with comments after completing a purchase.
+- **Reviews & Ratings** — Leave 1–5 star reviews with comments after clicking the WhatsApp contact button (contact-event gating prevents review bombing).
 - **WhatsApp Contact** — One-tap WhatsApp messaging for every listing.
+- **Save Listings** — Bookmark listings to revisit later.
 - **Report Listings** — Flag suspicious or inappropriate listings and users.
 
 ### For Sellers
 
 - **Create & Manage Listings** — Post new listings with title, description, price, condition, location, and up to 5 images.
 - **Image Upload** — Automatic compression via `browser-image-compression` (resized to 800px, ~300KB) before uploading to Supabase Storage.
-- **Sales Dashboard** — Track incoming orders and update status (mark as delivered, complete sales).
-- **Analytics** — View listing view counts and sales performance.
+- **Bump Listings** — Boost a listing to the top of the feed (24h cooldown per user).
+- **Analytics** — View listing view counts and performance metrics on the seller dashboard.
 - **Edit / Delete Listings** — Full CRUD on your own listings.
 
 ### Admin Features
 
-- **Dashboard** — Platform-wide stats: total users, banned users, listings, pending moderation, reports, disputes, and a listings-over-time chart.
+- **Dashboard** — Platform-wide stats: total users, banned users, listings, pending moderation, reports, and a listings-over-time chart.
 - **User Management** — Ban/unban users, grant/remove verified seller badges, hard-delete accounts (super admin only).
 - **Listing Moderation** — Approve or reject listings submitted for review.
 - **Report Handling** — Review and resolve/dismiss user and listing reports.
-- **Dispute Resolution** — View and resolve transaction disputes between buyers and sellers.
 - **Audit Logging** — Full trail of admin actions (super admin only).
 
 ### Platform Features
@@ -94,7 +93,7 @@
 |---|---|---|
 | **Frontend** | React 19 + Vite 8 | Fast HMR, minimal config, ESM-native |
 | **State & Data** | TanStack Query v5 | Built-in caching, background refetch, offline support via `keepPreviousData` |
-| **Routing** | React Router v7 | Declarative routing with lazy loading |
+| **Routing** | React Router v6 | Declarative routing with lazy loading |
 | **Styling** | Tailwind CSS v4 + Custom CSS | Utility-first, PWA-compatible, custom design tokens |
 | **PWA** | vite-plugin-pwa + Workbox | Service worker generation, offline caching, install prompt |
 | **Backend** | Node.js + Express 4 | Simple, untyped (JSDoc + Zod for safety), fast iteration |
@@ -133,13 +132,12 @@
 │  │  Helmet  │  │   CORS   │  │  Rate Limit (1K/15m)│  │
 │  └──────────┘  └──────────┘  └────────────────────┘  │
 │                                                       │
-│  ┌────────────────────────────────────────────────┐   │
 │  │  Routes                                        │   │
 │  │  /api/listings   /api/zones/areas              │   │
-│  │  /api/categories /api/orders                   │   │
+│  │  /api/categories /api/sellers                  │   │
 │  │  /api/reviews    /api/reports                  │   │
 │  │  /api/profile    /api/notifications            │   │
-│  │  /api/admin/*                                  │   │
+│  │  /api/saved      /api/admin/*                  │   │
 │  └──────────────────────┬─────────────────────────┘   │
 │                         │                              │
 │  ┌──────────────────────▼─────────────────────────┐   │
@@ -165,7 +163,7 @@
 ### Data Flow (Key Processes)
 
 1. **Listing Creation**: Client uploads compressed image to Supabase Storage → posts listing data to Express API → API validates with Zod, inserts into Supabase with `moderation_status: 'pending'` → notifies admins.
-2. **Order Transaction**: Buyer creates order → state machine tracks `pending → buyer_paid → delivered → completed` with role-based transitions → notifications at each step.
+2. **Listing Bump**: Seller bumps listing → API checks per-user 24h cooldown → updates `bumped_at` timestamp → listing rises to feed top.
 3. **Offline Sync**: Offline listing saved to IndexedDB (`idb-keyval`) → on reconnect, `OfflineContext` processes queue → background sync fallback via Service Worker.
 
 ---
@@ -323,30 +321,33 @@ This creates 50+ listings across 6 categories (Electronics, Clothing, Food & Gro
 Requires `Authorization: Bearer <JWT>` header.
 
 | Method | Path | Description |
-|---|---|---|
+|---|---|---|---|
 | `GET` | `/api/listings/mine` | Current user's listings (all moderation statuses) |
 | `POST` | `/api/listings` | Create a new listing (max 10 per 15 min). Body validated against Zod schema |
 | `PUT` | `/api/listings/:id` | Edit own listing |
 | `DELETE` | `/api/listings/:id` | Delete own listing |
+| `POST` | `/api/listings/:id/bump` | Bump listing to top of feed (24h cooldown) |
 | `GET` | `/api/listings/:id/reviews` | Reviews for a listing (optional auth) |
-| `POST` | `/api/listings/:id/reviews` | Create review (max 5 per 15 min) |
+| `POST` | `/api/listings/:id/reviews` | Create review (requires prior contact event) |
 | `PUT` | `/api/reviews/:id` | Update own review |
 | `DELETE` | `/api/reviews/:id` | Delete own review |
 | `POST` | `/api/reports` | Submit a report (listing or user, max 5 per 15 min) |
-| `POST` | `/api/orders` | Create an order (purchase intent with 48h expiry) |
-| `GET` | `/api/orders/purchases` | Current user's purchases |
-| `GET` | `/api/orders/sales` | Current user's sales (as seller) |
-| `PUT` | `/api/orders/:id/status` | Update order status (state-machine enforced) |
 | `GET` | `/api/profile` | Current user's profile |
 | `PUT` | `/api/profile` | Update profile fields |
 | `DELETE` | `/api/profile/avatar` | Delete avatar |
+| `GET` | `/api/sellers/:id/listings` | Seller's public listings |
+| `GET` | `/api/sellers/:id/reviews` | Seller's reviews as reviewer |
+| `GET` | `/api/sellers/:id/stats` | Seller's aggregate stats (total listings, avg rating, etc.) |
+| `GET` | `/api/saved` | Current user's saved listings |
+| `POST` | `/api/saved` | Save a listing |
+| `DELETE` | `/api/saved/:id` | Remove saved listing |
 
 ### Admin Endpoints
 
 Requires `Authorization: Bearer <JWT>` with admin or super_admin role.
 
 | Method | Path | Description |
-|---|---|---|
+|---|---|---|---|
 | `GET` | `/api/admin/stats` | Platform dashboard stats (`?days=14`) |
 | `GET` | `/api/admin/users` | User list with search/filter. Params: `search`, `role`, `banned` |
 | `PUT` | `/api/admin/users/:id/ban` | Ban or unban a user |
@@ -357,7 +358,6 @@ Requires `Authorization: Bearer <JWT>` with admin or super_admin role.
 | `DELETE` | `/api/admin/listings/:id` | Admin listing deletion (with storage cleanup) |
 | `GET` | `/api/admin/reports` | Reports list with status filter |
 | `PUT` | `/api/admin/reports/:id` | Update report status (resolved/dismissed/reopen) |
-| `GET` | `/api/admin/disputes` | All disputed orders |
 | `GET` | `/api/admin/logs` | Admin audit log (super admin only) |
 
 ### Notifications
@@ -375,104 +375,144 @@ Requires `Authorization: Bearer <JWT>` with admin or super_admin role.
 
 ```
 localmarkt/
-├── client/                          # React + Vite frontend
-│   ├── public/                      # Static assets (favicon.svg, logo.svg)
+├── client/                              # React + Vite frontend
+│   ├── public/                          # Static assets (favicon.svg, manifest icons)
 │   ├── src/
-│   │   ├── components/              # Reusable UI components
-│   │   │   ├── admin/               # Admin-specific components
-│   │   │   ├── AdminRoute.jsx       # Admin guard wrapper
-│   │   │   ├── ProtectedRoute.jsx   # Auth guard wrapper
-│   │   │   ├── Layout.jsx           # App shell (Header + Outlet + Footer)
-│   │   │   ├── ListingCard.jsx      # Feed listing card
-│   │   │   ├── ListingForm.jsx      # Shared create/edit form
-│   │   │   ├── SearchFilters.jsx    # Category/area/sort filters
-│   │   │   ├── CheckoutModal.jsx    # Order creation flow
-│   │   │   ├── Pagination.jsx       # Paginated navigation
-│   │   │   ├── StarRating.jsx       # Star rating display/input
-│   │   │   └── ...
+│   │   ├── components/                  # Reusable UI components
+│   │   │   ├── admin/
+│   │   │   │   └── AdminLayout.jsx      # Admin panel shell (sidebar + header)
+│   │   │   ├── ui/
+│   │   │   │   ├── ImageLightbox.jsx    # Full-screen image viewer
+│   │   │   │   └── Pagination.jsx       # Paginated navigation
+│   │   │   ├── AdminRoute.jsx           # Admin role guard wrapper
+│   │   │   ├── AlertMessage.jsx         # Alert banner (success/error/info)
+│   │   │   ├── AvatarImage.jsx          # User avatar with fallback
+│   │   │   ├── ErrorBoundary.jsx        # React error boundary
+│   │   │   ├── Footer.jsx               # App footer
+│   │   │   ├── FormField.jsx            # Reusable form input wrapper
+│   │   │   ├── Header.jsx               # App header with nav + search
+│   │   │   ├── Layout.jsx               # App shell (Header + Outlet + Footer)
+│   │   │   ├── ListingCard.jsx          # Feed listing card
+│   │   │   ├── ListingCardSkeleton.jsx  # Loading skeleton card
+│   │   │   ├── ListingForm.jsx          # Shared create/edit listing form
+│   │   │   ├── Modal.jsx                # Reusable modal dialog
+│   │   │   ├── NotificationBell.jsx     # Header notification indicator
+│   │   │   ├── OfflineBanner.jsx        # Offline connectivity banner
+│   │   │   ├── PendingSyncBadge.jsx     # Pending offline sync count
+│   │   │   ├── ProtectedRoute.jsx       # Auth guard wrapper
+│   │   │   ├── ReviewForm.jsx           # Review create/edit form
+│   │   │   ├── ReviewList.jsx           # Review display list
+│   │   │   ├── SafeImage.jsx            # Image with fallback + lazy load
+│   │   │   ├── SaveButton.jsx           # Save/unsave listing toggle
+│   │   │   ├── SearchFilters.jsx        # Category/area/sort/price filters
+│   │   │   ├── SellerInfo.jsx           # Seller profile sidebar card
+│   │   │   ├── StarRating.jsx           # Star rating display/input
+│   │   │   ├── StatsCard.jsx            # Dashboard stat card
+│   │   │   └── SvgSparkline.jsx         # Mini sparkline chart (admin dashboard)
 │   │   ├── context/
-│   │   │   ├── AuthContext.jsx      # Supabase auth + profile state
-│   │   │   ├── OfflineContext.jsx   # Online/offline detection, sync queue
-│   │   │   └── ToastContext.jsx     # Toast notification system
-│   │   ├── hooks/                   # TanStack Query hooks
-│   │   │   ├── useListings.js       # Listing CRUD + stats queries
-│   │   │   ├── useLookups.js        # Zones, areas, categories
-│   │   │   ├── useReviews.js        # Review CRUD
-│   │   │   ├── useOrders.js         # (via api.js)
-│   │   │   ├── useNotifications.js  # Notification queries
-│   │   │   ├── useAdmin.js          # All admin queries/mutations
-│   │   │   └── useReports.js        # Report submission
+│   │   │   ├── AuthContext.jsx          # Supabase auth + profile state
+│   │   │   ├── OfflineContext.jsx       # Online/offline detection, sync queue
+│   │   │   └── ToastContext.jsx         # Toast notification system
+│   │   ├── hooks/                       # TanStack Query hooks
+│   │   │   ├── useAdmin.js              # All admin queries/mutations
+│   │   │   ├── useDocumentTitle.js      # Dynamic document title
+│   │   │   ├── useListings.js           # Listing CRUD + stats + bump
+│   │   │   ├── useLookups.js            # Zones, areas, categories
+│   │   │   ├── useNotifications.js      # Notification queries/mutations
+│   │   │   ├── useReports.js            # Report submission
+│   │   │   ├── useReviews.js            # Review CRUD
+│   │   │   ├── useSaved.js              # Saved list CRUD
+│   │   │   ├── useSellers.js            # Seller profile + stats
+│   │   │   └── useShare.js              # Web Share API wrapper
 │   │   ├── lib/
-│   │   │   ├── api.js               # Centralised API client with retry + token refresh
-│   │   │   ├── supabase.js          # Supabase client (anon key)
-│   │   │   ├── imageUpload.js       # Image compression + storage upload
-│   │   │   ├── offlineStorage.js    # IndexedDB (idb-keyval) offline queue
-│   │   │   └── utils.js             # Formatting (GMD, dates, phone, WhatsApp)
-│   │   ├── pages/                   # Route-level page components
-│   │   │   ├── admin/               # Admin panel pages
-│   │   │   ├── ListingFeed.jsx      # Main marketplace feed
-│   │   │   ├── ListingDetail.jsx    # Single listing view
-│   │   │   ├── CreateListing.jsx    # New listing form
-│   │   │   ├── MyListings.jsx       # Seller's listings + sales tab
-│   │   │   ├── MyPurchases.jsx      # Buyer's purchases
-│   │   │   ├── Profile.jsx          # User profile settings
-│   │   │   ├── Login.jsx            # Sign in
-│   │   │   ├── Register.jsx         # Sign up
-│   │   │   └── ...
-│   │   ├── App.jsx                  # Root component with routing + providers
-│   │   ├── main.jsx                 # Entry point (SW registration)
-│   │   └── index.css                # Global styles + design system + Tailwind
-│   ├── index.html                   # SPA shell
-│   ├── vite.config.js               # Vite config (React, Tailwind, PWA, proxy)
-│   ├── eslint.config.js             # ESLint flat config
-│   └── vercel.json                  # SPA rewrite rules
+│   │   │   ├── api.js                   # Centralised API client with retry + refresh
+│   │   │   ├── imageUpload.js           # Image compression (browser-image-compression)
+│   │   │   ├── offlineStorage.js        # IndexedDB queue via idb-keyval
+│   │   │   ├── searchHistory.js         # Recent search persistence
+│   │   │   ├── supabase.js              # Supabase anon client
+│   │   │   └── utils.js                 # Formatting (GMD, dates, phone, WhatsApp)
+│   │   ├── pages/
+│   │   │   ├── admin/
+│   │   │   │   ├── AdminDashboard.jsx   # Platform stats overview
+│   │   │   │   ├── AdminListings.jsx    # Listing moderation queue
+│   │   │   │   ├── AdminLogs.jsx        # Admin audit trail
+│   │   │   │   ├── AdminReports.jsx     # Report handling
+│   │   │   │   └── AdminUsers.jsx       # User management
+│   │   │   ├── AnalyticsDashboard.jsx   # Seller analytics (views, bumps)
+│   │   │   ├── CreateListing.jsx        # New listing form
+│   │   │   ├── EditListing.jsx          # Edit existing listing
+│   │   │   ├── ForgotPassword.jsx       # Password reset request
+│   │   │   ├── ListingDetail.jsx        # Single listing view
+│   │   │   ├── ListingFeed.jsx          # Main marketplace feed
+│   │   │   ├── Login.jsx                # Sign in
+│   │   │   ├── MyListings.jsx           # Seller's listing management
+│   │   │   ├── NotFound.jsx             # 404 page
+│   │   │   ├── Profile.jsx              # User profile settings
+│   │   │   ├── Register.jsx             # Sign up
+│   │   │   ├── ResetPassword.jsx        # New password form
+│   │   │   ├── SavedListings.jsx        # Bookmarked listings
+│   │   │   └── SellerProfile.jsx        # Public seller page
+│   │   ├── App.jsx                      # Root with routing + providers
+│   │   ├── index.css                    # Global styles + Tailwind
+│   │   ├── main.jsx                     # Entry (SW registration)
+│   │   └── sw.js                        # Service worker custom logic
+│   ├── index.html                       # SPA shell
+│   ├── vite.config.js                   # Vite (React, Tailwind, PWA, proxy)
+│   ├── eslint.config.mjs                # ESLint flat config
+│   └── vercel.json                      # SPA rewrite rules
 │
-├── server/                          # Express API backend
+├── server/                              # Express API backend
 │   ├── src/
-│   │   ├── index.js                 # Express app setup (middleware, routes, error handling)
-│   │   ├── supabase.js              # Supabase admin client (service role key)
+│   │   ├── index.js                     # Express app setup + error handling
+│   │   ├── supabase.js                  # Supabase admin client (service role key)
 │   │   ├── middleware/
-│   │   │   ├── auth.js              # JWT verification (authenticate + optionalAuth)
-│   │   │   └── admin.js             # Role checks (requireAdmin, requireSuperAdmin)
+│   │   │   ├── auth.js                  # JWT verify (authenticate + optionalAuth)
+│   │   │   └── admin.js                 # Role check (requireAdmin, requireSuperAdmin)
 │   │   ├── routes/
-│   │   │   ├── listings.js          # Listing CRUD + stats + suggestions
-│   │   │   ├── zones.js             # Zone + area lookups
-│   │   │   ├── categories.js        # Category list
-│   │   │   ├── orders.js            # Order CRUD + state machine
-│   │   │   ├── reviews.js           # Review CRUD
-│   │   │   ├── reports.js           # Report submission
-│   │   │   ├── profile.js           # User profile get/update/avatar
-│   │   │   ├── admin.js             # Admin dashboard, users, listings, reports, disputes, logs
-│   │   │   └── notifications.js     # Notification list/read/delete
-│   │   ├── schemas/                 # Zod validation schemas
-│   │   │   ├── listing.js           # Create/update listing + validateBody middleware
-│   │   │   ├── order.js             # Create order + status update
-│   │   │   ├── review.js            # Create/update review
-│   │   │   ├── report.js            # Create report + status update
-│   │   │   ├── admin.js             # Ban, verify, moderate schemas
-│   │   │   └── user.js              # Profile update schema
+│   │   │   ├── admin.js                 # Dashboard, users, listings, reports, logs
+│   │   │   ├── categories.js            # Category list
+│   │   │   ├── listings.js              # CRUD, stats, suggestions, bump, contact events
+│   │   │   ├── notifications.js         # List, read, delete
+│   │   │   ├── profile.js               # Get/update profile + avatar
+│   │   │   ├── reports.js               # Submit report
+│   │   │   ├── reviews.js               # Review CRUD
+│   │   │   ├── saved.js                 # Save/unsave listings
+│   │   │   ├── sellers.js               # Seller profile, listings, reviews, stats
+│   │   │   └── zones.js                 # Zone + area lookups
+│   │   ├── schemas/                     # Zod validation schemas
+│   │   │   ├── admin.js                 # Ban, verify, moderate schemas
+│   │   │   ├── listing.js               # Create/update listing + validateBody
+│   │   │   ├── report.js                # Create report
+│   │   │   ├── review.js                # Create/update review
+│   │   │   └── user.js                  # Profile update schema
 │   │   ├── services/
-│   │   │   └── notifications.js     # Notification creation helpers
+│   │   │   └── notifications.js         # Notification insertion helpers
 │   │   └── utils/
-│   │       ├── catchAsync.js        # Async error wrapper
-│   │       ├── storage.js           # Supabase Storage image deletion
-│   │       └── adminLogs.js         # Admin audit log insertion
+│   │       ├── adminLogs.js             # Admin audit log insertion
+│   │       ├── catchAsync.js            # Async error wrapper
+│   │       └── storage.js               # Supabase Storage image deletion
 │   ├── scripts/
-│   │   └── seed.js                  # Database seeder (Faker-based dummy data)
-│   ├── .env.example                 # Server env template
+│   │   └── seed.js                      # Faker-based dummy data seeder
+│   ├── .env.example
 │   └── package.json
 │
 ├── supabase/
-│   ├── schema.sql                   # Full database schema (idempotent, run in SQL Editor)
-│   └── migrations/                  # Incremental SQL migrations (23 files)
+│   ├── schema.sql                       # Full DB schema (run first in SQL Editor)
+│   └── migrations/                      # 31 incremental migrations
 │       ├── 001_payments_analytics.sql
-│       ├── 002_sold_listings_trigger.sql
-│       ├── 003_replica_identity.sql
-│       ├── ...
-│       └── remove_broad_storage_select.sql
+│       └── ...
 │
-├── .eslintrc.js                     # Root ESLint config (shared)
-├── .prettierrc                      # Prettier config (semi, singleQuote, trailingCommas)
+├── docs/                                # Project documentation
+│   ├── 01_SRS.md                        # Software Requirements Specification
+│   ├── 02_SDD.md                        # System Design Document
+│   ├── 03_UserManual.md                 # User Manual
+│   ├── 04_DeveloperManual.md            # Developer Manual
+│   ├── 05_TestCases.md                  # Test Cases (100 tests)
+│   └── 06_ProjectReport.md              # Academic Project Report
+│
+├── .eslintrc.json                       # Root ESLint config (shared)
+├── .prettierrc                          # Prettier settings
+├── AGENTS.md                            # OpenCode agent instructions
 └── .gitignore
 ```
 
@@ -480,15 +520,16 @@ localmarkt/
 
 ## Database Schema
 
-The PostgreSQL schema (in `supabase/schema.sql`) defines:
+The PostgreSQL schema (in `supabase/schema.sql`) defines 11 tables:
 
-- **`profiles`** — User profiles linked to `auth.users` via foreign key. Auto-created on signup via trigger. Fields include `display_name`, `email`, `phone_number`, `avatar_url`, `bio`, `role`, `is_banned`, `verified_seller`, `notifications` (JSON preferences).
+- **`profiles`** — User profiles linked to `auth.users` via foreign key. Auto-created on signup via trigger. Fields include `display_name`, `email`, `phone_number`, `avatar_url`, `bio`, `role` (`user`/`admin`/`super_admin`), `is_banned`, `verified_seller`, `notifications` (JSON preferences), `last_bump_at` (cooldown tracking).
 - **`zones`** — Greater Banjul Area zones (Banjul, Serrekunda, Bakau/Fajara, Kololi/Kotu, Sukuta/Brikama, Brufut/Tanji).
 - **`areas`** — Neighbourhoods within zones (26 areas total).
 - **`categories`** — Marketplace categories (9 categories: Electronics & Phones, Clothing & Apparel, Home & Furniture, Beauty & Health, Food & Groceries, Baby & Kids, Vehicles, Services, Other).
-- **`listings`** — Core listings table with `title`, `description`, `price`, `condition` (enum), `category_id`, `area_id`, `contact`, `image_url`, `images[]`, `moderation_status`, `view_count`, `is_sold`, `negotiable`. Row-Level Security ensures owners can CRUD their own.
-- **`reviews`** — 1–5 star ratings with optional comments, linked to listings and reviewers.
-- **`orders`** — Transaction records with state machine status (`pending → buyer_paid → delivered → completed / cancelled / disputed`), price snapshot at purchase, and 48-hour expiry.
+- **`listings`** — Core listings table with `title`, `description`, `price`, `condition` (enum: `new`, `like_new`, `good`, `fair`), `category_id`, `area_id`, `contact` (phone), `image_url`, `images[]`, `moderation_status` (`pending`/`approved`/`rejected`), `view_count`, `is_sold`, `negotiable`, `bumped_at`. Row-Level Security ensures owners can CRUD their own.
+- **`listing_events`** — Tracks contact events (WhatsApp clicks, call clicks) for review gating — a user must contact the seller before reviewing.
+- **`reviews`** — 1–5 star ratings with optional comments, linked to listings and reviewers via `listing_events`. Prevents duplicate reviews.
+- **`saved_listings`** — User bookmarking of listings (many-to-many).
 - **`reports`** — User and listing reports with `reason`, `details`, and handling status.
 - **`notifications`** — In-app notifications with type, title, message, link, and read status.
 - **`admin_logs`** — Immutable audit trail for all admin actions.
@@ -514,7 +555,7 @@ This project follows a lightweight conventional commits style:
 <type>: <description>
 
 feat: add listing image upload
-fix: correct order status transition validation
+fix: correct listing bump cooldown validation
 refactor: extract sanitizeListingForResponse helper
 chore: update dependencies
 ```
