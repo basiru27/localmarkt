@@ -36,7 +36,11 @@ const apiLimiter = rateLimit({
 });
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.CLIENT_ORIGIN]
+  ? [
+      process.env.CLIENT_ORIGI,
+      'https://gmarkt.tech',
+      'https://www.gmarkt.tech',
+    ]
   : [
       process.env.CLIENT_ORIGIN || 'http://localhost:5173',
       'http://localhost:5173',
