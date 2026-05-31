@@ -23,6 +23,7 @@ export default function Profile() {
   const [phoneValue, setPhoneValue] = useState('+220 ');
   const [phoneError, setPhoneError] = useState('');
   const [nameError, setNameError] = useState('');
+  const [bioError, setBioError] = useState('');
   
   // Security Tab State
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -183,10 +184,18 @@ export default function Profile() {
       setPhoneError('');
     }
 
+    const bioVal = formData.get('bio');
+    if (bioVal && bioVal.length > 500) {
+      setBioError('Bio must not exceed 500 characters');
+      return;
+    } else {
+      setBioError('');
+    }
+
     mutation.mutate({
       display_name: displayNameVal,
       phone_number: phoneValue,
-      bio: formData.get('bio'),
+      bio: bioVal,
       avatar_url: profile?.avatar_url
     });
   };
@@ -424,7 +433,9 @@ export default function Profile() {
                 defaultValue={profile?.bio || ''}
                 className="input min-h-[120px]"
                 placeholder="Tell buyers a bit about yourself or your shop..."
+                onChange={() => bioError && setBioError('')}
               />
+              {bioError && <p className="error-message text-red-500 mt-1 text-sm">{bioError}</p>}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
