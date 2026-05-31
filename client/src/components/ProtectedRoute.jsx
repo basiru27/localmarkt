@@ -2,10 +2,10 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, initializing } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (initializing || loading) {
     return (
       <div 
         className="flex flex-col items-center justify-center min-h-[60vh] gap-4"

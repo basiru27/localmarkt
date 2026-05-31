@@ -11,11 +11,22 @@ class ApiError extends Error {
   }
 }
 
+// Refresh lock — prevents concurrent refresh race (Supabase rotates refresh tokens)
+let refreshPromise = null;
+
+const refreshSession = () => {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = supabase.auth.refreshSession().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+};
+
 // Retry configuration
 const RETRY_CONFIG = {
   maxRetries: 3,
-  baseDelay: 1000, // 1 second
-  maxDelay: 10000, // 10 seconds
+  baseDelay: 1000,
+  maxDelay: 10000,
   retryableStatuses: [408, 429, 500, 502, 503, 504],
 };
 
@@ -31,7 +42,7 @@ const getRetryDelay = (attempt) => {
 // Check if error is retryable
 const isRetryable = (error, status) => {
   // Network errors are retryable
-  if (error.name === 'TypeError' && error.message.includes('fetch')) {
+  if (error && error.name === 'TypeError' && error.message.includes('fetch')) {
     return true;
   }
   // Check status codes
@@ -53,11 +64,6 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      // 503 = auth service temporarily unavailable (not a session expiry)
-      if (response.status === 503) {
-        throw new ApiError('Authentication service temporarily unavailable.', 503);
-      }
-
       if (response.status === 401) {
         // Already tried refreshing once for this request — give up
         if (retryCount > 0) {
@@ -66,7 +72,9 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
         }
 
         // Try to refresh the session before concluding it's expired
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        // Uses refreshSession() with a module-level lock to prevent concurrent
+        // refresh races (Supabase rotates refresh tokens on each refresh)
+        const { data: refreshData, error: refreshError } = await refreshSession();
         if (refreshError || !refreshData?.session) {
           window.dispatchEvent(new CustomEvent('auth:expired'));
           throw new ApiError('Session expired. Please log in again.', 401);
@@ -82,8 +90,19 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
         return fetchApi(endpoint, retryOptions, retryCount + 1);
       }
 
+      // 503 = auth service temporarily unavailable (cold start, transient).
+      // Retry with backoff instead of immediately failing.
+      if (response.status === 503) {
+        if (retryCount < RETRY_CONFIG.maxRetries) {
+          const retryDelay = getRetryDelay(retryCount);
+          await delay(retryDelay);
+          return fetchApi(endpoint, options, retryCount + 1);
+        }
+        throw new ApiError('Authentication service temporarily unavailable. Please try again.', 503);
+      }
+
       const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
-      
+
       // Check if we should retry
       if (retryCount < RETRY_CONFIG.maxRetries && isRetryable(null, response.status)) {
         const retryDelay = getRetryDelay(retryCount);

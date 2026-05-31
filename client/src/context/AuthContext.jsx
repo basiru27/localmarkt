@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   const signOut = async () => {
     try {
@@ -72,6 +73,7 @@ export function AuthProvider({ children }) {
         setUser(null);
         setSession(null);
         setProfile(null);
+        setInitializing(false);
         setLoading(false);
         return;
       }
@@ -96,6 +98,7 @@ export function AuthProvider({ children }) {
         const fetchedProfile = await refreshProfile(activeSession.user.id);
         if (fetchedProfile?.is_banned) {
           await supabase.auth.signOut();
+          setInitializing(false);
           setLoading(false);
           return;
         }
@@ -103,6 +106,7 @@ export function AuthProvider({ children }) {
         setProfile(null);
       }
 
+      setInitializing(false);
       setLoading(false);
     }
 
@@ -112,6 +116,7 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      setInitializing(false);
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -193,6 +198,7 @@ export function AuthProvider({ children }) {
     session,
     profile,
     loading,
+    initializing,
     signUp,
     signIn,
     signOut,
