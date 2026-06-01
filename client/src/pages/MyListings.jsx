@@ -217,6 +217,7 @@ export default function MyListings() {
                       <SafeImage
                         src={listing.image_url}
                         alt=""
+                        category={listing.category?.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         placeholderClassName="w-full h-full"
                       />

@@ -4,20 +4,51 @@ import { createPortal } from 'react-dom';
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, [tabindex]:not([tabindex="-1"])';
 
+function LightboxImage({ src, alt, onLoad, reducedMotion }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`max-w-full max-h-[75vh] sm:max-h-[90vh] w-auto h-auto object-contain select-none ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ transition: reducedMotion ? 'none' : 'opacity 200ms ease' }}
+        onLoad={() => { setLoaded(true); onLoad?.(); }}
+        onError={() => setLoaded(true)}
+        draggable={false}
+      />
+    </>
+  );
+}
+
 export default function ImageLightbox({ images, initialIndex = 0, onClose, title }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
-  const [touchDelta, setTouchDelta] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(null);
+  const [touchDelta, setTouchDelta] = useState(null);
+  const [reducedMotion, setReducedMotion] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+    return false;
+  });
+  const [closing, setClosing] = useState(false);
 
   const containerRef = useRef(null);
   const stageRef = useRef(null);
   const prevFocusRef = useRef(null);
   const onCloseRef = useRef(onClose);
-  
+
   const reducedMotionRef = useRef(reducedMotion);
-  
+
   const handlePrev = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
   }, [images.length]);
@@ -37,18 +68,15 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setImageLoaded(false);
-    setTouchDelta(0);
-  }, [currentIndex]);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setReducedMotion(mq.matches);
     const handler = (e) => setReducedMotion(e.matches);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const triggerClose = useCallback(() => {
+    setClosing(true);
+    setTimeout(() => onCloseRef.current(), 200);
   }, []);
 
   useEffect(() => {
@@ -65,7 +93,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onCloseRef.current();
+        triggerClose();
         return;
       }
 
@@ -120,7 +148,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
 
       if (rootEl) rootEl.removeAttribute('aria-hidden');
     };
-  }, []);
+  }, [triggerClose]);
 
   useEffect(() => {
     const thumb = containerRef.current?.querySelector(`[data-thumb="${currentIndex}"]`);
@@ -136,39 +164,53 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
   const handleTouchStart = (e) => {
     if (images.length <= 1) return;
     setTouchStartX(e.touches[0].clientX);
-    setTouchDelta(0);
+    setTouchStartY(e.touches[0].clientY);
+    setTouchDelta({ x: 0, y: 0 });
   };
 
   const handleTouchMove = (e) => {
     if (touchStartX === null || images.length <= 1) return;
-    setTouchDelta(e.touches[0].clientX - touchStartX);
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    setTouchDelta({ x: dx, y: dy });
   };
 
   const handleTouchEnd = (e) => {
-    if (touchStartX === null || images.length <= 1) return;
-    const delta = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(delta) > 50) {
-      if (delta > 0) handlePrev();
+    if (touchStartX === null || images.length <= 1) {
+      setTouchStartX(null);
+      setTouchStartY(null);
+      setTouchDelta(null);
+      return;
+    }
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+
+    if (dy > 80 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+      triggerClose();
+    } else if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) handlePrev();
       else handleNext();
     }
+
     setTouchStartX(null);
-    setTouchDelta(0);
+    setTouchStartY(null);
+    setTouchDelta(null);
   };
 
   if (!images || images.length === 0) return null;
 
-  const transition = reducedMotion ? 'none' : 'opacity 200ms ease';
-
   return createPortal(
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] flex flex-col bg-black/90"
+      className={`fixed inset-0 z-[9999] flex flex-col bg-black/90 transition-opacity duration-200 ${
+        closing ? 'opacity-0' : 'opacity-100'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="Image gallery"
       tabIndex="-1"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) triggerClose();
       }}
     >
       <style>{`
@@ -182,7 +224,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
           background: transparent;
         }
         .lightbox-thumb-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.3);
           border-radius: 2px;
         }
       `}</style>
@@ -194,8 +236,8 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
       >
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => onClose()}
-            className="p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors shrink-0"
+            onClick={() => triggerClose()}
+            className="p-2.5 text-white bg-white/10 hover:bg-white/25 rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-white/50"
             aria-label="Close lightbox"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,27 +272,16 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
         <div
           className="relative flex items-center justify-center w-full h-full px-4"
           style={{
-            transform: touchStartX !== null ? `translateX(${touchDelta}px)` : 'none',
+            transform: touchDelta ? `translateX(${touchDelta.x}px) translateY(${touchDelta.y}px)` : 'none',
             transition:
-              touchStartX !== null ? 'none' : reducedMotion ? 'none' : 'opacity 200ms ease',
+              touchDelta ? 'none' : reducedMotion ? 'none' : 'opacity 200ms ease',
           }}
         >
-          {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            </div>
-          )}
-
-          <img
+          <LightboxImage
             key={currentIndex}
             src={images[currentIndex]}
             alt={`${title || 'Image'} — ${currentIndex + 1} of ${images.length}`}
-            className={`max-w-full max-h-[75vh] sm:max-h-[90vh] w-auto h-auto object-contain select-none ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{ transition }}
-            onLoad={() => setImageLoaded(true)}
-            draggable={false}
+            reducedMotion={reducedMotion}
           />
         </div>
 
@@ -261,7 +292,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
                 e.stopPropagation();
                 handlePrev();
               }}
-              className="lightbox-arrow absolute left-2 sm:left-4 p-3 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+              className="lightbox-arrow absolute left-2 sm:left-4 p-3 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
               aria-label="Previous image"
             >
               <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +304,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
                 e.stopPropagation();
                 handleNext();
               }}
-              className="lightbox-arrow absolute right-2 sm:right-4 p-3 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+              className="lightbox-arrow absolute right-2 sm:right-4 p-3 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
               aria-label="Next image"
             >
               <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,6 +312,20 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose, title
               </svg>
             </button>
           </>
+        )}
+
+        {/* Dot indicators */}
+        {images.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 pointer-events-none sm:hidden">
+            {images.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                  idx === currentIndex ? 'bg-white w-3' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
         )}
       </div>
 

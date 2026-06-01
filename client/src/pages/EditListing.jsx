@@ -4,6 +4,7 @@ import { useListing, useUpdateListing } from '../hooks/useListings';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ListingForm from '../components/ListingForm';
+import SafeImage from '../components/SafeImage';
 
 export default function EditListing() {
   useDocumentTitle('Edit Listing');
@@ -147,13 +148,14 @@ export default function EditListing() {
 
         {/* Current listing info */}
         <div className="bg-gray-50 rounded-xl p-4 mb-6 flex items-center gap-4">
-          {listing.image_url && (
-            <img 
-              src={listing.image_url} 
-              alt={listing.title} 
-              className="w-16 h-16 rounded-lg object-cover"
-            />
-          )}
+          <SafeImage
+            src={listing.image_url}
+            alt={listing.title}
+            category={listing.category?.name}
+            className="w-16 h-16 rounded-lg object-cover"
+            placeholderClassName="w-16 h-16 rounded-lg"
+            iconClassName="w-6 h-6"
+          />
           <div className="min-w-0">
             <p className="font-semibold text-text truncate">{listing.title}</p>
             <p className="text-sm text-text-secondary">

@@ -361,6 +361,7 @@ export default function ListingDetail() {
                 key={currentImageUrl}
                 src={currentImageUrl}
                 alt={listing.title}
+                category={listing.category?.name}
                 loading="lazy"
                 decoding="async"
                 className={`w-full h-full object-cover transition-transform duration-300 hover:scale-[1.02] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -404,6 +405,7 @@ export default function ListingDetail() {
                     <SafeImage
                       src={img}
                       alt={`${listing.title} thumbnail ${idx + 1}`}
+                      category={listing.category?.name}
                       className="w-full h-full object-cover"
                       placeholderClassName="w-full h-full"
                     />

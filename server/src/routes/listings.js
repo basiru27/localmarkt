@@ -379,7 +379,7 @@ router.get('/analytics', authenticate, async (req, res, next) => {
 
     const { data: listings, error: listingsError } = await supabase
       .from('listings')
-      .select('id, title, price, images, image_url, moderation_status, is_sold, created_at, bumped_at')
+      .select('id, title, price, images, image_url, moderation_status, is_sold, created_at, bumped_at, category:categories(id, name)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -488,6 +488,7 @@ router.get('/analytics', authenticate, async (req, res, next) => {
       moderation_status: l.moderation_status,
       is_sold: l.is_sold,
       created_at: l.created_at,
+      category: l.category,
       views: viewCountMap[l.id] || 0,
       contacts: contactCountMap[l.id] || 0,
       saves: saveCountMap[l.id] || 0,

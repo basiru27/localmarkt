@@ -247,7 +247,7 @@ export default function AdminListings() {
                       className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                     />
                   </div>
-                  <SafeImage src={listing.image_url} alt="Thumbnail" className="w-full h-full object-cover" placeholderClassName="w-full h-full" />
+                  <SafeImage src={listing.image_url} alt="Thumbnail" category={listing.category?.name} className="w-full h-full object-cover" placeholderClassName="w-full h-full" />
                 </div>
                 
                 <div className="min-w-0 flex-1">

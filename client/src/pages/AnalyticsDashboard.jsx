@@ -403,6 +403,7 @@ export default function AnalyticsDashboard() {
                           <SafeImage
                             src={listing.image}
                             alt=""
+                            category={listing.category?.name}
                             className="h-10 w-10 object-cover"
                             iconClassName="h-6 w-6"
                           />
