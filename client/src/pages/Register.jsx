@@ -180,7 +180,7 @@ export default function Register() {
       await signUp(formData.email, formData.password, formData.displayName, formData.phoneNumber);
       setSuccess(true);
       setTimeout(() => {
-        navigate('/browse');
+        navigate('/');
       }, 1500);
     } catch (err) {
       if (err.message?.includes('already registered')) {
