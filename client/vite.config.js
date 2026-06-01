@@ -16,8 +16,8 @@ export default defineConfig({
         name: 'GMarkt',
         short_name: 'GMarkt',
         description: 'The Gambia\'s Marketplace',
-        theme_color: '#C8622A',
-        background_color: '#FAFAF8',
+        theme_color: '#C2622A',
+        background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [

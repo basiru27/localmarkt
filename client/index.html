@@ -1,23 +1,83 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#C8622A" />
-    <meta name="apple-mobile-web-app-title" content="GMarkt" />
-    <meta name="description" content="The Gambia's Marketplace" />
-    <link rel="preconnect" href="https://jksqjhugzskeaptsotfs.supabase.co" />
-    <title>GMarkt</title>
-  </head>
-  <body>
-    <noscript>
-      <div style="padding: 20px; text-align: center; background: #FFF4E5; color: #9A3900; font-family: sans-serif;">
-        <h2>JavaScript is disabled</h2>
-        <p>GMarkt requires JavaScript to function properly. Please enable JavaScript in your browser settings to use the marketplace.</p>
-      </div>
-    </noscript>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#C8622A" />
+  <meta name="apple-mobile-web-app-title" content="GMarkt" />
+  <meta name="description" content="The Gambia's Marketplace" />
+  <link rel="preconnect" href="https://jksqjhugzskeaptsotfs.supabase.co" />
+  <title>GMarkt</title>
+</head>
+<style>
+    body {
+        margin: 0;
+        background-color: #ffffff;
+    }
+
+    #root:empty::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        display: flex;
+        background: #ffffff;
+    }
+</style>
+<body>
+<noscript>
+  <div style="padding: 20px; text-align: center; background: #FFF4E5; color: #9A3900; font-family: sans-serif;">
+    <h2>JavaScript is disabled</h2>
+    <p>GMarkt requires JavaScript to function properly. Please enable JavaScript in your browser settings to use the
+      marketplace.</p>
+  </div>
+</noscript>
+<div id="root">
+  <!-- Inline splash content shown before React hydrates -->
+  <div style="
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      gap: 16px;
+    ">
+    <img
+      src="/dist/pwa-192x192.svg"
+      width="80"
+      height="80"
+      style="border-radius: 18px;"
+      alt="GMarkt"
+    />
+    <div style="
+        width: 40px;
+        height: 4px;
+        background: #f0e6de;
+        border-radius: 2px;
+        overflow: hidden;
+      ">
+      <div style="
+          height: 100%;
+          background: #C2622A;
+          border-radius: 2px;
+          animation: load 1.2s ease-in-out infinite;
+          width: 40%;
+        "></div>
+    </div>
+  </div>
+</div>
+<style>
+    @keyframes load {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(350%);
+        }
+    }
+</style>
+<script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
