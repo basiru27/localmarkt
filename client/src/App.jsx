@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { track } from '@vercel/analytics';
 import { AuthProvider } from './context/AuthContext';
 import { OfflineProvider } from './context/OfflineContext';
@@ -77,6 +78,7 @@ function App() {
           <OfflineProvider>
             <BrowserRouter>
               <Analytics />
+              <SpeedInsights />
               <RouteTracker />
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
