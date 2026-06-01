@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.101.0",
     "@tanstack/react-query": "^5.95.2",
+    "@vercel/analytics": "^2.0.1",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
     "idb-keyval": "^6.2.2",

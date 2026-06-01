@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Analytics } from '@vercel/analytics/react';
+import { track } from '@vercel/analytics';
 import { AuthProvider } from './context/AuthContext';
 import { OfflineProvider } from './context/OfflineContext';
 import { ToastProvider } from './context/ToastContext';
@@ -49,6 +51,17 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Tracks page views on route change for Vercel Analytics */
+function RouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    track('page_view', { url: location.pathname + location.search });
+  }, [location]);
+
+  return null;
+}
+
 function App() {
   // Wake up the backend (Render free tier) on initial load
   useEffect(() => {
@@ -63,6 +76,8 @@ function App() {
         <ToastProvider>
           <OfflineProvider>
             <BrowserRouter>
+              <Analytics />
+              <RouteTracker />
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
