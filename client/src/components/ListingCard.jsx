@@ -71,10 +71,11 @@ const ListingCard = React.memo(({ listing, index = 0 }) => {
         <SafeImage
           src={imageUrl}
           alt={title}
+          category={category?.name}
           onLoad={() => setImageLoaded(true)}
           className={`relative z-1 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-          placeholderClassName="relative z-1 w-full h-full object-cover"
-          iconClassName="w-10 h-10 text-[#C8622A]/50"
+          placeholderClassName="relative z-1 w-full h-full"
+          iconClassName="w-10 h-10 text-[#C8622A]/40 mb-2"
         />
         
         {/* Gradient overlay on hover */}

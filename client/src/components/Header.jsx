@@ -187,7 +187,7 @@ export default function Header() {
                 <div className="relative">
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px]"
+                    className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] justify-center sm:justify-start"
                     aria-expanded={dropdownOpen}
                     aria-haspopup="true"
                     aria-label="User menu"
@@ -198,7 +198,7 @@ export default function Header() {
                       size="sm"
                       className="ring-2 ring-[#E8A838]"
                     />
-                    <span className="hidden sm:block truncate max-w-[100px]" style={{ fontSize: '13px', fontWeight: 500, color: '#0a1f17' }}>
+                    <span className="hidden md:block truncate max-w-[100px]" style={{ fontSize: '13px', fontWeight: 500, color: '#0a1f17' }}>
                       {profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0]}
                     </span>
                     <svg

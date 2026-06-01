@@ -173,23 +173,26 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   return (
     <div className="card-static p-4 sm:p-5 mb-6">
       {/* Category Chips */}
-      <div className="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {categoryNames.map(name => {
-          const isActive = activeCategoryName === name;
-          return (
-            <button
-              key={name}
-              onClick={() => handleChipClick(name)}
-              className={`flex-shrink-0 px-4 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors duration-200 ${
-                isActive
-                  ? 'bg-[#C8622A] text-white font-semibold border border-transparent'
-                  : 'bg-white text-[#3D3D3D] border border-[#E8E3DC] hover:border-[#C8622A] hover:text-[#C8622A]'
-              }`}
-            >
-              {name}
-            </button>
-          );
-        })}
+      <div className="relative mb-4">
+        <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {categoryNames.map(name => {
+            const isActive = activeCategoryName === name;
+            return (
+              <button
+                key={name}
+                onClick={() => handleChipClick(name)}
+                className={`flex-shrink-0 px-4 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors duration-200 ${
+                  isActive
+                    ? 'bg-[#C8622A] text-white font-bold border border-transparent'
+                    : 'bg-gray-100 text-gray-800 border border-transparent hover:bg-gray-200'
+                }`}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
       </div>
 
       {/* Search Bar */}

@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCreateListing } from '../hooks/useListings';
 import { useToast } from '../context/ToastContext';
 import ListingForm from '../components/ListingForm';
+import { FileText } from 'lucide-react';
 
 export default function CreateListing() {
   useDocumentTitle('Post a Listing');
@@ -12,6 +13,30 @@ export default function CreateListing() {
   const { success, error: showError, warning } = useToast();
   const [showSuccess, setShowSuccess] = useState(false);
   const createMutation = useCreateListing();
+  const [draftExists, setDraftExists] = useState(() => !!localStorage.getItem('localmarkt_listing_draft'));
+  const [draftData, setDraftData] = useState(() => {
+    const saved = localStorage.getItem('localmarkt_listing_draft');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [useDraft, setUseDraft] = useState(false);
+
+  const handleContinueDraft = () => {
+    setUseDraft(true);
+    setDraftExists(false);
+  };
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem('localmarkt_listing_draft');
+    setDraftExists(false);
+    setDraftData(null);
+  };
 
   const handleSubmit = async (data) => {
     try {
@@ -56,6 +81,33 @@ export default function CreateListing() {
   }
 
   return (
+    <div className="w-full">
+      {draftExists && (
+        <div className="w-full bg-amber-50 border-b border-amber-300 px-4 py-3 animate-fade-in-down z-10">
+          <div className="container-app flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-amber-900">
+              <FileText className="w-5 h-5" />
+              <p className="text-sm font-semibold">You have an unsaved draft.</p>
+            </div>
+            <div className="flex gap-3 items-center">
+              <button
+                type="button"
+                onClick={handleContinueDraft}
+                className="px-4 py-1.5 text-sm font-bold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors shadow-sm"
+              >
+                Continue draft
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="px-3 py-1.5 text-sm font-semibold text-amber-700 hover:bg-amber-100 hover:text-amber-900 rounded-lg transition-colors"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="container-app py-4 sm:py-6">
       <div className="max-w-xl mx-auto animate-fade-in">
         {/* Header */}
@@ -90,8 +142,11 @@ export default function CreateListing() {
         {/* Form Card */}
         <div className="card-static p-5 sm:p-6">
           <ListingForm
+            key={useDraft ? 'draft' : 'new'}
+            initialData={useDraft ? draftData : undefined}
             onSubmit={handleSubmit}
             isSubmitting={createMutation.isPending}
+            hideDraftBanner={true}
           />
         </div>
 
@@ -112,5 +167,7 @@ export default function CreateListing() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
+

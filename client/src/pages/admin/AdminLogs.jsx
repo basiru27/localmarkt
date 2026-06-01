@@ -106,6 +106,21 @@ export default function AdminLogs() {
     );
   };
 
+  const getActionBadgeClass = (action) => {
+    switch (action) {
+      case 'APPROVE_LISTING':
+        return 'bg-green-100 text-green-700 border border-green-200';
+      case 'REJECT_LISTING':
+        return 'bg-red-100 text-red-700 border border-red-200';
+      case 'DELETE_LISTING':
+        return 'bg-red-200 text-red-900 border border-red-300';
+      case 'BAN_USER':
+        return 'bg-orange-100 text-orange-700 border border-orange-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border border-gray-200';
+    }
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="card-static p-5">
@@ -196,7 +211,9 @@ export default function AdminLogs() {
                   <td className="p-3 text-text-secondary whitespace-nowrap">{formatRelativeDate(entry.created_at)}</td>
                   <td className="p-3 text-text">{entry.admin?.display_name || entry.admin_id}</td>
                   <td className="p-3">
-                    <span className="badge-secondary uppercase tracking-wide">{entry.action}</span>
+                    <span className={`inline-flex items-center gap-0.25 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getActionBadgeClass(entry.action)}`}>
+                      {entry.action}
+                    </span>
                   </td>
                   <td className="p-3 text-text-secondary">
                     {entry.target_type}:{' '}

@@ -232,15 +232,15 @@ export default function Login() {
             </FormField>
 
             {/* Remember Me */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <input
                 id="rememberMe"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2 accent-[#C2622A] cursor-pointer"
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-text-secondary">
+              <label htmlFor="rememberMe" className="text-sm text-text-secondary cursor-pointer select-none">
                 Remember me
               </label>
             </div>

@@ -122,7 +122,7 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[360px] overflow-y-auto custom-scrollbar">
             {isLoading ? (
               <div className="p-4 space-y-4">
                 {[1, 2, 3].map(i => (
@@ -144,18 +144,21 @@ export default function NotificationBell() {
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col">
+              <div className="flex flex-col divide-y divide-[#F0EDE8]">
                 {notifications.map((notification) => (
                   <button
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`flex items-start gap-3 p-4 text-left transition-colors hover:bg-[#FEF3E8] ${
-                      !notification.is_read ? 'bg-[#FEFAF7]' : 'bg-white'
+                    className={`relative flex items-start gap-3 p-4 text-left transition-colors hover:bg-[#FEF3E8] ${
+                      !notification.is_read ? 'bg-orange-50' : 'bg-white'
                     }`}
                   >
+                    {!notification.is_read && (
+                      <div className="absolute left-1.5 top-5 w-1.5 h-1.5 bg-[#C8622A] rounded-full shrink-0" />
+                    )}
                     {getIconForType(notification.type)}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm text-[#1A1A1A] ${!notification.is_read ? 'font-bold' : 'font-semibold'}`}>
+                      <p className={`text-sm text-[#1A1A1A] ${!notification.is_read ? 'font-bold' : 'font-normal'}`}>
                         {notification.title}
                       </p>
                       <p className="text-xs text-[#6B6B6B] mt-0.5">
@@ -165,9 +168,6 @@ export default function NotificationBell() {
                         {timeAgo(notification.created_at)}
                       </p>
                     </div>
-                    {!notification.is_read && (
-                      <div className="w-2 h-2 bg-[#C8622A] rounded-full shrink-0 mt-2" />
-                    )}
                   </button>
                 ))}
               </div>

@@ -17,7 +17,7 @@ import { useOffline } from '../context/OfflineContext';
 import Modal, { ModalFooter } from './Modal';
 import { formatPrice } from '../lib/utils';
 
-export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
+export default function ListingForm({ initialData, onSubmit, isSubmitting, hideDraftBanner }) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isOnline } = useOffline();
@@ -322,7 +322,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting }) {
 
   return (
     <>
-      {draftExists && (
+      {draftExists && !hideDraftBanner && (
         <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-fade-in">
           <div className="flex items-center gap-2 text-amber-800">
             <span className="text-lg">📝</span>

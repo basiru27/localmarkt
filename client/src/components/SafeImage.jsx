@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import { Camera, Smartphone, Shirt, ShoppingBag, Sofa, Car, Wrench, Package } from 'lucide-react';
 
-const CameraIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
+const CategoryIcon = ({ category, className }) => {
+  switch (category) {
+    case 'Electronics & Phones': return <Smartphone className={className} />;
+    case 'Clothing & Apparel': return <Shirt className={className} />;
+    case 'Food & Groceries': return <ShoppingBag className={className} />;
+    case 'Home & Furniture': return <Sofa className={className} />;
+    case 'Vehicles': return <Car className={className} />;
+    case 'Services': return <Wrench className={className} />;
+    default: return <Camera className={className} />;
+  }
+};
 
-const SafeImage = ({ src, alt, className, placeholderClassName, iconClassName, onLoad, ...props }) => {
+const SafeImage = ({ src, alt, className, placeholderClassName, iconClassName, onLoad, category, ...props }) => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!src || error) {
       onLoad?.();
     }
-  });
+  }, [src, error, onLoad]);
 
   if (!src || error) {
     return (
-      <div className={`bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] flex items-center justify-center ${placeholderClassName || className}`}>
-        <CameraIcon className={iconClassName || "w-6 h-6 text-[#C8622A]/40"} />
+      <div className={`bg-orange-50 flex flex-col items-center justify-center ${placeholderClassName || className}`}>
+        <CategoryIcon category={category} className={iconClassName || "w-10 h-10 text-orange-200 mb-2"} />
+        <span className="text-xs font-medium text-orange-300">No photo yet</span>
       </div>
     );
   }
