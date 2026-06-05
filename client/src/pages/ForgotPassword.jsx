@@ -109,7 +109,7 @@ export default function ForgotPassword() {
                 We've sent a password reset link to <strong>{email}</strong>. 
                 Please check your inbox and spam folder.
               </p>
-              <Link to="/login" className="btn-primary w-full py-3">
+              <Link to="/login" className="btn-primary w-full">
                 Back to Login
               </Link>
             </div>
@@ -161,7 +161,7 @@ export default function ForgotPassword() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary w-full py-3.5 text-base"
+                  className="btn-primary w-full"
                 >
                   {loading ? (
                     <>

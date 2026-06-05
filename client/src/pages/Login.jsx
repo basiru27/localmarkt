@@ -250,7 +250,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3.5 text-base"
+              className="btn-primary w-full"
             >
               {loading ? (
                 <>

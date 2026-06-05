@@ -1,5 +1,5 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +35,8 @@ export default function Profile() {
     email_moderation: true,
     email_sales: true
   });
+
+  const fileInputRef = useRef(null);
 
   const getAuthHeader = () => {
     if (!session?.access_token) return {};
@@ -333,6 +335,8 @@ export default function Profile() {
                 size="xl"
                 className="border-4 border-white shadow-md"
               />
+              
+              {/* Remove X — always visible on mobile, hover on desktop */}
               {profile?.avatar_url && (
                 <button
                   type="button"
@@ -341,8 +345,9 @@ export default function Profile() {
                     handleAvatarRemove();
                   }}
                   disabled={uploading}
-                  className="absolute top-0 right-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 transition-opacity z-10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="absolute -top-1.5 -right-1.5 w-11 h-11 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   title="Remove avatar"
+                  aria-label="Remove avatar"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -350,7 +355,11 @@ export default function Profile() {
                 </button>
               )}
               
-              <label className={`absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}>
+              {/* Desktop hover overlay — hidden on mobile */}
+              <label 
+                htmlFor="avatar-upload-input"
+                className={`absolute inset-0 bg-black/50 text-white rounded-full flex-col items-center justify-center cursor-pointer hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ${uploading ? 'opacity-100' : ''}`}
+              >
                 {uploading ? (
                   <div className="spinner w-6 h-6 border-white border-t-transparent" />
                 ) : (
@@ -359,17 +368,39 @@ export default function Profile() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-[10px] font-medium">Upload</span>
+                    <span className="text-[10px] font-medium">Change Photo</span>
                   </>
                 )}
-                <input 
-                  type="file" 
-                  accept="image/jpeg, image/png, image/webp" 
-                  className="hidden" 
-                  onChange={handleAvatarUpload}
-                  disabled={uploading}
-                />
               </label>
+              
+              {/* Mobile camera badge — always visible */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className={`absolute -bottom-0.5 -right-0.5 w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white sm:hidden z-20 transition-opacity ${uploading ? 'opacity-60' : 'hover:opacity-90'}`}
+                aria-label="Upload avatar"
+              >
+                {uploading ? (
+                  <div className="spinner w-5 h-5 border-white border-t-transparent" />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+              </button>
+              
+              {/* Hidden file input — shared by desktop label and mobile button */}
+              <input
+                ref={fileInputRef}
+                id="avatar-upload-input"
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                disabled={uploading}
+              />
             </div>
             <div className="text-center sm:text-left">
               <h2 className="text-lg font-bold text-text">{displayName || 'Anonymous User'}</h2>
@@ -439,7 +470,7 @@ export default function Profile() {
               <button 
                 type="submit" 
                 disabled={mutation.isPending || uploading}
-                className="btn-primary w-full sm:flex-1 py-3.5 text-base"
+                className="btn-primary w-full sm:flex-1"
               >
                 {mutation.isPending ? 'Saving...' : 'Save Profile'}
               </button>
@@ -483,7 +514,7 @@ export default function Profile() {
               />
             </div>
 
-            <button type="submit" className="btn-primary w-full sm:w-auto px-6">
+            <button type="submit" className="btn-primary w-full sm:w-auto">
               Update Password
             </button>
           </form>
@@ -502,14 +533,15 @@ export default function Profile() {
             <div>
               <button
                 onClick={togglePushNotifications}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                   pushEnabled ? 'bg-primary' : 'bg-gray-300'
                 }`}
                 aria-pressed={pushEnabled}
+                style={{ minWidth: 0, minHeight: 0 }}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    pushEnabled ? 'translate-x-6' : 'translate-x-1'
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+                    pushEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'
                   }`}
                 />
               </button>
@@ -529,14 +561,15 @@ export default function Profile() {
               </div>
               <button
                 onClick={() => handleEmailToggle(key)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                   enabled ? 'bg-primary' : 'bg-gray-300'
                 }`}
                 aria-pressed={enabled}
+                style={{ minWidth: 0, minHeight: 0 }}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    enabled ? 'translate-x-6' : 'translate-x-1'
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+                    enabled ? 'translate-x-[22px]' : 'translate-x-0.5'
                   }`}
                 />
               </button>

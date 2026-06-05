@@ -635,7 +635,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
         </label>
         
         {imagePreviews.length > 0 && (
-          <div className="flex overflow-x-auto gap-3 pb-2 mb-4 snap-x snap-mandatory scrollbar-hide sm:flex-wrap sm:overflow-visible sm:pb-0">
+          <div className="flex overflow-x-auto gap-3 mb-4 snap-x snap-mandatory scrollbar-hide sm:flex-wrap sm:overflow-visible sm:pb-0">
             {imagePreviews.map((preview, idx) => (
               <div key={idx} className="relative inline-block animate-scale-in shrink-0 snap-start">
                 <img
@@ -650,7 +650,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
                   type="button"
                   onClick={() => removeImage(idx)}
                   aria-label="Remove image"
-                  className="absolute -top-2.5 -right-2.5 w-[44px] h-[44px] flex items-center justify-center bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 focus:outline-none transition-colors"
+                  className="absolute -top-2.5 -right-2.5 w-11 h-11 flex items-center justify-center bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 focus:outline-none transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -752,7 +752,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
         <button
           type="submit"
           disabled={isLoading}
-          className="btn-primary flex-1 py-3.5 text-base"
+          className="btn-primary flex-1"
         >
           {uploading ? (
             <>
@@ -778,7 +778,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
           onClick={() => {
             if (validate()) setShowPreview(true);
           }}
-          className="btn-secondary py-3.5 flex-1"
+          className="btn-secondary flex-1"
           disabled={isLoading}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -790,7 +790,7 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="btn-ghost py-3.5 px-4"
+          className="btn-ghost"
           disabled={isLoading}
         >
           Cancel

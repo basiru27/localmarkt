@@ -357,13 +357,13 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <Link 
                   to="/login" 
-                  className="btn-ghost text-sm py-2 px-3 hidden sm:inline-flex"
+                  className="btn-ghost hidden sm:inline-flex"
                 >
                   Log In
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-primary text-sm py-2 px-4"
+                  className="btn-primary"
                 >
                   Get Started
                 </Link>

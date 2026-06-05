@@ -1053,6 +1053,15 @@ input[type="search"]::-webkit-search-results-decoration {
   background: #94a3b8;
 }
 
+/* Hide scrollbar utility for horizontal-scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================
    MOBILE RESPONSIVE HELPERS
    ============================================ */

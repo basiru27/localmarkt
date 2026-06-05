@@ -278,7 +278,7 @@ export default function AdminListings() {
                     <button
                       onClick={() => handleModeration(listing.id, 'approved')}
                       disabled={moderateMutation.isPending}
-                      className="btn-primary py-2 px-3 text-xs w-full sm:w-auto"
+                      className="btn-primary !py-1.5 !px-3 !text-xs w-full sm:w-auto"
                     >
                       Approve
                     </button>
@@ -288,7 +288,7 @@ export default function AdminListings() {
                     <button
                       onClick={() => handleModeration(listing.id, 'rejected')}
                       disabled={moderateMutation.isPending}
-                      className="btn-secondary py-2 px-3 text-xs w-full sm:w-auto"
+                      className="btn-secondary !py-1.5 !px-3 !text-xs w-full sm:w-auto"
                     >
                       Reject
                     </button>
@@ -297,7 +297,7 @@ export default function AdminListings() {
                   <button
                     onClick={() => handleDelete(listing.id, listing.title)}
                     disabled={deleteMutation.isPending}
-                    className="btn-danger py-2 px-3 text-xs w-full sm:w-auto"
+                      className="btn-danger !py-1.5 !px-3 !text-xs w-full sm:w-auto"
                   >
                     Remove
                   </button>
@@ -323,21 +323,21 @@ export default function AdminListings() {
             <button 
               onClick={() => handleBulkModeration('approved')} 
               disabled={isBulkLoading}
-              className="btn-primary py-1.5 px-3 sm:px-4 text-xs sm:text-sm"
+              className="btn-primary !py-1.5 !px-3 sm:!px-4 !text-xs sm:!text-sm"
             >
               Approve All
             </button>
             <button 
               onClick={() => handleBulkModeration('rejected')} 
               disabled={isBulkLoading}
-              className="btn-secondary py-1.5 px-3 sm:px-4 text-xs sm:text-sm"
+              className="btn-secondary !py-1.5 !px-3 sm:!px-4 !text-xs sm:!text-sm"
             >
               Reject All
             </button>
             <button 
               onClick={handleBulkDelete} 
               disabled={isBulkLoading}
-              className="btn-danger py-1.5 px-3 sm:px-4 text-xs sm:text-sm"
+              className="btn-danger !py-1.5 !px-3 sm:!px-4 !text-xs sm:!text-sm"
             >
               Delete All
             </button>

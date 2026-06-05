@@ -175,7 +175,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     <div className="card-static p-4 sm:p-5 mb-6">
       {/* Category Chips */}
       <div className="relative mb-4">
-        <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex overflow-x-auto gap-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {categoryNames.map(name => {
             const isActive = activeCategoryName === name;
             return (
@@ -333,7 +333,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
         {/* Filter Button - Mobile (opens bottom sheet) */}
         <button
           onClick={() => setShowFilterSheet(true)}
-          className="sm:hidden btn-secondary px-3 relative min-w-[44px] min-h-[44px]"
+          className="sm:hidden btn-secondary relative"
           aria-expanded={showFilterSheet}
           aria-label={`Open filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
         >
@@ -404,7 +404,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="btn-ghost text-sm px-3 text-text-secondary hover:text-error min-h-[44px]"
+              className="btn-ghost text-text-secondary hover:text-error"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -500,7 +500,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
               onClick={() => {
                 setShowFilterSheet(false);
               }}
-              className="btn-primary w-full min-h-[44px]"
+              className="btn-primary w-full"
             >
               Apply Filters
             </button>

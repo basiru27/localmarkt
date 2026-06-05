@@ -157,7 +157,7 @@ export default function ResetPassword() {
             <p className="text-text-secondary mb-6">
               This password reset link is invalid or has expired. Please request a new one.
             </p>
-            <Link to="/forgot-password" className="btn-primary w-full py-3">
+            <Link to="/forgot-password" className="btn-primary w-full">
               Request New Link
             </Link>
           </div>
@@ -199,7 +199,7 @@ export default function ResetPassword() {
               <p className="text-text-secondary mb-6">
                 Your password has been successfully reset. Redirecting to login...
               </p>
-              <Link to="/login" className="btn-primary w-full py-3">
+              <Link to="/login" className="btn-primary w-full">
                 Go to Login
               </Link>
             </div>
@@ -325,7 +325,7 @@ export default function ResetPassword() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary w-full py-3.5 text-base"
+                  className="btn-primary w-full"
                 >
                   {loading ? (
                     <>

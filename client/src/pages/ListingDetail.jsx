@@ -716,7 +716,7 @@ export default function ListingDetail() {
                 More from {listing.seller?.display_name || 'this seller'}
               </Link>
             </h2>
-            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden pb-2">
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden">
               {sellerListings.map(item => (
                 <div key={item.id} className="min-w-[160px] max-w-[180px] snap-start shrink-0">
                   <ListingCard key={item.id} listing={item} />
@@ -734,7 +734,7 @@ export default function ListingDetail() {
         {similarListings.length > 0 && (
           <div className="mt-12 space-y-4">
             <h2 className="text-xl font-bold text-text">Similar items</h2>
-            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden pb-2">
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden">
               {similarListings.map(item => (
                 <div key={item.id} className="min-w-[160px] max-w-[180px] snap-start shrink-0">
                   <ListingCard key={item.id} listing={item} />

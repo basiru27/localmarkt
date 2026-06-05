@@ -123,7 +123,7 @@ export default function AdminReports() {
                     <button
                       onClick={() => handleUpdateStatus(report.id, 'resolved')}
                       disabled={updateReportMutation.isPending}
-                      className="btn-primary py-1.5 px-3 text-xs"
+                      className="btn-primary !py-1.5 !px-3 !text-xs"
                     >
                       Resolve
                     </button>
@@ -133,7 +133,7 @@ export default function AdminReports() {
                     <button
                       onClick={() => handleUpdateStatus(report.id, 'dismissed')}
                       disabled={updateReportMutation.isPending}
-                      className="btn-secondary py-1.5 px-3 text-xs"
+                      className="btn-secondary !py-1.5 !px-3 !text-xs"
                     >
                       Dismiss
                     </button>
@@ -143,7 +143,7 @@ export default function AdminReports() {
                     <button
                       onClick={() => handleUpdateStatus(report.id, 'pending')}
                       disabled={updateReportMutation.isPending}
-                      className="btn-ghost py-1.5 px-3 text-xs"
+                      className="btn-ghost !py-1.5 !px-3 !text-xs"
                     >
                       Reopen
                     </button>

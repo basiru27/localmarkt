@@ -29,7 +29,7 @@ export class ErrorBoundary extends React.Component {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="btn-primary px-6 py-2"
+            className="btn-primary"
           >
             Reload Page
           </button>

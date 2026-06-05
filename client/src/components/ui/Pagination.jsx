@@ -54,8 +54,8 @@ export default function Pagination({ pagination, onPageChange }) {
         <button
           onClick={handlePrev}
           disabled={!hasPrevPage}
-          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hidden sm:inline-flex items-center"
-          aria-label="Go to previous page"
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed hidden sm:inline-flex items-center"
+           aria-label="Go to previous page"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -124,8 +124,8 @@ export default function Pagination({ pagination, onPageChange }) {
         <button
           onClick={handleNext}
           disabled={!hasNextPage}
-          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hidden sm:inline-flex items-center"
-          aria-label="Go to next page"
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed hidden sm:inline-flex items-center"
+           aria-label="Go to next page"
         >
           Next
           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

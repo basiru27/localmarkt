@@ -288,7 +288,7 @@ export default function AdminUsers() {
                         <button
                           onClick={() => handleToggleVerify(entry)}
                           disabled={updateVerifyMutation.isPending}
-                          className={entry.verified_seller ? 'btn-secondary py-1.5 px-3 text-xs' : 'btn-primary py-1.5 px-3 text-xs'}
+                          className={entry.verified_seller ? 'btn-secondary !py-1.5 !px-3 !text-xs' : 'btn-primary !py-1.5 !px-3 !text-xs'}
                         >
                           {entry.verified_seller ? 'Unverify' : 'Verify'}
                         </button>
@@ -296,7 +296,7 @@ export default function AdminUsers() {
                         <button
                           onClick={() => handleToggleBan(entry)}
                           disabled={disableBan || updateBanMutation.isPending}
-                          className={entry.is_banned ? 'btn-secondary py-1.5 px-3 text-xs' : 'btn-danger py-1.5 px-3 text-xs'}
+                          className={entry.is_banned ? 'btn-secondary !py-1.5 !px-3 !text-xs' : 'btn-danger !py-1.5 !px-3 !text-xs'}
                         >
                           {entry.is_banned ? 'Unban' : 'Ban'}
                         </button>
@@ -305,7 +305,7 @@ export default function AdminUsers() {
                           <button
                             onClick={() => setConfirmDeleteUserId(entry.id)}
                             disabled={hardDeleteMutation.isPending}
-                            className="btn-danger py-1.5 px-3 text-xs"
+                            className="btn-danger !py-1.5 !px-3 !text-xs"
                           >
                             Delete
                           </button>

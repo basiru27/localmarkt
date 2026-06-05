@@ -55,7 +55,7 @@ export default function StarRating({
   const displayRating = hoverRating || rating;
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className="inline-flex items-center gap-0.5">
       <div 
         className={`inline-flex ${!readonly ? 'cursor-pointer' : ''}`}
         onMouseLeave={handleMouseLeave}

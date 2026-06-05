@@ -298,7 +298,7 @@ export default function MyListings() {
                       {activeTab !== 'sold' && (
                         <Link
                           to={`/listings/${listing.id}/edit`}
-                          className="btn-secondary text-xs px-3 py-1.5 min-h-[36px] inline-flex items-center gap-1.5"
+                          className="btn-secondary !text-xs !px-3 !py-1.5 inline-flex items-center gap-1.5"
                         >
                           <Edit3 size={14} />
                           Edit
@@ -306,7 +306,7 @@ export default function MyListings() {
                       )}
                       <button
                         onClick={() => setDeleteModal({ open: true, listing })}
-                        className="btn-danger text-xs px-3 py-1.5 min-h-[36px] inline-flex items-center gap-1.5"
+                        className="btn-danger !text-xs !px-3 !py-1.5 inline-flex items-center gap-1.5"
                       >
                         <Trash2 size={14} />
                         Delete

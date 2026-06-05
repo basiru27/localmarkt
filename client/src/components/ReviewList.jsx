@@ -76,26 +76,20 @@ function ReviewItem({ review, listingId, onEdit }) {
           
           {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-text">{reviewerName}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <StarRating rating={review.rating} readonly size="sm" />
-                  <span className="text-xs text-text-muted">
-                    {formatReviewDate(review.created_at)}
-                    {isEdited && ' (edited)'}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Owner actions */}
+            <p className="font-semibold text-text">{reviewerName}</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+              <StarRating rating={review.rating} readonly size="sm" />
+              <span className="text-xs text-text-muted">
+                {formatReviewDate(review.created_at)}
+                {isEdited && ' (edited)'}
+              </span>
               {isOwner && (
-                <div className="flex gap-1">
+                <>
                   <button
                     onClick={() => onEdit(review)}
                     className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                     title="Edit review"
+                    aria-label="Edit review"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -105,12 +99,13 @@ function ReviewItem({ review, listingId, onEdit }) {
                     onClick={() => setShowDeleteModal(true)}
                     className="p-1.5 text-text-secondary hover:text-error hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete review"
+                    aria-label="Delete review"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
-                </div>
+                </>
               )}
             </div>
             
