@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
 import { supabase } from '../supabase.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import {
@@ -140,16 +141,30 @@ router.get('/search/suggestions', async (req, res, next) => {
     const escaped = String(q).replaceAll('%', '\\%').replaceAll('_', '\\_');
     const { data, error } = await supabase
       .from('listings')
-      .select('title')
+      .select(`
+        title,
+        category:categories(name)
+      `)
       .eq('moderation_status', 'approved')
       .ilike('title', `%${escaped}%`)
-      .limit(20); // Fetch more to ensure we get 5 unique after deduplication
+      .limit(50);
 
     if (error) throw error;
     
-    const uniqueTitles = [...new Set(data.map(d => d.title))].slice(0, 5);
+    // Group by title + category name to deduplicate and count
+    const grouped = {};
+    data.forEach((item) => {
+      const catName = item.category?.name || 'Other';
+      const key = `${item.title}||${catName}`;
+      if (!grouped[key]) {
+        grouped[key] = { suggestion: item.title, category: catName, count: 0 };
+      }
+      grouped[key].count++;
+    });
     
-    res.json(uniqueTitles);
+    const suggestions = Object.values(grouped).slice(0, 6);
+    
+    res.json(suggestions);
   } catch (err) {
     next(err);
   }
@@ -162,7 +177,7 @@ router.get('/search/suggestions', async (req, res, next) => {
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { category, area_id, search, page, limit, sort, cursor, user_id } = req.query;
+    const { category, area_id, search, page, limit, sort, cursor, user_id, exclude_user_id } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = Math.min(parseInt(limit) || 24, 50);
@@ -182,20 +197,30 @@ router.get('/', async (req, res, next) => {
       .eq('moderation_status', 'approved')
       .eq('seller.is_banned', false);
 
-    query = query.order('is_sold', { ascending: true });
-
-    if (sort === 'price_asc') {
-      query = query.order('price', { ascending: true });
-    } else if (sort === 'price_desc') {
-      query = query.order('price', { ascending: false });
-    } else if (sort === 'views') {
-      query = query.order('view_count', { ascending: false, nullsFirst: false });
-    } else if (sort === 'oldest') {
-      query = query.order('created_at', { ascending: true });
-    } else {
+    if (!search) {
+      // Default sort — newest first (bumped)
       query = query
+        .order('is_sold', { ascending: true })
         .order('bumped_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
+    } else {
+      // When search is active, default to relevance sort
+      if (sort === 'price_asc') {
+        query = query.order('price', { ascending: true });
+      } else if (sort === 'price_desc') {
+        query = query.order('price', { ascending: false });
+      } else if (sort === 'views') {
+        query = query.order('view_count', { ascending: false, nullsFirst: false });
+      } else if (sort === 'oldest') {
+        query = query.order('created_at', { ascending: true });
+      } else {
+        // Relevance sort: FTS rank, then bumped, then newest
+        query = query
+          .order('is_sold', { ascending: true })
+          .order('search_vector', { ascending: false, nullsFirst: false })
+          .order('bumped_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false });
+      }
     }
 
     if (cursor) {
@@ -216,20 +241,133 @@ router.get('/', async (req, res, next) => {
       query = query.eq('user_id', user_id);
     }
 
-    if (search) {
-      if (search.trim()) {
-        const escaped = String(search.trim()).replaceAll('%', '\\%').replaceAll('_', '\\_');
-        query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    if (exclude_user_id) {
+      const uuidResult = z.string().uuid().safeParse(exclude_user_id);
+      if (uuidResult.success) {
+        query = query.neq('user_id', exclude_user_id);
       }
     }
 
-    if (!cursor) {
-      query = query.range(from, to);
-    } else {
-      query = query.limit(limitNum);
-    }
+    let data, error, count;
 
-    const { data, error, count } = await query;
+    if (search && search.trim().length >= 2) {
+      const trimmed = search.trim();
+      const escaped = String(trimmed).replaceAll('%', '\\%').replaceAll('_', '\\_');
+
+      // Try full-text search first
+      let ftsQuery = supabase
+        .from('listings')
+        .select(`
+          *,
+          area:areas(id, name, zone:zones(id, name)),
+          category:categories(id, name),
+          seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
+        `, { count: 'exact' })
+        .eq('moderation_status', 'approved')
+        .eq('seller.is_banned', false)
+        .textSearch('search_vector', trimmed, { type: 'websearch', config: 'english' });
+
+      if (category) {
+        const catId = parseInt(category, 10);
+        if (!Number.isNaN(catId)) ftsQuery = ftsQuery.eq('category_id', catId);
+      }
+      if (area_id) {
+        const areaId = parseInt(area_id, 10);
+        if (!Number.isNaN(areaId)) ftsQuery = ftsQuery.eq('area_id', areaId);
+      }
+      if (user_id) {
+        ftsQuery = ftsQuery.eq('user_id', user_id);
+      }
+      if (exclude_user_id) {
+        const uuidResult = z.string().uuid().safeParse(exclude_user_id);
+        if (uuidResult.success) {
+          ftsQuery = ftsQuery.neq('user_id', exclude_user_id);
+        }
+      }
+
+      ftsQuery = ftsQuery
+        .order('is_sold', { ascending: true })
+        .order('search_vector', { ascending: false, nullsFirst: false })
+        .order('bumped_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
+
+      if (!cursor) {
+        ftsQuery = ftsQuery.range(from, to);
+      } else {
+        ftsQuery = ftsQuery.limit(limitNum);
+      }
+
+      const ftsResult = await ftsQuery;
+      data = ftsResult.data;
+      error = ftsResult.error;
+      count = ftsResult.count;
+
+      // Fallback: if FTS returned 0 results, try ILIKE
+      if ((!data || data.length === 0) && !error) {
+        let ilikeQuery = supabase
+          .from('listings')
+          .select(`
+            *,
+            area:areas(id, name, zone:zones(id, name)),
+            category:categories(id, name),
+            seller:profiles!inner(id, display_name, created_at, is_banned, avatar_url, bio, phone_number, verified_seller)
+          `, { count: 'exact' })
+          .eq('moderation_status', 'approved')
+          .eq('seller.is_banned', false)
+          .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+
+        if (category) {
+          const catId = parseInt(category, 10);
+          if (!Number.isNaN(catId)) ilikeQuery = ilikeQuery.eq('category_id', catId);
+        }
+        if (area_id) {
+          const areaId = parseInt(area_id, 10);
+          if (!Number.isNaN(areaId)) ilikeQuery = ilikeQuery.eq('area_id', areaId);
+        }
+        if (user_id) {
+          ilikeQuery = ilikeQuery.eq('user_id', user_id);
+        }
+        if (exclude_user_id) {
+          const uuidResult = z.string().uuid().safeParse(exclude_user_id);
+          if (uuidResult.success) {
+            ilikeQuery = ilikeQuery.neq('user_id', exclude_user_id);
+          }
+        }
+
+        ilikeQuery = ilikeQuery
+          .order('is_sold', { ascending: true })
+          .order('bumped_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false });
+
+        if (!cursor) {
+          ilikeQuery = ilikeQuery.range(from, to);
+        } else {
+          ilikeQuery = ilikeQuery.limit(limitNum);
+        }
+
+        const ilikeResult = await ilikeQuery;
+        data = ilikeResult.data;
+        error = ilikeResult.error;
+        count = ilikeResult.count;
+      }
+    } else {
+      // No search query or too short — use ILIKE for short queries or none
+      if (search && search.trim()) {
+        const escaped = String(search.trim()).replaceAll('%', '\\%').replaceAll('_', '\\_');
+        query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+      }
+
+      if (!cursor) {
+        query = query.range(from, to);
+      } else {
+        query = query.limit(limitNum);
+      }
+
+      const result = await query;
+      data = result.data;
+      error = result.error;
+      count = result.count;
+    }
 
     if (error) {
       throw error;

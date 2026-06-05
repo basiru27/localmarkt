@@ -29,7 +29,7 @@ export function useListingStats() {
 
 // Get all listings with optional filters
 export function useListings(filters = {}) {
-  const { isAuthenticated, getAuthHeader } = useAuth();
+  const { isAuthenticated, getAuthHeader, user } = useAuth();
 
   return useQuery({
     queryKey: listingKeys.list(filters),
@@ -53,9 +53,13 @@ export function useListings(filters = {}) {
         return listingsApi.getMine(filters, authHeader);
       }
 
-      return listingsApi.getAll(filters);
+      const apiFilters = { ...filters };
+      if (!filters.mine && user?.id) {
+        apiFilters.exclude_user_id = user.id;
+      }
+      return listingsApi.getAll(apiFilters);
     },
-    staleTime: filters.mine ? 0 : 1000 * 60 * 5, // 0 for realtime backed, 5 min for public feed
+    staleTime: filters.mine ? 0 : filters.search ? 1000 * 30 : 1000 * 60 * 2,
     placeholderData: keepPreviousData,
   });
 }

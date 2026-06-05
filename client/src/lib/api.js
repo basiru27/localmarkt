@@ -152,6 +152,7 @@ export const listingsApi = {
     if (params.sort) searchParams.append('sort', params.sort);
     if (params.cursor) searchParams.append('cursor', params.cursor);
     if (params.user_id) searchParams.append('user_id', params.user_id);
+    if (params.exclude_user_id) searchParams.append('exclude_user_id', params.exclude_user_id);
     const query = searchParams.toString();
     return fetchApi(`/listings${query ? `?${query}` : ''}`);
   },

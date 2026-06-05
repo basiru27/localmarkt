@@ -1,14 +1,14 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useListings, useListingStats } from '../hooks/useListings';
 import { useOffline } from '../context/OfflineContext';
 import { useAuth } from '../context/AuthContext';
 import { SearchX } from 'lucide-react';
-import { addToSearchHistory } from '../lib/searchHistory';
 import ListingCard from '../components/ListingCard';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
 import SearchFilters from '../components/SearchFilters';
+import SearchInput from '../components/SearchInput';
 
 import Pagination from '../components/ui/Pagination';
 
@@ -16,7 +16,6 @@ export default function ListingFeed() {
   useDocumentTitle('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [heroSearch, setHeroSearch] = useState('');
   
   // Derive filters directly from URL params (single source of truth)
   const filters = useMemo(() => {
@@ -56,14 +55,6 @@ export default function ListingFeed() {
     setSearchParams(params, { replace: true });
   }, [setSearchParams]);
 
-  const handleHeroSearch = (e) => {
-    e.preventDefault();
-    if (heroSearch.trim()) {
-      addToSearchHistory(heroSearch);
-      handleFiltersChange({ search: heroSearch });
-    }
-  };
-
   const handlePageChange = useCallback((page) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', page);
@@ -72,7 +63,7 @@ export default function ListingFeed() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams, setSearchParams]);
 
-  const { data: listingsData, isLoading, isError, error } = useListings(filters);
+  const { data: listingsData, isLoading, isFetching, isError, error } = useListings(filters);
   const listings = listingsData?.data;
   const pagination = listingsData?.pagination;
   const { data: statsData, isLoading: isStatsLoading } = useListingStats();
@@ -87,52 +78,33 @@ export default function ListingFeed() {
     <div>
       {/* Hero section - only on home page without filters */}
       {!hasActiveFilters && (
-        <div className="hero-gradient text-white py-8 md:py-16 mb-6">
+        <div className="hero-gradient text-white py-4 md:py-10">
           <div className="container-app relative z-10 px-4 md:px-0">
             <div className="max-w-2xl mx-auto text-center">
-              <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight !text-white">
+              <h1 className="hidden md:block text-2xl md:text-4xl font-bold mb-2 leading-tight !text-white">
                 Buy & Sell in The Gambia
               </h1>
-              <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed">
-                Your trusted marketplace for products and services. Connect with your community today.
+              
+              <p className="hidden md:block text-white/80 text-base mt-2 mb-6">
+                The Gambia's trusted buy &amp; sell community.
               </p>
               
-              <form onSubmit={handleHeroSearch} className="max-w-[600px] mx-auto mb-8 relative flex items-center bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="pl-4 pr-2 text-gray-400 flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
+              <div className="block md:hidden mb-4">
+                <SearchInput
                   placeholder="Search in The Gambia..."
-                  className="flex-1 text-gray-900 py-3 px-2 focus:outline-none placeholder:text-gray-400 sm:hidden"
+                  onSearch={(q) => {
+                    if (q) handleFiltersChange({ search: q });
+                  }}
+                  inputClassName="pl-10 pr-10 h-12 bg-white rounded-2xl text-gray-900 shadow-lg placeholder:text-gray-400 border-0"
                 />
-                <input
-                  type="text"
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
-                  placeholder="Search products in The Gambia..."
-                  className="flex-1 text-gray-900 py-3 px-2 focus:outline-none placeholder:text-gray-400 hidden sm:block"
-                />
-                <div className="p-1.5">
-                  <button
-                    type="submit"
-                    className="bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold h-10 w-[84px] rounded-xl transition-colors flex items-center justify-center"
-                  >
-                    Search
-                  </button>
-                </div>
-              </form>
+              </div>
 
               {isAuthenticated && (
                 <Link
                   to="/listings/new"
-                  className="btn bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold px-8 py-3 rounded-xl shadow-lg flex w-full max-w-xs mx-auto md:inline-flex md:w-auto transition-all duration-200 justify-center"
+                  className="btn bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold px-8 py-2.5 rounded-xl shadow-lg hidden w-full max-w-xs mx-auto md:w-auto md:inline-flex justify-center text-sm"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Post a Listing
@@ -140,8 +112,8 @@ export default function ListingFeed() {
               )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto mt-10 text-center">
+            {/* Stats - desktop only */}
+            <div className="hidden md:grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto mt-10 text-center">
               <div className="stat-pill flex flex-col justify-center px-2 py-4">
                 <div className="text-xl sm:text-2xl font-bold">
                   {isStatsLoading ? (
@@ -180,7 +152,7 @@ export default function ListingFeed() {
       <div className="container-app py-4 sm:py-6">
         {/* Page title when filters are active */}
         {hasActiveFilters && (
-          <div className="mb-6">
+          <div className="mb-4">
             {isSellerFilter ? (
               <>
                 <Link 
@@ -199,12 +171,7 @@ export default function ListingFeed() {
                   {pagination?.total || listings?.length || 0} listing{(pagination?.total || listings?.length || 0) !== 1 ? 's' : ''} from this seller
                 </p>
               </>
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold text-text">Search Results</h1>
-                <p className="text-text-secondary">Browse filtered listings</p>
-              </>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -228,18 +195,15 @@ export default function ListingFeed() {
           </div>
         )}
 
-        {/* Loading state */}
-        {isLoading && (
+        {/* Initial load — show skeleton when no data yet */}
+        {isLoading && !listings && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="skeleton w-32 h-5 rounded" />
-            </div>
             <ListingGridSkeleton count={8} />
           </div>
         )}
 
         {/* Error state */}
-        {isError && (
+        {isError && !listings && (
           <div className="empty-state py-16 animate-fade-in">
             <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center mb-6">
               <svg className="w-10 h-10 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,37 +226,54 @@ export default function ListingFeed() {
           </div>
         )}
 
-        {/* Listings grid */}
-        {!isLoading && !isError && listings && (
+        {/* Listings grid — always show when data exists, with overlay during refetch */}
+        {listings && (
           <>
             {listings.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-                <SearchX size={48} className="text-gray-400 mb-4" />
-                <h3 className="text-2xl font-bold text-text mb-1">No listings found</h3>
-                
-                {filters.search && (
-                  <p className="text-lg text-text-secondary mb-2">
-                    for "<span className="font-medium text-text">{filters.search}</span>"
-                  </p>
-                )}
-                
-                <p className="text-text-secondary mb-8">
-                  Try a different search or browse all categories
+              <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+                <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mb-5">
+                  <SearchX size={32} className="text-[#C8622A]" />
+                </div>
+                <h3 className="text-xl font-bold text-text mb-1">
+                  {filters.search ? (
+                    <>No results for &ldquo;<span className="text-[#C8622A]">{filters.search}</span>&rdquo;</>
+                  ) : (
+                    'No listings found'
+                  )}
+                </h3>
+                <p className="text-text-secondary mb-2 max-w-sm">
+                  Try checking your spelling or use a more general term
                 </p>
-                
-                <button 
-                  onClick={() => setSearchParams({})} 
-                  className="btn-secondary"
+                <button
+                  onClick={() => setSearchParams({})}
+                  className="text-sm text-[#C8622A] hover:text-[#B5561F] font-medium mt-2 hover:underline"
                 >
-                  Clear filters
+                  Browse all listings &rarr;
                 </button>
               </div>
             ) : (
               <>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
-                  <p className="text-sm font-medium text-text-secondary">
-                    <span className="text-text font-semibold">{listings.length}</span> listing{listings.length !== 1 ? 's' : ''} found
-                  </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {filters.search ? (
+                      <p className="text-base font-semibold text-text">
+                        Search results for &ldquo;<span className="text-[#C8622A]">{filters.search}</span>&rdquo;
+                      </p>
+                    ) : (
+                      <p className="text-sm font-medium text-text-secondary">
+                        <span className="text-text font-semibold">{listings.length}</span> listing{listings.length !== 1 ? 's' : ''} found
+                      </p>
+                    )}
+                    {filters.search && (
+                      <button
+                        onClick={() => handleFiltersChange({ search: undefined })}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#C8622A] bg-orange-50 hover:bg-orange-100 px-2.5 py-1 rounded-full transition-colors"
+                      >
+                        <SearchX size={12} />
+                        Clear search
+                      </button>
+                    )}
+                  </div>
                   <div className="hidden sm:flex items-center gap-2">
                     <label htmlFor="sort-select" className="text-sm text-text-secondary font-medium whitespace-nowrap">Sort by:</label>
                     <select
@@ -308,10 +289,22 @@ export default function ListingFeed() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {listings.map((listing, index) => (
-                    <ListingCard key={listing.id} listing={listing} index={index} />
-                  ))}
+                {listings.length <= 3 && filters.search && (
+                  <p className="text-sm text-text-secondary mb-4">
+                    Only {listings.length} result{listings.length !== 1 ? 's' : ''} found. Try a different search term.
+                  </p>
+                )}
+                <div className={`relative ${isFetching && !isLoading ? 'opacity-50' : ''}`}>
+                  {isFetching && !isLoading && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <div className="w-5 h-5 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {listings.map((listing, index) => (
+                      <ListingCard key={listing.id} listing={listing} index={index} />
+                    ))}
+                  </div>
                 </div>
                 <Pagination pagination={pagination} onPageChange={handlePageChange} />
               </>

@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 import { listingsApi } from '../lib/api';
@@ -15,6 +16,9 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState(getSearchHistory());
   const containerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState({});
   
   const { data: zones, isLoading: zonesLoading } = useZones();
   const { data: areas, isLoading: areasLoading } = useAreas(selectedZone);
@@ -27,7 +31,10 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
   // Handle outside click and escape for suggestions + history
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target) &&
+        (!dropdownRef.current || !dropdownRef.current.contains(e.target))
+      ) {
         setShowSuggestions(false);
         setShowHistory(false);
       }
@@ -69,6 +76,51 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       setSelectedZone('');
     }
   }, [filters.area_id]);
+
+  const showSearchDropdown = showSuggestions || showHistory;
+
+  // Position the portal dropdown at the search input
+  useLayoutEffect(() => {
+    if (showSearchDropdown && searchInputRef.current) {
+      const rect = searchInputRef.current.getBoundingClientRect();
+      const dropdownWidth = Math.max(rect.width, 280);
+      const overflows = rect.left + dropdownWidth > window.innerWidth;
+      setDropdownStyle({
+        position: 'fixed',
+        top: `${rect.bottom + 4}px`,
+        left: overflows ? 'auto' : `${rect.left}px`,
+        right: overflows ? `${window.innerWidth - rect.right}px` : 'auto',
+        width: `${dropdownWidth}px`,
+        zIndex: 9999,
+      });
+    }
+  }, [showSearchDropdown]);
+
+  // Recalculate position on scroll/resize while open
+  useEffect(() => {
+    if (!showSearchDropdown) return;
+    const recalc = () => {
+      if (searchInputRef.current) {
+        const rect = searchInputRef.current.getBoundingClientRect();
+        const dropdownWidth = Math.max(rect.width, 280);
+        const overflows = rect.left + dropdownWidth > window.innerWidth;
+        setDropdownStyle({
+          position: 'fixed',
+          top: `${rect.bottom + 4}px`,
+          left: overflows ? 'auto' : `${rect.left}px`,
+          right: overflows ? `${window.innerWidth - rect.right}px` : 'auto',
+          width: `${dropdownWidth}px`,
+          zIndex: 9999,
+        });
+      }
+    };
+    window.addEventListener('scroll', recalc, true);
+    window.addEventListener('resize', recalc);
+    return () => {
+      window.removeEventListener('scroll', recalc, true);
+      window.removeEventListener('resize', recalc);
+    };
+  }, [showSearchDropdown]);
 
   const debouncedSearch = useMemo(
     () => debounce((value, currentFilters, onChange) => {
@@ -172,7 +224,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
     : null;
 
   return (
-    <div className="card-static p-4 sm:p-5 mb-6">
+    <div className="card-static p-3 sm:p-4 mb-4">
       {/* Category Chips */}
       <div className="relative mb-4">
         <div className="flex overflow-x-auto gap-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -216,6 +268,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             </svg>
           </div>
           <input
+            ref={searchInputRef}
             type="search"
             placeholder="Search for products, services..."
             value={searchInput}
@@ -255,8 +308,12 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
             </button>
           )}
 
-          {showSuggestions && suggestions.length > 0 && (
-            <ul className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-1 overflow-hidden">
+          {showSuggestions && suggestions.length > 0 && createPortal(
+            <ul
+              ref={dropdownRef}
+              className="bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-1 overflow-hidden"
+              style={dropdownStyle}
+            >
               {suggestions.map((suggestion, idx) => (
                 <li 
                   key={idx}
@@ -269,11 +326,16 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                   {suggestion}
                 </li>
               ))}
-            </ul>
+            </ul>,
+            document.body
           )}
 
-          {showHistory && !searchInput && historyItems.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-2 overflow-hidden">
+          {showHistory && !searchInput && historyItems.length > 0 && createPortal(
+            <div
+              ref={dropdownRef}
+              className="bg-white rounded-xl shadow-lg border border-[#F0EDE8] py-2 overflow-hidden"
+              style={dropdownStyle}
+            >
               <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Recent searches
               </div>
@@ -326,7 +388,8 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
                 </svg>
                 Clear all recent searches
               </button>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 
@@ -522,26 +585,7 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       {/* Active Filter Pills */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-light" role="list" aria-label="Active filters">
-          {filters.search && (
-            <span className="badge-primary flex items-center gap-1.5" role="listitem">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span>Search: "{filters.search}"</span>
-              <button
-                onClick={() => {
-                  setSearchInput('');
-                  onFiltersChange({ ...filters, search: undefined });
-                }}
-                className="ml-1 hover:text-primary-dark p-0.5"
-                aria-label={`Remove search filter: ${filters.search}`}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          )}
+
           {filters.category && categories && (
             <span className="badge-primary flex items-center gap-1.5" role="listitem">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

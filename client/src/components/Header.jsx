@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Home, ShoppingBag, Heart, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
 import AvatarImage from './AvatarImage';
 import NotificationBell from './NotificationBell';
+import SearchInput from './SearchInput';
 
 export default function Header() {
   const { user, profile, signOut, isAuthenticated, isAdmin } = useAuth();
@@ -14,6 +15,8 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const showSearch = location.pathname === '/';
+  const navigate = useNavigate();
   const mobileMenuRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
 
@@ -128,9 +131,9 @@ export default function Header() {
   return (
     <header className={`navbar sticky top-0 z-40 bg-white transition-shadow duration-200 safe-top ${isScrolled ? 'shadow-sm' : ''}`}>
       <div className="container-app w-full">
-        <div className="flex items-center justify-between h-full">
+        <div className="flex items-center justify-between h-full gap-2 lg:gap-4">
           {/* Logo */}
-          <div className="flex-1">
+          <div className="flex-1 lg:flex-initial">
             <Link to="/" className="inline-flex items-center gap-2 group">
               <div className="flex flex-col justify-center">
                 <span className="font-bold text-2xl tracking-tight leading-none">
@@ -144,18 +147,34 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 justify-center flex-1">
-            <Link
-              to="/"
-              className={`nav-link ${isActive('/') ? 'active' : ''}`}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" strokeWidth="1.7"/>
-                <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.7"/>
-              </svg>
-              Browse
-            </Link>
+          {/* Desktop Search - lg+ only (feed page only) */}
+          {showSearch && (
+            <div className="hidden lg:block flex-1 max-w-md">
+              <SearchInput
+                placeholder="Search listings..."
+                onSearch={(q) => {
+                  if (q) navigate(`/?search=${encodeURIComponent(q)}`);
+                  else if (location.pathname === '/') navigate('/');
+                }}
+                inputClassName="pl-10 pr-10 h-9 bg-gray-100 rounded-full text-sm border border-gray-200 focus:border-[#C8622A] focus:bg-white focus:ring-1 focus:ring-[#C8622A]/20"
+              />
+            </div>
+          )}
+
+          {/* Desktop Navigation - lg+ */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {!isAuthenticated && (
+              <Link
+                to="/"
+                className={`nav-link ${isActive('/') ? 'active' : ''}`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" strokeWidth="1.7"/>
+                  <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.7"/>
+                </svg>
+                Browse
+              </Link>
+            )}
 
             {isAuthenticated && (
               <>
@@ -172,22 +191,11 @@ export default function Header() {
               </>
             )}
 
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/>
-                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-                </svg>
-                Admin
-              </Link>
-            )}
+
           </nav>
 
           {/* Right Section */}
-          <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
+          <div className="flex flex-1 lg:flex-initial items-center justify-end gap-2">
             {/* Status indicators */}
             {!isOnline && (
               <span className="text-gray-400" title="Offline">
@@ -230,6 +238,8 @@ export default function Header() {
                   Post Listing
                 </Link>
 
+                <NotificationBell />
+
                 {/* Post Listing Button - Mobile */}
                 <Link
                   to="/listings/new"
@@ -240,8 +250,6 @@ export default function Header() {
                     <path d="M12 5v14M5 12h14" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                 </Link>
-
-                <NotificationBell />
 
                 {/* User Dropdown */}
                 <div className="relative hidden md:block">
@@ -338,6 +346,7 @@ export default function Header() {
                           </Link>
                         )}
 
+                        <hr className="my-1 border-gray-100" />
                         <button
                           onClick={handleSignOut}
                           className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors min-h-[44px]"
