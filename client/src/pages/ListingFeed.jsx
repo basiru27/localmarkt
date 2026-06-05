@@ -87,18 +87,18 @@ export default function ListingFeed() {
     <div>
       {/* Hero section - only on home page without filters */}
       {!hasActiveFilters && (
-        <div className="hero-gradient text-white py-12 sm:py-16 mb-6">
-          <div className="container-app relative z-10">
+        <div className="hero-gradient text-white py-8 md:py-16 mb-6">
+          <div className="container-app relative z-10 px-4 md:px-0">
             <div className="max-w-2xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight !text-white">
+              <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight !text-white">
                 Buy & Sell in The Gambia
               </h1>
               <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed">
                 Your trusted marketplace for products and services. Connect with your community today.
               </p>
               
-              <form onSubmit={handleHeroSearch} className="max-w-[600px] mx-auto mb-8 relative flex items-center">
-                <div className="absolute left-4 text-gray-400">
+              <form onSubmit={handleHeroSearch} className="max-w-[600px] mx-auto mb-8 relative flex items-center bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="pl-4 pr-2 text-gray-400 flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -107,21 +107,30 @@ export default function ListingFeed() {
                   type="text"
                   value={heroSearch}
                   onChange={(e) => setHeroSearch(e.target.value)}
-                  placeholder="Search products in The Gambia..."
-                  className="w-full bg-white text-gray-900 rounded-2xl py-3 px-5 pl-12 pr-32 shadow-lg focus:outline-none focus:ring-2 focus:ring-[#C8622A] focus:border-[#C8622A]"
+                  placeholder="Search in The Gambia..."
+                  className="flex-1 text-gray-900 py-3 px-2 focus:outline-none placeholder:text-gray-400 sm:hidden"
                 />
-                <button
-                  type="submit"
-                  className="absolute right-2 bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold py-2 px-6 rounded-xl transition-colors"
-                >
-                  Search
-                </button>
+                <input
+                  type="text"
+                  value={heroSearch}
+                  onChange={(e) => setHeroSearch(e.target.value)}
+                  placeholder="Search products in The Gambia..."
+                  className="flex-1 text-gray-900 py-3 px-2 focus:outline-none placeholder:text-gray-400 hidden sm:block"
+                />
+                <div className="p-1.5">
+                  <button
+                    type="submit"
+                    className="bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold h-10 w-[84px] rounded-xl transition-colors flex items-center justify-center"
+                  >
+                    Search
+                  </button>
+                </div>
               </form>
 
               {isAuthenticated && (
                 <Link
                   to="/listings/new"
-                  className="btn bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold px-8 py-3 rounded-xl shadow-lg inline-flex transition-all duration-200"
+                  className="btn bg-[#C8622A] hover:bg-[#B5561F] text-white font-semibold px-8 py-3 rounded-xl shadow-lg flex w-full max-w-xs mx-auto md:inline-flex md:w-auto transition-all duration-200 justify-center"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -132,36 +141,36 @@ export default function ListingFeed() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-10 text-center">
-              <div className="stat-pill flex flex-col justify-center">
-                <div className="text-2xl font-bold">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto mt-10 text-center">
+              <div className="stat-pill flex flex-col justify-center px-2 py-4">
+                <div className="text-xl sm:text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
                     statsData?.totalListings > 10 ? `${Math.floor(statsData.totalListings / 10) * 10}+` : (statsData?.totalListings || 0)
                   )}
                 </div>
-                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Listings</div>
+                <div className="text-[10px] sm:text-xs text-white/70 mt-1 uppercase tracking-wide">Listings</div>
               </div>
-              <div className="stat-pill flex flex-col justify-center">
-                <div className="text-2xl font-bold">
+              <div className="stat-pill flex flex-col justify-center px-2 py-4">
+                <div className="text-xl sm:text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
                     statsData?.activeAreas > 10 ? `${Math.floor(statsData.activeAreas / 10) * 10}+` : (statsData?.activeAreas || 0)
                   )}
                 </div>
-                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Areas</div>
+                <div className="text-[10px] sm:text-xs text-white/70 mt-1 uppercase tracking-wide">Areas</div>
               </div>
-              <div className="stat-pill flex flex-col justify-center">
-                <div className="text-2xl font-bold">
+              <div className="stat-pill flex flex-col justify-center px-2 py-4">
+                <div className="text-xl sm:text-2xl font-bold">
                   {isStatsLoading ? (
                     <span className="inline-block w-[40px] h-[18px] bg-white/20 rounded-full animate-pulse" />
                   ) : (
                     statsData?.activeSellers > 10 ? `${Math.floor(statsData.activeSellers / 10) * 10}+` : (statsData?.activeSellers || 0)
                   )}
                 </div>
-                <div className="text-xs text-white/70 mt-1 uppercase tracking-wide">Sellers</div>
+                <div className="text-[10px] sm:text-xs text-white/70 mt-1 uppercase tracking-wide">Sellers</div>
               </div>
             </div>
           </div>
@@ -284,7 +293,7 @@ export default function ListingFeed() {
                   <p className="text-sm font-medium text-text-secondary">
                     <span className="text-text font-semibold">{listings.length}</span> listing{listings.length !== 1 ? 's' : ''} found
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2">
                     <label htmlFor="sort-select" className="text-sm text-text-secondary font-medium whitespace-nowrap">Sort by:</label>
                     <select
                       id="sort-select"
@@ -299,7 +308,7 @@ export default function ListingFeed() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {listings.map((listing, index) => (
                     <ListingCard key={listing.id} listing={listing} index={index} />
                   ))}

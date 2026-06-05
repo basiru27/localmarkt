@@ -273,12 +273,12 @@ export default function AdminListings() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 md:justify-end md:flex-col lg:flex-row ml-auto">
+                <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
                   {listing.moderation_status !== 'approved' && (
                     <button
                       onClick={() => handleModeration(listing.id, 'approved')}
                       disabled={moderateMutation.isPending}
-                      className="btn-primary py-1.5 px-3 text-xs"
+                      className="btn-primary py-2 px-3 text-xs w-full sm:w-auto"
                     >
                       Approve
                     </button>
@@ -288,7 +288,7 @@ export default function AdminListings() {
                     <button
                       onClick={() => handleModeration(listing.id, 'rejected')}
                       disabled={moderateMutation.isPending}
-                      className="btn-secondary py-1.5 px-3 text-xs"
+                      className="btn-secondary py-2 px-3 text-xs w-full sm:w-auto"
                     >
                       Reject
                     </button>
@@ -297,7 +297,7 @@ export default function AdminListings() {
                   <button
                     onClick={() => handleDelete(listing.id, listing.title)}
                     disabled={deleteMutation.isPending}
-                    className="btn-danger py-1.5 px-3 text-xs"
+                    className="btn-danger py-2 px-3 text-xs w-full sm:w-auto"
                   >
                     Remove
                   </button>

@@ -144,7 +144,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="modal-overlay"
+      className={`${isOpen ? 'modal-overlay' : 'hidden'} md:flex md:items-center md:justify-center`}
       onClick={handleOverlayClick}
       aria-hidden="false"
     >
@@ -153,12 +153,22 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`modal-content w-full ${sizeClasses[size]} mx-4`}
+        className={`
+          /* Mobile: bottom sheet */
+          fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[85vh] overflow-y-auto
+          md:relative md:inset-auto md:rounded-2xl md:max-h-[90vh]
+          w-full ${sizeClasses[size]} md:mx-4
+        `}
         tabIndex={-1}
       >
+        {/* Drag handle bar for mobile */}
+        <div className="md:hidden flex justify-center pt-2 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
+
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border-light">
+          <div className="flex items-center justify-between px-5 pt-2 pb-3 md:p-5 md:border-b md:border-border-light">
             {title && (
               <h2
                 id={titleId}
@@ -171,7 +181,7 @@ export default function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 -m-2 text-text-secondary hover:text-text hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 -m-2 text-text-secondary hover:text-text hover:bg-gray-100 rounded-lg transition-colors ml-auto"
                 aria-label="Close modal"
               >
                 <svg
@@ -194,7 +204,7 @@ export default function Modal({
         )}
 
         {/* Content */}
-        <div className="p-4 sm:p-5">
+        <div className="p-5 pt-2 md:p-5">
           {children}
         </div>
       </div>

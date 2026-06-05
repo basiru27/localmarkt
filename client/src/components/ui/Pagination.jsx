@@ -50,16 +50,29 @@ export default function Pagination({ pagination, onPageChange }) {
       </p>
       
       <div className="flex items-center gap-1">
+        {/* Desktop: Previous button with text */}
         <button
           onClick={handlePrev}
           disabled={!hasPrevPage}
-          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hidden sm:inline-flex items-center"
           aria-label="Go to previous page"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Previous
+        </button>
+
+        {/* Mobile: Previous icon-only */}
+        <button
+          onClick={handlePrev}
+          disabled={!hasPrevPage}
+          className="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-text-secondary hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          aria-label="Previous page"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
         
         <div className="hidden sm:flex items-center gap-1 mx-2" role="list">
@@ -91,14 +104,27 @@ export default function Pagination({ pagination, onPageChange }) {
         </div>
         
         {/* Mobile page indicator */}
-        <span className="sm:hidden px-4 text-sm text-text-secondary">
-          Page <span className="font-semibold text-text">{currentPage}</span> of <span className="font-semibold text-text">{totalPages}</span>
+        <span className="sm:hidden px-4 text-sm text-text-secondary font-medium">
+          <span className="font-semibold text-text">{currentPage}</span> / <span className="font-semibold text-text">{totalPages}</span>
         </span>
         
+        {/* Mobile: Next icon-only */}
         <button
           onClick={handleNext}
           disabled={!hasNextPage}
-          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          className="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-text-secondary hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          aria-label="Next page"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        
+        {/* Desktop: Next button with text */}
+        <button
+          onClick={handleNext}
+          disabled={!hasNextPage}
+          className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hidden sm:inline-flex items-center"
           aria-label="Go to next page"
         >
           Next

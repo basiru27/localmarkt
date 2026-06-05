@@ -310,7 +310,7 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-8">
         <StatsCard
           title="Total Views"
           value={summary.total_views}
@@ -359,9 +359,13 @@ export default function AnalyticsDashboard() {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Views Over Time</h2>
-        <SimpleAreaChart data={viewsOverTime} range={range} />
+        <div className="overflow-x-auto pb-2 -mx-2 px-2">
+          <div className="min-w-[500px] sm:min-w-0">
+            <SimpleAreaChart data={viewsOverTime} range={range} />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -374,7 +378,53 @@ export default function AnalyticsDashboard() {
             No listings yet.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile card view */}
+          <div className="divide-y divide-gray-100 sm:hidden">
+            {sorted.map((listing) => (
+              <div key={listing.id} className="px-4 py-3">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 flex-shrink-0 bg-[#F5EFE8] rounded-lg overflow-hidden">
+                    <SafeImage src={listing.image} alt="" category={listing.category?.name} className="h-10 w-10 object-cover" iconClassName="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#1A1A1A] truncate">{listing.title}</p>
+                    <p className="text-xs text-[#6B6B6B]">{formatPrice(listing.price)}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="text-center">
+                    <p className="font-semibold text-[#1A1A1A]">{listing.views}</p>
+                    <p className="text-[10px] text-[#6B6B6B]">Views</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-[#1A1A1A]">{listing.contacts}</p>
+                    <p className="text-[10px] text-[#6B6B6B]">Contacts</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-[#1A1A1A]">{listing.saves}</p>
+                    <p className="text-[10px] text-[#6B6B6B]">Saves</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-[#6B6B6B]">
+                  <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                    listing.is_sold
+                      ? 'bg-[#1A1A1A] text-white'
+                      : listing.moderation_status === 'approved'
+                      ? 'bg-green-50 text-green-700 border border-green-100'
+                      : listing.moderation_status === 'rejected'
+                      ? 'bg-red-50 text-red-700 border border-red-100'
+                      : 'bg-amber-50 text-amber-700 border border-amber-100'
+                  }`}>
+                    {listing.is_sold ? 'sold' : listing.moderation_status || 'pending'}
+                  </span>
+                  <span>{new Date(listing.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table */}
+          <div className="overflow-x-auto hidden sm:block">
             <table className="min-w-full">
               <thead className="bg-[#FAFAF8] border-b border-[#F0EDE8]">
                 <tr>
@@ -453,6 +503,7 @@ export default function AnalyticsDashboard() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

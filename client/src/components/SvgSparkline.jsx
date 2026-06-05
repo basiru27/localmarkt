@@ -88,8 +88,12 @@ export default function SvgSparkline({
           );
         })}
 
-        {/* X-axis labels */}
-        {data.map((d, i) => (
+        {/* X-axis labels - skip every other label when many data points */}
+        {data.map((d, i) => {
+          const labelCount = data.length;
+          const step = labelCount > 14 ? Math.ceil(labelCount / 7) : labelCount > 8 ? 2 : 1;
+          if (i % step !== 0 && i !== labelCount - 1) return null;
+          return (
           <text 
             key={`x-${i}`} 
             x={getX(i)} 
@@ -100,7 +104,8 @@ export default function SvgSparkline({
           >
             {formatDay(d.day || d.date)}
           </text>
-        ))}
+          );
+        })}
 
         {values.length > 1 && (
           <>

@@ -1,4 +1,5 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { ChevronLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -198,10 +199,8 @@ export default function ForgotPassword() {
 
         {/* Back to Home */}
         <p className="text-center mt-6">
-          <Link to="/" className="text-sm text-text-muted hover:text-text transition-colors inline-flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+          <Link to="/" className="text-sm text-text-muted hover:text-text transition-colors inline-flex items-center gap-1 min-h-[44px] justify-center">
+            <ChevronLeft className="w-4 h-4" />
             Back to Home
           </Link>
         </p>

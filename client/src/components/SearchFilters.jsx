@@ -3,10 +3,11 @@ import { useZones, useAreas, useCategories } from '../hooks/useLookups';
 import { debounce } from '../lib/utils';
 import { listingsApi } from '../lib/api';
 import { getSearchHistory, addToSearchHistory, removeFromSearchHistory, clearSearchHistory } from '../lib/searchHistory';
+import Modal from './Modal';
 
 export default function SearchFilters({ filters, onFiltersChange, hideSearch = false }) {
   const [searchInput, setSearchInput] = useState(filters.search || '');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [selectedZone, setSelectedZone] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -329,17 +330,17 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
           )}
         </div>
 
-        {/* Filter Toggle Button - Mobile */}
+        {/* Filter Button - Mobile (opens bottom sheet) */}
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => setShowFilterSheet(true)}
           className="sm:hidden btn-secondary px-3 relative min-w-[44px] min-h-[44px]"
-          aria-expanded={isExpanded}
-          aria-controls="mobile-filters"
-          aria-label={`${isExpanded ? 'Hide' : 'Show'} filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
+          aria-expanded={showFilterSheet}
+          aria-label={`Open filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
+          <span className="ml-1.5 text-sm font-medium">Filters</span>
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center" aria-hidden="true">
               {activeFilterCount}
@@ -415,79 +416,108 @@ export default function SearchFilters({ filters, onFiltersChange, hideSearch = f
       </div>
       )}
 
-      {/* Mobile Expanded Filters */}
-      {isExpanded && (
-        <div id="mobile-filters" className="sm:hidden mt-4 pt-4 border-t border-border animate-fade-in-down">
-          <div className="space-y-3">
-            {/* Zone filter */}
-            <div>
-              <label htmlFor="mobile-zone-filter" className="label">Zone</label>
-              <div className="relative">
-                <select
-                  id="mobile-zone-filter"
-                  value={selectedZone}
-                  onChange={handleZoneChange}
-                  className="input"
-                  disabled={zonesLoading}
-                  aria-busy={zonesLoading}
-                >
-                  <option value="">{zonesLoading ? 'Loading zones...' : 'All Zones'}</option>
-                  {zones?.map((zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </option>
-                  ))}
-                </select>
-                {zonesLoading && (
-                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Mobile Filter Bottom Sheet */}
+      <Modal
+        isOpen={showFilterSheet}
+        onClose={() => setShowFilterSheet(false)}
+        title="Filters"
+        showCloseButton={true}
+      >
+        <div className="space-y-5">
+          {/* Sort */}
+          <div>
+            <label htmlFor="filter-sort" className="label">Sort by</label>
+            <select
+              id="filter-sort"
+              value={filters.sort || 'newest'}
+              onChange={(e) => onFiltersChange({ ...filters, sort: e.target.value })}
+              className="input"
+            >
+              <option value="newest">Newest first</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="views">Most viewed</option>
+            </select>
+          </div>
 
-            {/* Area filter */}
-            <div>
-              <label htmlFor="mobile-area-filter" className="label">Area</label>
-              <div className="relative">
-                <select
-                  id="mobile-area-filter"
-                  value={filters.area_id || ''}
-                  onChange={handleAreaChange}
-                  className="input"
-                  disabled={!selectedZone || areasLoading}
-                  aria-busy={areasLoading}
-                >
-                  <option value="">{!selectedZone ? 'Select zone first' : areasLoading ? 'Loading...' : 'All Areas'}</option>
-                  {areas?.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.name}
-                    </option>
-                  ))}
-                </select>
-                {areasLoading && (
-                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-                  </div>
-                )}
-              </div>
+          {/* Zone filter */}
+          <div>
+            <label htmlFor="mobile-zone-filter" className="label">Zone</label>
+            <div className="relative">
+              <select
+                id="mobile-zone-filter"
+                value={selectedZone}
+                onChange={handleZoneChange}
+                className="input"
+                disabled={zonesLoading}
+                aria-busy={zonesLoading}
+              >
+                <option value="">{zonesLoading ? 'Loading zones...' : 'All Zones'}</option>
+                {zones?.map((zone) => (
+                  <option key={zone.id} value={zone.id}>
+                    {zone.name}
+                  </option>
+                ))}
+              </select>
+              {zonesLoading && (
+                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Clear filters */}
+          {/* Area filter */}
+          <div>
+            <label htmlFor="mobile-area-filter" className="label">Area</label>
+            <div className="relative">
+              <select
+                id="mobile-area-filter"
+                value={filters.area_id || ''}
+                onChange={handleAreaChange}
+                className="input"
+                disabled={!selectedZone || areasLoading}
+                aria-busy={areasLoading}
+              >
+                <option value="">{!selectedZone ? 'Select zone first' : areasLoading ? 'Loading...' : 'All Areas'}</option>
+                {areas?.map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.name}
+                  </option>
+                ))}
+              </select>
+              {areasLoading && (
+                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-[#C8622A] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="pt-4 space-y-3">
+            <button
+              onClick={() => {
+                setShowFilterSheet(false);
+              }}
+              className="btn-primary w-full min-h-[44px]"
+            >
+              Apply Filters
+            </button>
             {hasActiveFilters && (
               <button
-                onClick={handleClearFilters}
-                className="btn-secondary w-full min-h-[44px]"
+                onClick={() => {
+                  handleClearFilters();
+                  setShowFilterSheet(false);
+                }}
+                className="w-full text-center text-sm text-text-secondary hover:text-text transition-colors py-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
                 Clear All Filters
               </button>
             )}
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Active Filter Pills */}
       {hasActiveFilters && (

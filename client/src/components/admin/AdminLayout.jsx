@@ -23,8 +23,9 @@ export default function AdminLayout() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-5">
-        <aside className="bg-[#1A1A1A] text-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 h-fit">
+      <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-5">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:block bg-[#1A1A1A] text-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 h-fit">
           <div className="mb-4 pb-4 border-b border-white/10">
             <h1 className="text-lg font-bold text-white">Admin Console</h1>
             <p className="text-sm text-white/70 mt-1">
@@ -56,6 +57,30 @@ export default function AdminLayout() {
         </aside>
 
         <section className="min-w-0">
+          {/* Mobile horizontal scrollable nav pills */}
+          <div className="overflow-x-auto scrollbar-hide lg:hidden mb-5 -mx-4 px-4">
+            <nav className="flex gap-2 min-w-max" aria-label="Admin navigation">
+              {navItems
+                .filter((item) => !item.superAdminOnly || isSuperAdmin)
+                .map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/admin'}
+                    className={({ isActive }) =>
+                      `whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-[#C8622A] text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+            </nav>
+          </div>
+
           <Outlet />
         </section>
       </div>

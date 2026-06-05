@@ -46,6 +46,15 @@ export default function NotificationBell() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
+  }, [isOpen]);
+
   const handleToggle = () => setIsOpen(!isOpen);
 
   const handleMarkAllRead = () => {
@@ -97,19 +106,20 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={handleToggle}
-        className="relative p-2 rounded-xl hover:bg-[#FEF3E8] transition-colors text-[#3D3D3D] hover:text-[#C8622A]"
+        className="relative p-2 rounded-xl hover:bg-[#FEF3E8] transition-colors text-[#3D3D3D] hover:text-[#C8622A] min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Notifications"
+        aria-expanded={isOpen}
       >
-        <BellIcon className="w-6 h-6" />
+        <BellIcon size={22} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+          <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#F0EDE8] z-50 overflow-hidden">
+        <div className="fixed left-2 right-2 top-16 md:absolute md:left-auto md:right-0 md:w-96 md:top-full mt-2 bg-white rounded-2xl shadow-xl border border-[#F0EDE8] z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EDE8]">
             <h3 className="font-semibold text-[#1A1A1A]">Notifications</h3>
             {unreadCount > 0 && (

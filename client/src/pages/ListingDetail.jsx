@@ -350,7 +350,7 @@ export default function ListingDetail() {
           {/* Image Section */}
           <div className="lg:col-span-3">
             <button 
-              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="relative -mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full aspect-[4/3] sm:aspect-square sm:rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               onClick={() => setShowLightbox(true)}
               aria-label="Open image gallery"
             >
@@ -419,7 +419,7 @@ export default function ListingDetail() {
           <div className="lg:col-span-2 space-y-6">
             {/* Title & Price */}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-[#1A1A1A] leading-tight mb-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#1A1A1A] leading-tight mb-2">
                 {listing.title}
               </h1>
               
@@ -432,7 +432,7 @@ export default function ListingDetail() {
                 </div>
               )}
               
-              <div className="text-3xl font-bold text-[#C8622A] inline-flex items-center gap-2">
+              <div className="text-2xl font-bold text-[#C8622A] inline-flex items-center gap-2 flex-wrap">
                 {listing.is_sold ? (
                   <>
                     <span className="text-gray-300 line-through text-2xl">{formatPrice(listing.price)}</span>
@@ -452,7 +452,7 @@ export default function ListingDetail() {
             </div>
 
             {/* Meta info */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {listing.condition && CONDITION_CONFIG[listing.condition] && (
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border ${CONDITION_CONFIG[listing.condition].bgColor} ${CONDITION_CONFIG[listing.condition].textColor} ${CONDITION_CONFIG[listing.condition].borderColor}`}>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -502,7 +502,7 @@ export default function ListingDetail() {
 
             
             {/* Action CTA Block */}
-            <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5 space-y-4 sticky bottom-0 z-40 md:relative md:shadow-none shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:bottom-auto">
+            <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5 space-y-4 sticky bottom-0 z-40 md:relative md:shadow-none shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:bottom-auto safe-bottom">
               {isOwner ? (
                 <>
                   <button
@@ -716,7 +716,14 @@ export default function ListingDetail() {
                 More from {listing.seller?.display_name || 'this seller'}
               </Link>
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden pb-2">
+              {sellerListings.map(item => (
+                <div key={item.id} className="min-w-[160px] max-w-[180px] snap-start shrink-0">
+                  <ListingCard key={item.id} listing={item} />
+                </div>
+              ))}
+            </div>
+            <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {sellerListings.map(item => (
                 <ListingCard key={item.id} listing={item} />
               ))}
@@ -727,7 +734,14 @@ export default function ListingDetail() {
         {similarListings.length > 0 && (
           <div className="mt-12 space-y-4">
             <h2 className="text-xl font-bold text-text">Similar items</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide lg:hidden pb-2">
+              {similarListings.map(item => (
+                <div key={item.id} className="min-w-[160px] max-w-[180px] snap-start shrink-0">
+                  <ListingCard key={item.id} listing={item} />
+                </div>
+              ))}
+            </div>
+            <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {similarListings.map(item => (
                 <ListingCard key={item.id} listing={item} />
               ))}

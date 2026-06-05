@@ -46,7 +46,7 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="card-static p-5">
             <div className="skeleton h-4 w-28 mb-3" />
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
         <p className="text-text-secondary">Moderation and platform health overview.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <StatCard label="Total Users" value={data?.users_total || 0} to="/admin/users" />
         <StatCard label="Banned Users" value={data?.users_banned || 0} hint="Soft-banned accounts" to="/admin/users?banned=true" />
         <StatCard label="Total Listings" value={data?.listings_total || 0} to="/admin/listings" />
@@ -148,11 +148,12 @@ export default function AdminDashboard() {
             ) : (
               data.recent_logs.map((log) => (
                 <div key={log.id} className="text-sm border-b border-border-light pb-3 last:border-0 last:pb-0">
-                  <p className="text-text-secondary text-xs mb-1">
-                    {formatRelativeDate(log.created_at)}
+                  <p className="text-text-secondary text-xs mb-1 flex flex-wrap gap-1">
+                    <span>{formatRelativeDate(log.created_at)}</span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="font-medium text-text">{log.admin?.display_name || 'Admin'}</span>
                   </p>
                   <p className="text-text leading-tight flex items-center flex-wrap gap-1.5">
-                    <span className="font-medium">{log.admin?.display_name || 'Admin'}</span>
                     <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${getActionBadgeColor(log.action)}`}>
                       {log.action}
                     </span>

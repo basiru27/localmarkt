@@ -7,6 +7,7 @@ import { formatPrice, formatRelativeDate } from '../lib/utils';
 import Modal, { ModalFooter } from '../components/Modal';
 import Pagination from '../components/ui/Pagination';
 import SafeImage from '../components/SafeImage';
+import { Eye, MoreVertical, Edit3, Trash2, CheckCircle2, RotateCcw, ArrowUp } from 'lucide-react';
 
 const TABS = [
   { key: 'active', label: 'Active', filters: { is_sold: 'false', moderation_status: 'approved' } },
@@ -26,6 +27,7 @@ export default function MyListings() {
   const markAsSoldMutation = useMarkAsSold();
   const bumpMutation = useBumpListing();
   const [deleteModal, setDeleteModal] = useState({ open: false, listing: null });
+  const [overflowMenuListingId, setOverflowMenuListingId] = useState(null);
 
   const currentTab = TABS.find(t => t.key === activeTab) || TABS[0];
   const { data: listingsData, isLoading, isError } = useListings({
@@ -135,25 +137,30 @@ export default function MyListings() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="border-b border-border mb-6">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors ${
-                  activeTab === tab.key
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-text-secondary hover:border-border hover:text-text'
-                }`}
-                aria-current={activeTab === tab.key ? 'page' : undefined}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="border-b border-border mb-6 overflow-x-auto scrollbar-hide">
+          <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
+              {TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center gap-1.5 ${
+                    activeTab === tab.key
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-text-secondary hover:border-border hover:text-text'
+                  }`}
+                  aria-current={activeTab === tab.key ? 'page' : undefined}
+                >
+                  {tab.label}
+                  {activeTab === tab.key && myListings.length > 0 && (
+                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                      {myListings.length}
+                    </span>
+                  )}
+                </button>
+              ))}
             <Link
               to="/my-listings/analytics"
-              className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+              className="border-transparent text-text-secondary hover:border-border hover:text-text whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex-shrink-0"
             >
               Analytics
             </Link>
@@ -208,12 +215,12 @@ export default function MyListings() {
             {myListings.map((listing, index) => (
               <article
                 key={listing.id}
-                className="card-static p-4 hover:shadow-md transition-shadow animate-fade-in-up"
+                className={`card-static p-4 hover:shadow-md transition-shadow animate-fade-in-up overflow-visible ${overflowMenuListingId === listing.id ? 'relative z-30' : ''}`}
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 <div className="flex gap-4">
                   <Link to={`/listings/${listing.id}`} className="shrink-0" aria-label={`View ${listing.title}`}>
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group">
+                    <div className="w-[72px] h-[72px] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group">
                       <SafeImage
                         src={listing.image_url}
                         alt=""
@@ -287,93 +294,89 @@ export default function MyListings() {
                       </div>
                     )}
 
-                    <div className="flex gap-2 mt-3 justify-end sm:justify-start">
-                      <Link
-                        to={`/listings/${listing.id}`}
-                        className="btn-ghost flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg text-text-secondary hover:text-primary transition-colors group relative"
-                        aria-label={`View ${listing.title}`}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </Link>
-                      {!listing.is_sold && (
+                    <div className="flex gap-2 mt-3 items-center">
+                      {activeTab !== 'sold' && (
                         <Link
                           to={`/listings/${listing.id}/edit`}
-                          className="btn-secondary flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg group relative"
-                          aria-label={`Edit ${listing.title}`}
+                          className="btn-secondary text-xs px-3 py-1.5 min-h-[36px] inline-flex items-center gap-1.5"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Edit3 size={14} />
+                          Edit
                         </Link>
-                      )}
-                      {activeTab === 'active' && (
-                        <button
-                          onClick={() => handleMarkAsSold(listing.id, true)}
-                          disabled={markAsSoldMutation.isPending}
-                          className="btn-ghost flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg text-green-700 hover:bg-green-50 group relative"
-                          aria-label="Mark as sold"
-                        >
-                          {markAsSoldMutation.isPending ? (
-                            <div className="spinner w-4 h-4 border-green-700 border-t-transparent" />
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          )}
-                        </button>
-                      )}
-                      {activeTab === 'sold' && (
-                        <button
-                          onClick={() => handleMarkAsSold(listing.id, false)}
-                          disabled={markAsSoldMutation.isPending}
-                          className="btn-ghost flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg text-blue-700 hover:bg-blue-50 group relative"
-                          aria-label="Relist"
-                        >
-                          {markAsSoldMutation.isPending ? (
-                            <div className="spinner w-4 h-4 border-blue-700 border-t-transparent" />
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          )}
-                        </button>
-                      )}
-                      {activeTab === 'active' && (
-                        <button
-                          onClick={() => handleBump(listing.id)}
-                          disabled={bumpMutation.isPending}
-                          className={`btn-ghost flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg group relative ${
-                            bumpedIds.has(listing.id)
-                              ? 'text-green-700 hover:bg-green-50'
-                              : 'text-amber-700 hover:bg-amber-50'
-                          }`}
-                          aria-label={bumpedIds.has(listing.id) ? 'Bumped!' : 'Bump to top'}
-                        >
-                          {bumpedIds.has(listing.id) ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : bumpMutation.isPending ? (
-                            <div className="spinner w-4 h-4 border-amber-700 border-t-transparent" />
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                            </svg>
-                          )}
-                        </button>
                       )}
                       <button
                         onClick={() => setDeleteModal({ open: true, listing })}
-                        className="btn-ghost flex items-center justify-center p-2 min-w-[36px] min-h-[36px] rounded-lg text-error hover:bg-red-50 group relative"
-                        aria-label={`Delete ${listing.title}`}
+                        className="btn-danger text-xs px-3 py-1.5 min-h-[36px] inline-flex items-center gap-1.5"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 size={14} />
+                        Delete
                       </button>
+                      <div className="relative ml-auto">
+                        <button
+                          onClick={() => setOverflowMenuListingId(overflowMenuListingId === listing.id ? null : listing.id)}
+                          className="btn-ghost min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg"
+                          aria-label="More actions"
+                          aria-expanded={overflowMenuListingId === listing.id}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+                        {overflowMenuListingId === listing.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOverflowMenuListingId(null)} />
+                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-20 animate-fade-in-down">
+                              <Link
+                                to={`/listings/${listing.id}`}
+                                className="flex items-center gap-3 px-4 py-3 text-sm text-text-secondary hover:bg-gray-50 min-h-[44px]"
+                                onClick={() => setOverflowMenuListingId(null)}
+                              >
+                                <Eye size={16} />
+                                View
+                              </Link>
+                              {activeTab === 'active' && (
+                                <button
+                                  onClick={() => {
+                                    handleMarkAsSold(listing.id, true);
+                                    setOverflowMenuListingId(null);
+                                  }}
+                                  disabled={markAsSoldMutation.isPending}
+                                  className="flex items-center gap-3 px-4 py-3 text-sm text-green-700 hover:bg-green-50 w-full text-left min-h-[44px]"
+                                >
+                                  <CheckCircle2 size={16} />
+                                  Mark as Sold
+                                </button>
+                              )}
+                              {activeTab === 'sold' && (
+                                <button
+                                  onClick={() => {
+                                    handleMarkAsSold(listing.id, false);
+                                    setOverflowMenuListingId(null);
+                                  }}
+                                  disabled={markAsSoldMutation.isPending}
+                                  className="flex items-center gap-3 px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 w-full text-left min-h-[44px]"
+                                >
+                                  <RotateCcw size={16} />
+                                  Relist
+                                </button>
+                              )}
+                              {activeTab === 'active' && (
+                                <button
+                                  onClick={() => {
+                                    handleBump(listing.id);
+                                    setOverflowMenuListingId(null);
+                                  }}
+                                  disabled={bumpMutation.isPending}
+                                  className={`flex items-center gap-3 px-4 py-3 text-sm w-full text-left min-h-[44px] ${
+                                    bumpedIds.has(listing.id) ? 'text-green-700 hover:bg-green-50' : 'text-amber-700 hover:bg-amber-50'
+                                  }`}
+                                >
+                                  <ArrowUp size={16} />
+                                  {bumpedIds.has(listing.id) ? 'Bumped!' : 'Bump to Top'}
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

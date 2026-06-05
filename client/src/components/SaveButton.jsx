@@ -12,8 +12,8 @@ export default function SaveButton({ listingId, size = 'md', className = '' }) {
   if (!user) return null;
 
   const sizeClasses = size === 'sm'
-    ? 'w-7 h-7'
-    : 'w-9 h-9';
+    ? 'w-11 h-11'
+    : 'w-11 h-11';
 
   return (
     <button

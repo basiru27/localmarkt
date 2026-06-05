@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Home, ShoppingBag, Heart, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
@@ -11,9 +12,18 @@ export default function Header() {
   const { isOnline, canInstall, installApp } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const mobileMenuRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -56,6 +66,54 @@ export default function Header() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [mobileMenuOpen, dropdownOpen]);
 
+  // Scroll lock when drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
+  }, [mobileMenuOpen]);
+
+  // Focus trap for mobile menu
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    
+    const menuElement = mobileMenuRef.current;
+    if (!menuElement) return;
+
+    const focusableElements = menuElement.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (!firstElement || !lastElement) return;
+
+    const handleTabKey = (e) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    // Focus first element on open
+    firstElement?.focus();
+
+    return () => document.removeEventListener('keydown', handleTabKey);
+  }, [mobileMenuOpen]);
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -68,24 +126,26 @@ export default function Header() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="navbar">
+    <header className={`navbar sticky top-0 z-40 bg-white transition-shadow duration-200 safe-top ${isScrolled ? 'shadow-sm' : ''}`}>
       <div className="container-app w-full">
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex flex-col justify-center">
-              <span className="font-bold text-2xl tracking-tight leading-none">
-                <span className="text-[#C8622A]">G</span>
-                <span className="text-[#1A1A1A]">Markt</span>
-              </span>
-              <span className="text-xs text-[#6B6B6B] tracking-wide uppercase font-medium mt-0.5 hidden sm:block">
-                The Gambia's Marketplace
-              </span>
-            </div>
-          </Link>
+          <div className="flex-1">
+            <Link to="/" className="inline-flex items-center gap-2 group">
+              <div className="flex flex-col justify-center">
+                <span className="font-bold text-2xl tracking-tight leading-none">
+                  <span className="text-[#C8622A]">G</span>
+                  <span className="text-[#1A1A1A]">Markt</span>
+                </span>
+                <span className="text-xs text-[#6B6B6B] tracking-wide uppercase font-medium mt-0.5 hidden sm:block">
+                  The Gambia's Marketplace
+                </span>
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 justify-center flex-1">
             <Link
               to="/"
               className={`nav-link ${isActive('/') ? 'active' : ''}`}
@@ -127,7 +187,7 @@ export default function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
             {/* Status indicators */}
             {!isOnline && (
               <span className="text-gray-400" title="Offline">
@@ -173,7 +233,7 @@ export default function Header() {
                 {/* Post Listing Button - Mobile */}
                 <Link
                   to="/listings/new"
-                  className="sm:hidden flex items-center justify-center bg-[#C8622A] text-white w-10 h-10 rounded-xl shadow-sm active:scale-95 transition-all duration-200"
+                  className="sm:hidden flex items-center justify-center bg-[#C8622A] text-white w-[44px] h-[44px] rounded-xl shadow-sm active:scale-95 transition-all duration-200"
                   aria-label="Post Listing"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -184,7 +244,7 @@ export default function Header() {
                 <NotificationBell />
 
                 {/* User Dropdown */}
-                <div className="relative">
+                <div className="relative hidden md:block">
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] justify-center sm:justify-start"
@@ -297,7 +357,7 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <Link 
                   to="/login" 
-                  className="btn-ghost text-sm py-2 px-3"
+                  className="btn-ghost text-sm py-2 px-3 hidden sm:inline-flex"
                 >
                   Log In
                 </Link>
@@ -314,18 +374,12 @@ export default function Header() {
             <button
               ref={mobileMenuButtonRef}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-text"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
             >
-              <svg className="w-6 h-6 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
@@ -342,7 +396,7 @@ export default function Header() {
             <nav
               id="mobile-menu"
               ref={mobileMenuRef}
-              className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col"
+              className="md:hidden fixed inset-y-0 right-0 z-50 w-[280px] bg-white border-l border-gray-200 flex flex-col shadow-2xl animate-slide-in-right"
               aria-label="Mobile navigation"
             >
               {/* Drawer Header: Avatar + Name */}
@@ -396,9 +450,7 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 h-12 ${isActive('/') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
+                  <Home size={20} />
                   Browse Listings
                 </Link>
                 {isAuthenticated && (
@@ -408,10 +460,24 @@ export default function Header() {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 h-12 ${isActive('/my-listings') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
+                      <ShoppingBag size={20} />
                       My Listings
+                    </Link>
+                    <Link
+                      to="/saved"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 h-12 ${isActive('/saved') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
+                    >
+                      <Heart size={20} />
+                      Saved Listings
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 h-12 ${isActive('/profile') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
+                    >
+                      <User size={20} />
+                      My Profile
                     </Link>
                   </>
                 )}
@@ -420,14 +486,41 @@ export default function Header() {
                   <Link
                     to="/admin"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 h-12 mt-auto mb-4 border-t border-gray-100 pt-4 ${location.pathname.startsWith('/admin') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
+                    className={`flex items-center gap-3 px-4 h-12 ${location.pathname.startsWith('/admin') ? 'bg-primary-50 text-primary font-semibold' : 'text-text-secondary hover:bg-gray-50'}`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <Settings size={20} />
                     Admin Console
                   </Link>
+                )}
+
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="flex items-center gap-3 px-4 h-12 mt-auto mb-4 border-t border-gray-100 pt-4 text-red-600 hover:bg-red-50 font-medium text-left w-full"
+                  >
+                    <LogOut size={20} />
+                    Sign Out
+                  </button>
+                ) : (
+                  <div className="mt-auto mb-4 border-t border-gray-100 pt-4 px-4 flex flex-col gap-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="btn-ghost justify-center w-full"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="btn-primary justify-center w-full"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
                 )}
               </div>
             </nav>

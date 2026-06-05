@@ -169,8 +169,8 @@ export default function AdminLogs() {
           </div>
         </div>
 
-        <div className="w-full md:w-auto ml-auto">
-          <button onClick={exportCSV} className="btn-secondary whitespace-nowrap h-[42px] px-4">
+        <div className="w-full lg:w-auto ml-auto">
+          <button onClick={exportCSV} className="btn-secondary whitespace-nowrap h-[42px] px-4 w-full lg:w-auto justify-center flex items-center">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Export CSV
           </button>
@@ -194,7 +194,37 @@ export default function AdminLogs() {
       )}
 
       {!isLoading && !isError && (
-        <div className="card-static overflow-auto">
+        <>
+        {/* Mobile two-line items */}
+        <div className="space-y-2 lg:hidden">
+          {logs?.map((entry) => (
+            <div key={entry.id} className="card-static px-4 py-3">
+              <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
+                <span>{formatRelativeDate(entry.created_at)}</span>
+                <span className="font-medium">{entry.admin?.display_name || entry.admin_id}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-0.25 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getActionBadgeClass(entry.action)}`}>
+                  {entry.action}
+                </span>
+                <span className="text-xs text-text-secondary font-mono">
+                  {entry.target_type}: {entry.target_id?.slice(0, 8)}
+                </span>
+              </div>
+            </div>
+          ))}
+          {logs?.length === 0 && (
+            <div className="card-static p-5 text-center text-text-secondary">No audit logs found matching criteria.</div>
+          )}
+          {pagination && (
+            <div className="px-1 pb-1">
+              <Pagination pagination={pagination} onPageChange={setPage} />
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="card-static overflow-auto hidden lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b border-border-light">
               <tr>
@@ -240,6 +270,7 @@ export default function AdminLogs() {
             </div>
           )}
         </div>
+        </>
       )}
     </div>
   );

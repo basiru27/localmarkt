@@ -290,36 +290,33 @@ export default function Profile() {
       <h1 className="text-2xl font-bold mb-6 text-text">Account Settings</h1>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-border mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <div className="border-b border-border mb-6 overflow-x-auto scrollbar-hide">
+        <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex-shrink-0 ${
               activeTab === 'profile'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary hover:border-border hover:text-text'
-            }`}
-          >
+            }`}>
             Profile Info
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex-shrink-0 ${
               activeTab === 'security'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary hover:border-border hover:text-text'
-            }`}
-          >
+            }`}>
             Security & Auth
           </button>
           <button
             onClick={() => setActiveTab('notifications')}
-            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+            className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex-shrink-0 ${
               activeTab === 'notifications'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary hover:border-border hover:text-text'
-            }`}
-          >
+            }`}>
             Notifications
           </button>
         </nav>
@@ -442,7 +439,7 @@ export default function Profile() {
               <button 
                 type="submit" 
                 disabled={mutation.isPending || uploading}
-                className="btn-primary flex-1 py-3.5 text-base"
+                className="btn-primary w-full sm:flex-1 py-3.5 text-base"
               >
                 {mutation.isPending ? 'Saving...' : 'Save Profile'}
               </button>
@@ -497,8 +494,8 @@ export default function Profile() {
         <div className="animate-fade-in bg-white rounded-2xl shadow-sm border border-border-light overflow-hidden p-6">
           <h2 className="text-lg font-bold text-text mb-4">Notification Preferences</h2>
 
-          <div className="flex items-center justify-between py-4 border-b border-border-light">
-            <div>
+          <div className="flex items-center justify-between py-4 border-b border-border-light gap-4">
+            <div className="flex-1 min-w-0">
               <h3 className="font-medium text-text">Push Notifications</h3>
               <p className="text-sm text-text-muted">Receive alerts for listings and messages on this device.</p>
             </div>
@@ -521,10 +518,10 @@ export default function Profile() {
           
           <p className="text-sm font-medium text-text mt-6 mb-3">Email Notifications</p>
           {Object.entries(emailPrefs).map(([key, enabled]) => (
-            <div key={key} className="flex items-center justify-between py-3 border-b border-border-light last:border-0">
-              <div>
+            <div key={key} className="flex items-center justify-between py-3 border-b border-border-light last:border-0 gap-4">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-text text-sm">{getEmailLabel(key)}</h3>
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-text-muted whitespace-normal">
                   {key === 'email_contact' ? 'Get notified when someone contacts you' :
                    key === 'email_moderation' ? 'Updates on your listings and reports' :
                    'Receive order confirmations and sales updates'}

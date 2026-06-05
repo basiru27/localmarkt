@@ -151,7 +151,90 @@ export default function AdminUsers() {
       )}
 
       {!isLoading && !isError && (
-        <div className="card-static overflow-auto">
+        <>
+        {/* Mobile card view */}
+        <div className="space-y-3 lg:hidden">
+          {users?.map((entry) => {
+            const isSelf = entry.id === user?.id;
+            const isSuperAdminTarget = entry.role === 'super_admin';
+            const disableBan = isSelf || (isSuperAdminTarget && !isSuperAdmin);
+
+            return (
+              <div key={entry.id} className="card-static p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-[#C8622A] flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    {(entry.display_name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-text truncate">{entry.display_name || 'User'}</p>
+                    <p className="text-xs text-text-secondary truncate">{entry.email || 'Unknown'}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="badge-secondary uppercase tracking-wide text-xs">{entry.role}</span>
+                  {entry.verified_seller && (
+                    <span className="inline-flex items-center text-green-600 bg-green-50 px-1.5 py-0.5 rounded text-xs font-medium">
+                      Verified
+                    </span>
+                  )}
+                  {entry.is_banned ? (
+                    <span className="badge-error text-xs">Banned</span>
+                  ) : (
+                    <span className="badge-success text-xs">Active</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-text-secondary mb-3">
+                  <span>Joined {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span>{entry.listing_count} listings</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleToggleVerify(entry)}
+                    disabled={updateVerifyMutation.isPending}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      entry.verified_seller
+                        ? 'bg-gray-100 text-text-secondary hover:bg-gray-200'
+                        : 'bg-[#C8622A] text-white hover:bg-[#B0521A]'
+                    }`}
+                  >
+                    {entry.verified_seller ? 'Unverify' : 'Verify'}
+                  </button>
+                  <button
+                    onClick={() => handleToggleBan(entry)}
+                    disabled={disableBan || updateBanMutation.isPending}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      entry.is_banned
+                        ? 'bg-gray-100 text-text-secondary hover:bg-gray-200'
+                        : 'bg-red-500 text-white hover:bg-red-600'
+                    }`}
+                  >
+                    {entry.is_banned ? 'Unban' : 'Ban'}
+                  </button>
+                  {isSuperAdmin && !isSelf && entry.role !== 'super_admin' && (
+                    <button
+                      onClick={() => setConfirmDeleteUserId(entry.id)}
+                      disabled={hardDeleteMutation.isPending}
+                      className="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {users?.length === 0 && (
+            <div className="card-static p-5 text-center text-text-secondary">No users found.</div>
+          )}
+          {pagination && (
+            <div className="px-1 pb-1">
+              <Pagination pagination={pagination} onPageChange={setPage} />
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="card-static overflow-auto hidden lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b border-border-light">
               <tr>
@@ -248,6 +331,7 @@ export default function AdminUsers() {
             </div>
           )}
         </div>
+        </>
       )}
 
       <Modal
