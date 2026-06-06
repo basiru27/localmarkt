@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, ShoppingBag, Heart, User, Settings, LogOut } from 'lucide-react';
+import { Menu, X, Search, ChevronLeft, Home, ShoppingBag, Heart, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import PendingSyncBadge from './PendingSyncBadge';
@@ -14,8 +14,16 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const location = useLocation();
-  const showSearch = location.pathname === '/';
+  const hideSearchRoutes = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+  ];
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const showSearch = !hideSearchRoutes.includes(location.pathname) && !isAdminRoute;
   const navigate = useNavigate();
   const mobileMenuRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
@@ -27,6 +35,10 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close mobile search on route change
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMobileSearchOpen(false); }, [location.pathname]);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -55,9 +67,14 @@ export default function Header() {
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
+        if (mobileSearchOpen) {
+          setMobileSearchOpen(false);
+          return;
+        }
         if (mobileMenuOpen) {
           setMobileMenuOpen(false);
           mobileMenuButtonRef.current?.focus();
+          return;
         }
         if (dropdownOpen) {
           setDropdownOpen(false);
@@ -67,7 +84,7 @@ export default function Header() {
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [mobileMenuOpen, dropdownOpen]);
+  }, [mobileSearchOpen, mobileMenuOpen, dropdownOpen]);
 
   // Scroll lock when drawer is open
   useEffect(() => {
@@ -131,7 +148,7 @@ export default function Header() {
   return (
     <header className={`navbar sticky top-0 z-40 bg-white transition-shadow duration-200 safe-top ${isScrolled ? 'shadow-sm' : ''}`}>
       <div className="container-app w-full">
-        <div className="flex items-center justify-between h-full gap-2 lg:gap-4">
+        <div className="relative flex items-center justify-between h-full gap-2 lg:gap-4">
           {/* Logo */}
           <div className="flex-1 min-w-0 lg:flex-initial">
             <Link to="/" className="inline-flex items-center gap-2 group">
@@ -379,10 +396,24 @@ export default function Header() {
               </div>
             )}
 
+            {/* Mobile Search Toggle */}
+            {showSearch && (
+              <button
+                onClick={() => setMobileSearchOpen(true)}
+                className="flex lg:hidden items-center justify-center w-[44px] h-[44px] rounded-xl hover:bg-gray-100 transition-colors shrink-0"
+                aria-label="Search"
+              >
+                <Search size={22} />
+              </button>
+            )}
+
             {/* Mobile Menu Toggle */}
             <button
               ref={mobileMenuButtonRef}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => {
+                if (!mobileMenuOpen) setMobileSearchOpen(false);
+                setMobileMenuOpen(!mobileMenuOpen);
+              }}
               className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-text shrink-0"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
@@ -391,6 +422,31 @@ export default function Header() {
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
+
+          {/* Expanded Mobile Search Row */}
+          {showSearch && (
+            <div className={`absolute inset-0 flex lg:hidden items-center gap-2 bg-white transition-all duration-200 ease-in-out z-10 ${mobileSearchOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <button
+                onClick={() => setMobileSearchOpen(false)}
+                className="flex items-center justify-center w-[44px] h-[44px] shrink-0"
+                aria-label="Close search"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <SearchInput
+                className="flex-1"
+                autoFocus
+                placeholder="Search listings..."
+                onSearch={(q) => {
+                  if (q) {
+                    navigate(`/?search=${encodeURIComponent(q)}`);
+                    setMobileSearchOpen(false);
+                  }
+                }}
+                inputClassName="pl-10 pr-10 h-9 bg-gray-100 rounded-full text-sm border border-gray-200 focus:border-[#C8622A] focus:bg-white focus:ring-1 focus:ring-[#C8622A]/20"
+              />
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu Drawer */}
