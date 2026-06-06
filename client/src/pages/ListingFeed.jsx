@@ -278,7 +278,7 @@ export default function ListingFeed() {
                     <label htmlFor="sort-select" className="text-sm text-text-secondary font-medium whitespace-nowrap">Sort by:</label>
                     <select
                       id="sort-select"
-                      className="input py-2 py-1.5 text-sm"
+                      className="input py-1.5 text-sm"
                       value={filters.sort || 'newest'}
                       onChange={(e) => handleFiltersChange({ ...filters, sort: e.target.value })}
                     >

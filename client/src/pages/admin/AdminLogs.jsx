@@ -54,6 +54,7 @@ export default function AdminLogs() {
 
   const exportCSV = () => {
     if (!logs || logs.length === 0) return;
+    // Exports the currently visible page of logs. For full export, use the API directly.
     const headers = ['When', 'Admin', 'Action', 'Target Type', 'Target ID', 'Details'];
     const rows = logs.map(log => [
       new Date(log.created_at).toLocaleString(),

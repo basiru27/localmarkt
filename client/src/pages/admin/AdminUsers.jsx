@@ -13,6 +13,7 @@ export default function AdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
+  const [confirmBanAction, setConfirmBanAction] = useState(null);
   const [page, setPage] = useState(1);
 
   const banFilter = searchParams.get('banned') || 'all';
@@ -43,17 +44,33 @@ export default function AdminUsers() {
 
   const handleToggleBan = async (target) => {
     if (!target.is_banned) {
-      if (!window.confirm(`Ban ${target.display_name || 'this user'}? They will lose access to their account.`)) return;
+      setConfirmBanAction({ userId: target.id, is_banned: true });
+      return;
     }
     try {
       await updateBanMutation.mutateAsync({
         userId: target.id,
         data: {
-          is_banned: !target.is_banned,
+          is_banned: false,
         },
       });
+      success('User unbanned');
+    } catch (err) {
+      showError(err.message || 'Failed to update user ban status');
+    }
+  };
 
-      success(target.is_banned ? 'User unbanned' : 'User banned');
+  const handleConfirmBan = async () => {
+    if (!confirmBanAction) return;
+    try {
+      await updateBanMutation.mutateAsync({
+        userId: confirmBanAction.userId,
+        data: {
+          is_banned: confirmBanAction.is_banned,
+        },
+      });
+      success('User banned');
+      setConfirmBanAction(null);
     } catch (err) {
       showError(err.message || 'Failed to update user ban status');
     }
@@ -333,6 +350,23 @@ export default function AdminUsers() {
         </div>
         </>
       )}
+
+      <Modal
+        isOpen={!!confirmBanAction}
+        onClose={() => setConfirmBanAction(null)}
+        title="Ban User"
+        size="sm"
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to ban this user? They will lose access to their account immediately.
+        </p>
+        <ModalFooter>
+          <button onClick={() => setConfirmBanAction(null)} className="btn-secondary">Cancel</button>
+          <button onClick={handleConfirmBan} disabled={updateBanMutation.isPending} className="btn-danger">
+            {updateBanMutation.isPending ? 'Banning...' : 'Ban User'}
+          </button>
+        </ModalFooter>
+      </Modal>
 
       <Modal
         isOpen={!!confirmDeleteUserId}

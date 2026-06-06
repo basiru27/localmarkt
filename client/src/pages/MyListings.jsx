@@ -64,6 +64,8 @@ export default function MyListings() {
         onError: (err) => showError(err.message || 'Failed to update'),
       }
     );
+    // Optimistic: immediately move the card
+    setActiveTab(is_sold ? 'sold' : 'active');
   };
 
   const handleBump = (id) => {

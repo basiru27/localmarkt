@@ -8,6 +8,7 @@ import SafeImage from '../components/SafeImage';
 import Pagination from '../components/ui/Pagination';
 import StarRating from '../components/StarRating';
 import { ListingGridSkeleton } from '../components/ListingCardSkeleton';
+import { normalizePhoneForWhatsApp } from '../lib/utils';
 
 function ReviewCard({ review }) {
   const rating = review.rating || 0;
@@ -92,8 +93,9 @@ export default function SellerProfile() {
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !seller) return <NotFound />;
 
-  const whatsappUrl = seller.phone_number
-    ? `https://wa.me/${seller.phone_number.replace(/\D/g, '')}`
+  const whatsappNumber = seller.phone_number ? normalizePhoneForWhatsApp(seller.phone_number) : null;
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}`
     : null;
 
   const listingsPagination = listingsData ? {

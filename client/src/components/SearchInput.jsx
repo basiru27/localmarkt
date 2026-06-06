@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { Search, X, Clock } from 'lucide-react';
 import { useSuggestions } from '../hooks/useSuggestions';
 import {
@@ -17,6 +18,7 @@ export default function SearchInput({
   autoFocus = false,
 }) {
   const [inputValue, setInputValue] = useState('');
+  const [debouncedValue, setDebouncedValue] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -24,10 +26,31 @@ export default function SearchInput({
   const inputRef = useRef(null);
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
+  const debounceTimerRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
+  const location = useLocation();
+
+  // Close dropdown on route navigation
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setIsOpen(false); setShowHistory(false); }, [location.pathname]);
+
+  // Debounce input value
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedValue(inputValue);
+    }, 300);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [inputValue]);
 
   const { data: suggestions = [], isLoading: suggestionsLoading } = useSuggestions(
-    inputValue.trim().length >= 2 ? inputValue.trim() : null
+    debouncedValue.trim().length >= 2 ? debouncedValue.trim() : null
   );
 
   const refreshHistory = useCallback(() => {

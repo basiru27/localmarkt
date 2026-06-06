@@ -30,6 +30,8 @@ const RETRY_CONFIG = {
   retryableStatuses: [408, 429, 500, 502, 503, 504],
 };
 
+const TIMEOUT_MS = 15000;
+
 // Delay helper with exponential backoff
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -42,7 +44,7 @@ const getRetryDelay = (attempt) => {
 // Check if error is retryable
 const isRetryable = (error, status) => {
   // Network errors are retryable
-  if (error && error.name === 'TypeError' && error.message.includes('fetch')) {
+  if (error && (error.name === 'TypeError' || error.name === 'AbortError')) {
     return true;
   }
   // Check status codes
@@ -58,6 +60,7 @@ async function fetchApi(endpoint, options = {}, retryCount = 0) {
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    signal: options.signal || AbortSignal.timeout(TIMEOUT_MS),
   };
 
   try {

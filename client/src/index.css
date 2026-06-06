@@ -88,7 +88,7 @@
 }
 
 /* Ensure minimum tap targets for interactive elements */
-button, a, [role="button"] {
+.tap-target {
   min-height: 44px;
   min-width: 44px;
 }
@@ -832,6 +832,7 @@ input[type="search"]::-webkit-search-results-decoration {
   background: #ffffff;
   border-bottom: 1px solid var(--color-border-page);
   height: 56px;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -1057,6 +1058,7 @@ input[type="search"]::-webkit-search-results-decoration {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

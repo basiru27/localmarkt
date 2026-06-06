@@ -325,6 +325,7 @@ export default function Register() {
                       onBlur={() => handleBlur('phoneNumber')}
                       className={`input pl-12 ${errorClass}`}
                       placeholder="+220 XXXXXXX"
+                      inputMode="tel"
                       {...ariaProps}
                     />
                   </div>

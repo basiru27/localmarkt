@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { listingsApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -31,8 +32,13 @@ export function useListingStats() {
 export function useListings(filters = {}) {
   const { isAuthenticated, getAuthHeader, user } = useAuth();
 
+  const queryFilters = useMemo(() => ({
+    ...filters,
+    ...(filters.mine ? {} : { exclude_user_id: user?.id || null }),
+  }), [filters, user?.id]);
+
   return useQuery({
-    queryKey: listingKeys.list(filters),
+    queryKey: listingKeys.list(queryFilters),
     queryFn: async () => {
       if (filters.mine) {
         if (!isAuthenticated) {

@@ -133,7 +133,7 @@ export default function Header() {
       <div className="container-app w-full">
         <div className="flex items-center justify-between h-full gap-2 lg:gap-4">
           {/* Logo */}
-          <div className="flex-1 lg:flex-initial">
+          <div className="flex-1 min-w-0 lg:flex-initial">
             <Link to="/" className="inline-flex items-center gap-2 group">
               <div className="flex flex-col justify-center">
                 <span className="font-bold text-2xl tracking-tight leading-none">
@@ -195,7 +195,7 @@ export default function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex flex-1 lg:flex-initial items-center justify-end gap-2">
+          <div className="flex lg:flex-initial items-center justify-end gap-2">
             {/* Status indicators */}
             {!isOnline && (
               <span className="text-gray-400" title="Offline">
@@ -238,12 +238,12 @@ export default function Header() {
                   Post Listing
                 </Link>
 
-                <NotificationBell />
+                <span className="shrink-0"><NotificationBell /></span>
 
                 {/* Post Listing Button - Mobile */}
                 <Link
                   to="/listings/new"
-                  className="sm:hidden flex items-center justify-center bg-[#C8622A] text-white w-[44px] h-[44px] rounded-xl shadow-sm active:scale-95 transition-all duration-200"
+                  className="sm:hidden flex items-center justify-center bg-[#C8622A] text-white w-[44px] h-[44px] rounded-xl shadow-sm active:scale-95 transition-all duration-200 shrink-0"
                   aria-label="Post Listing"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -252,7 +252,7 @@ export default function Header() {
                 </Link>
 
                 {/* User Dropdown */}
-                <div className="relative hidden md:block">
+                <div className="relative hidden md:block shrink-0">
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] justify-center sm:justify-start"
@@ -363,16 +363,16 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link 
                   to="/login" 
-                  className="btn-ghost hidden sm:inline-flex"
+                  className="btn-ghost hidden sm:inline-flex shrink-0"
                 >
                   Log In
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-primary"
+                  className="btn-primary shrink-0 px-3 py-2 text-sm sm:px-4 sm:py-2 sm:text-sm whitespace-nowrap"
                 >
                   Get Started
                 </Link>
@@ -383,7 +383,7 @@ export default function Header() {
             <button
               ref={mobileMenuButtonRef}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-text"
+              className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-text shrink-0"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"

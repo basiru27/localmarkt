@@ -64,9 +64,10 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
   });
   const [showPreview, setShowPreview] = useState(false);
 
-  // Autosave draft
+  // Autosave draft (debounced)
   useEffect(() => {
     if (initialData || draftExists) return;
+    if (!formData.title && !formData.description && !formData.price) return;
     const timer = setTimeout(() => {
       localStorage.setItem('localmarkt_listing_draft', JSON.stringify(formData));
     }, 800);
@@ -418,6 +419,11 @@ export default function ListingForm({ initialData, onSubmit, isSubmitting, hideD
             name="price"
             value={formData.price}
             onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                e.preventDefault();
+              }
+            }}
             className={`input pl-20 text-lg font-semibold ${errors.price ? 'input-error' : ''}`}
             placeholder="0.00"
             min="0"

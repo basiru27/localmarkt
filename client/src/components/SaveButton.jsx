@@ -1,15 +1,31 @@
 import { Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSavedIds, useToggleSave } from '../hooks/useSaved';
 
 export default function SaveButton({ listingId, size = 'md', className = '' }) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: savedIds = [] } = useSavedIds();
   const { mutate: toggleSave, isPending } = useToggleSave();
 
   const isSaved = savedIds.includes(listingId);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          navigate('/login');
+        }}
+        aria-label="Save listing"
+        className={`flex items-center justify-center rounded-full transition-all text-gray-400 bg-white/80 hover:text-red-400 hover:bg-red-50 cursor-pointer ${size === 'sm' ? 'w-11 h-11' : 'w-11 h-11'} ${className}`}
+      >
+        <Heart size={size === 'sm' ? 14 : 18} />
+      </button>
+    );
+  }
 
   const sizeClasses = size === 'sm'
     ? 'w-11 h-11'

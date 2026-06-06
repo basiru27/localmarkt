@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { formatPrice, formatRelativeDate } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import SafeImage from '../../components/SafeImage';
+import Modal, { ModalFooter } from '../../components/Modal';
 import Pagination from '../../components/ui/Pagination';
 
 export default function AdminListings() {
@@ -18,6 +19,8 @@ export default function AdminListings() {
   const [selectedListings, setSelectedListings] = useState(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [confirmDeleteListingId, setConfirmDeleteListingId] = useState(null);
+  const [confirmDeleteListingTitle, setConfirmDeleteListingTitle] = useState('');
   const { success, error: showError } = useToast();
   const queryClient = useQueryClient();
 
@@ -83,10 +86,17 @@ export default function AdminListings() {
   };
 
   const handleDelete = async (listingId, title) => {
-    if (!window.confirm(`Delete '${title}'? This cannot be undone.`)) return;
+    setConfirmDeleteListingId(listingId);
+    setConfirmDeleteListingTitle(title);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteListingId) return;
     try {
-      await deleteMutation.mutateAsync(listingId);
+      await deleteMutation.mutateAsync(confirmDeleteListingId);
       success('Listing removed');
+      setConfirmDeleteListingId(null);
+      setConfirmDeleteListingTitle('');
     } catch (err) {
       showError(err.message || 'Failed to remove listing');
     }
@@ -351,6 +361,30 @@ export default function AdminListings() {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={!!confirmDeleteListingId}
+        onClose={() => { setConfirmDeleteListingId(null); setConfirmDeleteListingTitle(''); }}
+        title="Delete Listing"
+        size="sm"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <p className="text-text-secondary mb-2">Are you sure you want to delete this listing?</p>
+          <p className="font-semibold text-text mb-4">&ldquo;{confirmDeleteListingTitle}&rdquo;</p>
+          <p className="text-sm text-error mb-6">This action cannot be undone.</p>
+        </div>
+        <ModalFooter>
+          <button onClick={() => { setConfirmDeleteListingId(null); setConfirmDeleteListingTitle(''); }} className="btn-secondary">Cancel</button>
+          <button onClick={handleConfirmDelete} disabled={deleteMutation.isPending} className="btn-danger">
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete Listing'}
+          </button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
