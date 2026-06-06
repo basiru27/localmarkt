@@ -59,7 +59,10 @@ export default function Register() {
   };
 
   // Handle blur validation
-  const handleBlur = (field) => {
+  const handleBlur = (field, e) => {
+    // If focus is moving to a link, skip validation to avoid issues when navigating
+    if (e?.relatedTarget?.tagName === 'A') return;
+
     const errors = { ...fieldErrors };
     
     if (field === 'displayName') {
@@ -263,7 +266,7 @@ export default function Register() {
                     name="displayName"
                     value={formData.displayName}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('displayName')}
+                    onBlur={(e) => handleBlur('displayName', e)}
                     className={`input pl-12 ${errorClass}`}
                     placeholder="How should we call you?"
                     autoComplete="name"
@@ -292,7 +295,7 @@ export default function Register() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('email')}
+                    onBlur={(e) => handleBlur('email', e)}
                     className={`input pl-12 ${errorClass}`}
                     placeholder="you@example.com"
                     autoComplete="email"
@@ -322,7 +325,7 @@ export default function Register() {
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handlePhoneChange}
-                      onBlur={() => handleBlur('phoneNumber')}
+                      onBlur={(e) => handleBlur('phoneNumber', e)}
                       className={`input pl-12 ${errorClass}`}
                       placeholder="+220 XXXXXXX"
                       inputMode="tel"
@@ -354,7 +357,7 @@ export default function Register() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      onBlur={() => handleBlur('password')}
+                      onBlur={(e) => handleBlur('password', e)}
                       className={`input pl-12 pr-12 ${errorClass}`}
                       placeholder="At least 8 characters"
                       autoComplete="new-password"
@@ -420,7 +423,7 @@ export default function Register() {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('confirmPassword')}
+                    onBlur={(e) => handleBlur('confirmPassword', e)}
                     className={`input pl-12 pr-12 ${errorClass}`}
                     placeholder="Repeat your password"
                     autoComplete="new-password"

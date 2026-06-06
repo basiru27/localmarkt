@@ -39,7 +39,10 @@ export default function Login() {
   };
 
   // Handle blur validation
-  const handleBlur = (field) => {
+  const handleBlur = (field, e) => {
+    // If focus is moving to a link, skip validation to avoid issues when navigating
+    if (e?.relatedTarget?.tagName === 'A') return;
+
     const errors = { ...fieldErrors };
     
     if (field === 'email') {
@@ -160,7 +163,7 @@ export default function Login() {
                         setFieldErrors(prev => ({ ...prev, email: undefined }));
                       }
                     }}
-                    onBlur={() => handleBlur('email')}
+                    onBlur={(e) => handleBlur('email', e)}
                     className={`input pl-12 ${errorClass}`}
                     placeholder="you@example.com"
                     autoComplete="email"
@@ -204,7 +207,7 @@ export default function Login() {
                         setFieldErrors(prev => ({ ...prev, password: undefined }));
                       }
                     }}
-                    onBlur={() => handleBlur('password')}
+                    onBlur={(e) => handleBlur('password', e)}
                     className={`input pl-12 pr-12 ${errorClass}`}
                     placeholder="Enter your password"
                     autoComplete="current-password"

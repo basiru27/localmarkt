@@ -28,7 +28,10 @@ export default function ForgotPassword() {
   };
 
   // Handle blur validation
-  const handleBlur = () => {
+  const handleBlur = (e) => {
+    // If focus is moving to a link, skip validation to avoid issues when navigating
+    if (e?.relatedTarget?.tagName === 'A') return;
+
     if (!email) {
       setFieldError('Email is required');
     } else if (!validateEmail(email)) {
@@ -147,7 +150,7 @@ export default function ForgotPassword() {
                           setEmail(e.target.value);
                           if (fieldError) setFieldError('');
                         }}
-                        onBlur={handleBlur}
+                        onBlur={(e) => handleBlur(e)}
                         className={`input pl-12 ${errorClass}`}
                         placeholder="you@example.com"
                         autoComplete="email"

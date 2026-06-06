@@ -64,7 +64,10 @@ export default function ResetPassword() {
   const passwordStrength = getPasswordStrength(password);
 
   // Handle blur validation
-  const handleBlur = (field) => {
+  const handleBlur = (field, e) => {
+    // If focus is moving to a link, skip validation to avoid issues when navigating
+    if (e?.relatedTarget?.tagName === 'A') return;
+
     const errors = { ...fieldErrors };
     
     if (field === 'password') {
@@ -240,7 +243,7 @@ export default function ResetPassword() {
                               setFieldErrors(prev => ({ ...prev, password: undefined }));
                             }
                           }}
-                          onBlur={() => handleBlur('password')}
+                          onBlur={(e) => handleBlur('password', e)}
                           className={`input pl-12 pr-12 ${errorClass}`}
                           placeholder="Enter new password"
                           autoComplete="new-password"
@@ -311,7 +314,7 @@ export default function ResetPassword() {
                             setFieldErrors(prev => ({ ...prev, confirmPassword: undefined }));
                           }
                         }}
-                        onBlur={() => handleBlur('confirmPassword')}
+                        onBlur={(e) => handleBlur('confirmPassword', e)}
                         className={`input pl-12 ${errorClass}`}
                         placeholder="Confirm new password"
                         autoComplete="new-password"
