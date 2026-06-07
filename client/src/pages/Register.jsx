@@ -1,17 +1,17 @@
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { ChevronLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AlertMessage from '../components/AlertMessage';
 import FormField from '../components/FormField';
 import { formatGambianPhone, isValidGambianPhone } from '../lib/utils';
+import { authApi } from '../lib/api';
 
 export default function Register() {
   useDocumentTitle('Register');
 
   const { signUp } = useAuth();
-  const navigate = useNavigate();
   const nameInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -26,6 +26,7 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Auto-focus name input on mount
   useEffect(() => {
@@ -178,14 +179,25 @@ export default function Register() {
       return;
     }
 
+    // Check if email domain can receive email
+    try {
+      const emailCheck = await authApi.checkEmail(formData.email);
+      if (!emailCheck.valid) {
+        setFieldErrors(prev => ({ ...prev, email: emailCheck.message || 'This email domain does not appear to accept emails. Please check your email address.' }));
+        setLoading(false);
+        return;
+      }
+    } catch (checkErr) {
+      // Fail open: network/DNS issues should not block registration
+      console.warn('Email domain check failed, allowing registration:', checkErr);
+    }
+
     setLoading(true);
 
     try {
       await signUp(formData.email, formData.password, formData.displayName, formData.phoneNumber);
+      setRegisteredEmail(formData.email);
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
     } catch (err) {
       if (err.message?.includes('already registered')) {
         setError('An account with this email already exists.');
@@ -207,7 +219,35 @@ export default function Register() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-text mb-3">Account created! Welcome to GMarkt</h2>
+            <h2 className="text-2xl font-bold text-text mb-2">Check your email</h2>
+            <p className="text-text-secondary mb-1">
+              We sent a confirmation link to
+            </p>
+            <p className="font-semibold text-text mb-4">
+              {registeredEmail}
+            </p>
+            <p className="text-sm text-text-muted mb-6">
+              Click the link to activate your account, then log in.
+            </p>
+            <Link
+              to="/login"
+              className="btn-primary w-full inline-flex items-center justify-center gap-2"
+            >
+              Go to Login
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+            <p className="text-xs text-text-muted mt-4">
+              Didn't receive the email? Check your spam folder or{' '}
+              <button
+                type="button"
+                onClick={() => setSuccess(false)}
+                className="text-primary hover:text-primary-dark font-medium transition-colors"
+              >
+                try a different email
+              </button>
+            </p>
           </div>
         </div>
       </div>

@@ -413,4 +413,9 @@ export const savedApi = {
     }),
 };
 
+export const authApi = {
+  checkEmail: (email) =>
+    fetchApi(`/auth/check-email?email=${encodeURIComponent(email)}`),
+};
+
 export { ApiError, fetchApi };
