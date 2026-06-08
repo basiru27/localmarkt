@@ -101,7 +101,11 @@ export function useUpdateUserBanStatus() {
       
       queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (oldData) => {
         if (!oldData) return oldData;
-        return oldData.map((user) => (user.id === userId ? { ...user, is_banned: data.is_banned } : user));
+        if (!oldData.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((user) => (user.id === userId ? { ...user, is_banned: data.is_banned } : user)),
+        };
       });
       
       return { previousQueries };
@@ -135,7 +139,11 @@ export function useUpdateUserVerifyStatus() {
       
       queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (oldData) => {
         if (!oldData) return oldData;
-        return oldData.map((user) => (user.id === userId ? { ...user, verified_seller: data.verified_seller } : user));
+        if (!oldData.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((user) => (user.id === userId ? { ...user, verified_seller: data.verified_seller } : user)),
+        };
       });
       
       return { previousQueries };
@@ -188,10 +196,11 @@ export function useModerateListing() {
       
       queryClient.setQueriesData({ queryKey: ['admin', 'listings'] }, (oldData) => {
         if (!oldData) return oldData;
-        if (Array.isArray(oldData)) {
-           return oldData.map(l => l.id === listingId ? { ...l, moderation_status: data.moderation_status } : l);
-        }
-        return oldData;
+        if (!oldData.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((l) => (l.id === listingId ? { ...l, moderation_status: data.moderation_status } : l)),
+        };
       });
 
       return { previousQueries };
