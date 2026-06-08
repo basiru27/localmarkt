@@ -14,6 +14,7 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
   const [confirmBanAction, setConfirmBanAction] = useState(null);
+  const [confirmUnbanAction, setConfirmUnbanAction] = useState(null);
   const [page, setPage] = useState(1);
 
   const banFilter = searchParams.get('banned') || 'all';
@@ -42,22 +43,12 @@ export default function AdminUsers() {
   const updateVerifyMutation = useUpdateUserVerifyStatus();
   const hardDeleteMutation = useHardDeleteUser();
 
-  const handleToggleBan = async (target) => {
+  const handleToggleBan = (target) => {
     if (!target.is_banned) {
       setConfirmBanAction({ userId: target.id, is_banned: true });
       return;
     }
-    try {
-      await updateBanMutation.mutateAsync({
-        userId: target.id,
-        data: {
-          is_banned: false,
-        },
-      });
-      success('User unbanned');
-    } catch (err) {
-      showError(err.message || 'Failed to update user ban status');
-    }
+    setConfirmUnbanAction({ userId: target.id, display_name: target.display_name, is_banned: false });
   };
 
   const handleConfirmBan = async () => {
@@ -71,6 +62,22 @@ export default function AdminUsers() {
       });
       success('User banned');
       setConfirmBanAction(null);
+    } catch (err) {
+      showError(err.message || 'Failed to update user ban status');
+    }
+  };
+
+  const handleConfirmUnban = async () => {
+    if (!confirmUnbanAction) return;
+    try {
+      await updateBanMutation.mutateAsync({
+        userId: confirmUnbanAction.userId,
+        data: {
+          is_banned: false,
+        },
+      });
+      success('User unbanned');
+      setConfirmUnbanAction(null);
     } catch (err) {
       showError(err.message || 'Failed to update user ban status');
     }
@@ -364,6 +371,23 @@ export default function AdminUsers() {
           <button onClick={() => setConfirmBanAction(null)} className="btn-secondary">Cancel</button>
           <button onClick={handleConfirmBan} disabled={updateBanMutation.isPending} className="btn-danger">
             {updateBanMutation.isPending ? 'Banning...' : 'Ban User'}
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={!!confirmUnbanAction}
+        onClose={() => setConfirmUnbanAction(null)}
+        title="Unban User"
+        size="sm"
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to unban <span className="font-semibold text-text">{confirmUnbanAction?.display_name || 'this user'}</span>? They will regain full access to the marketplace.
+        </p>
+        <ModalFooter>
+          <button onClick={() => setConfirmUnbanAction(null)} className="btn-secondary">Cancel</button>
+          <button onClick={handleConfirmUnban} disabled={updateBanMutation.isPending} className="btn-primary" style={{ backgroundColor: '#C2622A' }}>
+            {updateBanMutation.isPending ? 'Unbanning...' : 'Confirm Unban'}
           </button>
         </ModalFooter>
       </Modal>

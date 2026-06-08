@@ -350,7 +350,7 @@ export default function ListingDetail() {
           {/* Image Section */}
           <div className="lg:col-span-3">
             <button 
-              className="relative -mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full aspect-[4/3] sm:aspect-square sm:rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5EFE8] to-[#E8D5C0] shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="relative -mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full aspect-[4/3] sm:aspect-square sm:rounded-2xl overflow-hidden bg-gray-50 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               onClick={() => setShowLightbox(true)}
               aria-label="Open image gallery"
             >
@@ -364,8 +364,8 @@ export default function ListingDetail() {
                 category={listing.category?.name}
                 loading="lazy"
                 decoding="async"
-                className={`w-full h-full object-cover transition-transform duration-300 hover:scale-[1.02] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                placeholderClassName="w-full h-full object-cover"
+                className={`w-full h-full object-contain transition-transform duration-300 hover:scale-[1.02] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                placeholderClassName="w-full h-full object-contain"
                 onLoad={() => setImageLoaded(true)}
                 iconClassName="w-16 h-16 text-[#C8622A]/50"
               />
@@ -500,6 +500,9 @@ export default function ListingDetail() {
               </div>
             )}
 
+            
+            {/* Spacer so content isn't hidden behind sticky CTA on mobile */}
+            <div className="h-24 md:hidden" aria-hidden="true" />
             
             {/* Action CTA Block */}
             <div className="bg-white border border-[#F0EDE8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-4 sm:p-5 space-y-4 sticky bottom-0 z-40 md:relative md:shadow-none shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:bottom-auto safe-bottom">

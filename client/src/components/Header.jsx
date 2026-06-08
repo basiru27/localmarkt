@@ -36,9 +36,11 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile search on route change
+  // Close mobile search and drawer on route change
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMobileSearchOpen(false); }, [location.pathname]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
   // Close mobile menu on outside click
   useEffect(() => {

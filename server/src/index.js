@@ -38,7 +38,7 @@ const apiLimiter = rateLimit({
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
-      process.env.CLIENT_ORIGI,
+      process.env.CLIENT_ORIGIN,
       'https://gmarkt.tech',
       'https://www.gmarkt.tech',
     ]

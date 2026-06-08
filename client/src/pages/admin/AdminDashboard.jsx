@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         {/* Listings Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-5 flex flex-col">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-5 flex flex-col min-w-0">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-text">New Listings per Day</h3>
             <select 

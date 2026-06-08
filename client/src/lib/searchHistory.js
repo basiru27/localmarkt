@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'gmarkt_search_history';
-const MAX_ENTRIES = 10;
+const MAX_ENTRIES = 5;
 
 export function getSearchHistory() {
   try {
