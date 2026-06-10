@@ -647,4 +647,171 @@ router.get('/admin/logs', requireSuperAdmin, async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/admin/users/export
+ */
+router.get('/admin/users/export', async (req, res, next) => {
+  try {
+    const { search = '', role, banned } = req.query;
+
+    let query = supabase
+      .from('profiles')
+      .select('id, display_name, email, role, is_banned, verified_seller, created_at, listing_count:listings(count)')
+      .order('created_at', { ascending: false });
+
+    if (role) {
+      query = query.eq('role', role);
+    }
+
+    if (banned === 'true') {
+      query = query.eq('is_banned', true);
+    }
+
+    if (banned === 'false') {
+      query = query.eq('is_banned', false);
+    }
+
+    if (search) {
+      const escaped = String(search).replaceAll('%', '\\%').replaceAll('_', '\\_').slice(0, 100);
+      query = query.ilike('display_name', `%${escaped}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const rows = data.map((profile) => ({
+      ...profile,
+      listing_count: profile.listing_count?.[0]?.count || 0,
+    }));
+
+    return res.json({ data: rows });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/admin/listings/export
+ */
+router.get('/admin/listings/export', async (req, res, next) => {
+  try {
+    const { status, search = '' } = req.query;
+
+    let query = supabase
+      .from('listings')
+      .select(`
+        id,
+        title,
+        description,
+        price,
+        moderation_status,
+        moderation_note,
+        created_at,
+        user_id,
+        area:areas(id, name, zone:zones(id, name)),
+        category:categories(id, name),
+        seller:profiles!user_id(id, display_name, is_banned)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('moderation_status', status);
+    }
+
+    if (search) {
+      const escaped = String(search).replaceAll('%', '\\%').replaceAll('_', '\\_').slice(0, 100);
+      query = query.ilike('title', `%${escaped}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return res.json({ data });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/admin/reports/export
+ */
+router.get('/admin/reports/export', async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    let query = supabase
+      .from('reports')
+      .select(`
+        id,
+        reporter_id,
+        listing_id,
+        reported_user_id,
+        reason,
+        details,
+        status,
+        handled_by,
+        handled_at,
+        created_at,
+        reporter:profiles!reporter_id(id, display_name),
+        listing:listings(id, title),
+        reported_user:profiles!reported_user_id(id, display_name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return res.json({ data });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/admin/logs/export
+ */
+router.get('/admin/logs/export', requireSuperAdmin, async (req, res, next) => {
+  try {
+    const { admin_id, action, date_from, date_to } = req.query;
+
+    let query = supabase
+      .from('admin_logs')
+      .select(`
+        id,
+        admin_id,
+        action,
+        target_type,
+        target_id,
+        details,
+        created_at,
+        admin:profiles!admin_id(id, display_name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (admin_id) {
+      query = query.eq('admin_id', admin_id);
+    }
+    if (action) {
+      query = query.eq('action', action);
+    }
+    if (date_from) {
+      query = query.gte('created_at', date_from);
+    }
+    if (date_to) {
+      query = query.lte('created_at', date_to + 'T23:59:59.999Z');
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return res.json({ data });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 export default router;

@@ -240,6 +240,36 @@ export function useAdminDeleteListing() {
   });
 }
 
+function useAdminExport(endpoint) {
+  const getAuthHeader = useAdminHeader();
+
+  return useQuery({
+    queryKey: [...adminKeys.all, 'export', endpoint],
+    queryFn: async () => {
+      const authHeader = await getAuthHeader();
+      return adminApi[endpoint](authHeader);
+    },
+    enabled: false,
+    retry: false,
+  });
+}
+
+export function useExportUsers() {
+  return useAdminExport('exportUsers');
+}
+
+export function useExportListings() {
+  return useAdminExport('exportListings');
+}
+
+export function useExportReports() {
+  return useAdminExport('exportReports');
+}
+
+export function useExportLogs() {
+  return useAdminExport('exportLogs');
+}
+
 export function useUpdateReportStatus() {
   const queryClient = useQueryClient();
   const getAuthHeader = useAdminHeader();

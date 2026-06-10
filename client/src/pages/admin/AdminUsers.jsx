@@ -1,7 +1,8 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers } from '../../hooks/useAdmin';
+import { useHardDeleteUser, useUpdateUserBanStatus, useUpdateUserVerifyStatus, useAdminUsers, useExportUsers } from '../../hooks/useAdmin';
+import { exportToCSV } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Modal, { ModalFooter } from '../../components/Modal';
@@ -42,6 +43,7 @@ export default function AdminUsers() {
   const updateBanMutation = useUpdateUserBanStatus();
   const updateVerifyMutation = useUpdateUserVerifyStatus();
   const hardDeleteMutation = useHardDeleteUser();
+  const { refetch: exportUsers, isRefetching: isExporting } = useExportUsers();
 
   const handleToggleBan = (target) => {
     if (!target.is_banned) {
@@ -110,6 +112,27 @@ export default function AdminUsers() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const result = await exportUsers();
+      if (result.data?.data) {
+        exportToCSV(result.data.data, [
+          { key: 'id', label: 'ID' },
+          { key: 'display_name', label: 'Name' },
+          { key: 'email', label: 'Email' },
+          { key: 'role', label: 'Role' },
+          { key: 'is_banned', label: 'Banned' },
+          { key: 'verified_seller', label: 'Verified Seller' },
+          { key: 'listing_count', label: 'Listings' },
+          { key: 'created_at', label: 'Joined' },
+        ], `users_${new Date().toISOString().split('T')[0]}.csv`);
+        success(`Exported ${result.data.data.length} users`);
+      }
+    } catch (err) {
+      showError(err.message || 'Failed to export users');
+    }
+  };
+
   const selectedUser = users?.find((entry) => entry.id === confirmDeleteUserId);
 
   return (
@@ -119,7 +142,7 @@ export default function AdminUsers() {
         <p className="text-text-secondary">Soft-ban users and manage account access.</p>
       </div>
 
-      <div className="card-static p-4 grid grid-cols-1 md:grid-cols-[1fr_180px_180px] gap-3">
+      <div className="card-static p-4 grid grid-cols-1 md:grid-cols-[1fr_180px_180px_auto] gap-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -155,6 +178,11 @@ export default function AdminUsers() {
           <option value="admin">Admin</option>
           <option value="super_admin">Super Admin</option>
         </select>
+
+        <button onClick={handleExportCSV} disabled={isExporting} className="btn-secondary whitespace-nowrap justify-center flex items-center">
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          {isExporting ? 'Exporting...' : 'Export CSV'}
+        </button>
       </div>
 
       {isLoading && (

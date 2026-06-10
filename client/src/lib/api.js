@@ -354,6 +354,14 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return fetchApi(`/admin/logs${query ? `?${query}` : ''}`, { headers: authHeader });
   },
+
+  exportUsers: (authHeader) => fetchApi('/admin/users/export', { headers: authHeader }),
+
+  exportListings: (authHeader) => fetchApi('/admin/listings/export', { headers: authHeader }),
+
+  exportReports: (authHeader) => fetchApi('/admin/reports/export', { headers: authHeader }),
+
+  exportLogs: (authHeader) => fetchApi('/admin/logs/export', { headers: authHeader }),
 };
 
 export const profileApi = {
@@ -418,4 +426,4 @@ export const authApi = {
     fetchApi(`/auth/check-email?email=${encodeURIComponent(email)}`),
 };
 
-export { ApiError, fetchApi };
+export { ApiError, fetchApi, isRetryable };

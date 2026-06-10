@@ -1,14 +1,16 @@
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useAdminLogs } from '../../hooks/useAdmin';
-import { formatRelativeDate } from '../../lib/utils';
+import { useAdminLogs, useExportLogs } from '../../hooks/useAdmin';
+import { formatRelativeDate, exportToCSV } from '../../lib/utils';
+import { useToast } from '../../context/ToastContext';
 import Pagination from '../../components/ui/Pagination';
 
 export default function AdminLogs() {
   useDocumentTitle('System Logs');
 
   const { isSuperAdmin } = useAuth();
+  const { success, error: showError } = useToast();
   
   const [filterAdmin, setFilterAdmin] = useState('');
   const [filterAction, setFilterAction] = useState('');
@@ -51,32 +53,26 @@ export default function AdminLogs() {
   const { data, isLoading, isError, error } = useAdminLogs(filters, isSuperAdmin);
   const logs = data?.data || [];
   const pagination = data?.pagination;
+  const { refetch: exportLogs, isRefetching: isExporting } = useExportLogs();
 
-  const exportCSV = () => {
-    if (!logs || logs.length === 0) return;
-    // Exports the currently visible page of logs. For full export, use the API directly.
-    const headers = ['When', 'Admin', 'Action', 'Target Type', 'Target ID', 'Details'];
-    const rows = logs.map(log => [
-      new Date(log.created_at).toLocaleString(),
-      log.admin?.display_name || log.admin_id,
-      log.action,
-      log.target_type,
-      log.target_id,
-      JSON.stringify(log.details || {})
-    ]);
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCSV = async () => {
+    if (!isSuperAdmin) return;
+    try {
+      const result = await exportLogs();
+      if (result.data?.data) {
+        exportToCSV(result.data.data, [
+          { key: 'created_at', label: 'When' },
+          { accessor: (r) => r.admin?.display_name || r.admin_id, label: 'Admin' },
+          { key: 'action', label: 'Action' },
+          { key: 'target_type', label: 'Target Type' },
+          { key: 'target_id', label: 'Target ID' },
+          { accessor: (r) => JSON.stringify(r.details || {}), label: 'Details' },
+        ], `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+        success(`Exported ${result.data.data.length} log entries`);
+      }
+    } catch (err) {
+      showError(err.message || 'Failed to export logs');
+    }
   };
 
   const renderDetails = (details) => {
@@ -171,9 +167,9 @@ export default function AdminLogs() {
         </div>
 
         <div className="w-full lg:w-auto ml-auto">
-          <button onClick={exportCSV} className="btn-secondary whitespace-nowrap w-full lg:w-auto justify-center flex items-center">
+          <button onClick={handleExportCSV} disabled={isExporting} className="btn-secondary whitespace-nowrap w-full lg:w-auto justify-center flex items-center">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            Export CSV
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
         </div>
       </div>

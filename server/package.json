@@ -8,6 +8,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "lint": "eslint src/",
+    "test": "vitest run",
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
@@ -21,7 +22,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
-    "eslint": "^8.56.0"
+    "eslint": "^8.56.0",
+    "vitest": "^4.1.8"
   },
   "engines": {
     "node": ">=18.0.0"
